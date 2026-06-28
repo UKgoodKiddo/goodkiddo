@@ -1,6 +1,5 @@
 import { ChildDailyCheckIn } from "@/components/child-daily-check-in";
 import { ChildBottomNav } from "@/components/child-bottom-nav";
-import { ChildModePersistence } from "@/components/child-mode-persistence";
 import { ChildSelectionGuard } from "@/components/child-selection-guard";
 import { ExitChildModeButton } from "@/components/exit-child-mode-button";
 import { getChildModeData } from "@/lib/data";
@@ -15,7 +14,10 @@ export default async function ChildLayout({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-2 py-4 sm:px-6">
       <div className="child-app-shell rounded-[2rem] px-3 py-4 text-white shadow-[0_24px_50px_rgba(6,23,80,0.24)] sm:px-5 sm:py-5">
-        <ChildSelectionGuard childProfileId={childMode.child?.id ?? null}>
+        <ChildSelectionGuard
+          childProfileId={childMode.child?.id ?? null}
+          familyId={childMode.child?.family_id ?? null}
+        >
           <header className="mb-5 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
             <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
               <p className="text-xs font-black uppercase tracking-[0.28em] text-white/70">
@@ -37,10 +39,6 @@ export default async function ChildLayout({
 
           {childMode.child ? (
             <>
-              <ChildModePersistence
-                childProfileId={childMode.child.id}
-                familyId={childMode.child.family_id}
-              />
               <ChildDailyCheckIn />
             </>
           ) : null}

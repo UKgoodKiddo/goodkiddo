@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { readChildModeSession } from "@/lib/child-mode";
+import { resolveChildModeSessionForParent } from "@/lib/child-mode";
 import { recordDailyChildCheckIn } from "@/lib/daily-bonus";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 import {
@@ -32,40 +32,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, reason: "no-user" }, { status: 200 });
   }
 
-  const session = await readChildModeSession();
-
-  if (!session) {
-    return NextResponse.json({ ok: false, reason: "no-child-session" }, { status: 200 });
-  }
-
   const admin = createSupabaseAdminClient();
-  const { data: deviceMode } = await admin
-    .from("device_child_mode")
-    .select("*")
-    .eq("id", session.deviceId)
-    .maybeSingle();
+  const deviceMode = await resolveChildModeSessionForParent({
+    admin,
+    parentSupabase,
+    parentUserId: user.id,
+  });
 
   if (!deviceMode) {
-    return NextResponse.json({ ok: false, reason: "missing-device-mode" }, { status: 200 });
-  }
-
-  const { data: family } = await parentSupabase
-    .from("families")
-    .select("id")
-    .eq("id", deviceMode.family_id)
-    .eq("parent_user_id", user.id)
-    .maybeSingle();
-
-  if (!family) {
-    return NextResponse.json({ ok: false, reason: "family-mismatch" }, { status: 200 });
+    return NextResponse.json({ ok: false, reason: "no-child-session" }, { status: 200 });
   }
 
   try {
     const result = await recordDailyChildCheckIn({
       actorUserId: user.id,
       admin,
-      childProfileId: deviceMode.child_profile_id,
-      familyId: deviceMode.family_id,
+      childProfileId: deviceMode.childProfileId,
+      familyId: deviceMode.familyId,
       localDate: parsed.data.localDate,
     });
 

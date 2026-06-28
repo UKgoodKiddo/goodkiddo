@@ -6,8 +6,8 @@ import {
 } from "@/lib/child-mode";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 import {
-  createSupabaseAdminClient,
   createSupabaseServerClient,
+  createSupabaseAdminClient,
 } from "@/lib/supabase/server";
 
 const restoreSessionSchema = z.object({
@@ -58,21 +58,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, reason: "child-not-found" }, { status: 404 });
   }
 
-  const { data: deviceMode, error } = await supabase
-    .from("device_child_mode")
-    .insert({
-      child_profile_id: child.id,
-      device_label: "Restored child mode",
-      family_id: family.id,
-    })
-    .select("id")
-    .single();
-
-  if (error || !deviceMode) {
-    return NextResponse.json({ ok: false, reason: "device-mode-failed" }, { status: 500 });
-  }
-
-  await setChildModeSession({ deviceId: deviceMode.id });
+  await setChildModeSession({
+    childProfileId: child.id,
+    deviceLabel: "Restored child mode",
+    familyId: family.id,
+  });
   await setChildModeSelection({ childProfileId: child.id });
 
   return NextResponse.json({ ok: true });

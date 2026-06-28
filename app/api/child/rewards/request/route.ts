@@ -2,8 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  readChildModeSelection,
-  readChildModeSession,
+  resolveChildModeSessionForParent,
 } from "@/lib/child-mode";
 import { buildChildStatusPath, CHILD_PAGE_ROUTES } from "@/lib/child-ui";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
@@ -58,50 +57,13 @@ export async function POST(request: Request) {
   }
 
   const admin = createSupabaseAdminClient();
-  const [session, selectedChildProfileId] = await Promise.all([
-    readChildModeSession(),
-    readChildModeSelection(),
-  ]);
+  const session = await resolveChildModeSessionForParent({
+    admin,
+    parentSupabase,
+    parentUserId: user.id,
+  });
 
-  let familyId: string | null = null;
-  let childProfileId: string | null = null;
-
-  if (session) {
-    const { data: deviceMode } = await admin
-      .from("device_child_mode")
-      .select("family_id, child_profile_id")
-      .eq("id", session.deviceId)
-      .maybeSingle();
-
-    if (deviceMode) {
-      familyId = deviceMode.family_id;
-      childProfileId = deviceMode.child_profile_id;
-    }
-  }
-
-  if ((!familyId || !childProfileId) && selectedChildProfileId) {
-    const { data: family } = await parentSupabase
-      .from("families")
-      .select("id")
-      .eq("parent_user_id", user.id)
-      .maybeSingle();
-
-    if (family) {
-      const { data: child } = await admin
-        .from("child_profiles")
-        .select("id, family_id")
-        .eq("id", selectedChildProfileId)
-        .eq("family_id", family.id)
-        .maybeSingle();
-
-      if (child) {
-        familyId = child.family_id;
-        childProfileId = child.id;
-      }
-    }
-  }
-
-  if (!familyId || !childProfileId) {
+  if (!session) {
     return NextResponse.json({
       ok: false,
       redirectTo: buildChildStatusPath(returnTo, "child-mode-required"),
@@ -112,7 +74,7 @@ export async function POST(request: Request) {
     .from("rewards")
     .select("*")
     .eq("id", parsed.data.rewardId)
-    .eq("family_id", familyId)
+    .eq("family_id", session.familyId)
     .eq("active", true)
     .maybeSingle();
 
@@ -126,7 +88,7 @@ export async function POST(request: Request) {
   const { data: transactionRows, error: transactionError } = await admin
     .from("boop_transactions")
     .select("amount")
-    .eq("child_profile_id", childProfileId);
+    .eq("child_profile_id", session.childProfileId);
 
   if (transactionError) {
     return NextResponse.json({
@@ -148,9 +110,9 @@ export async function POST(request: Request) {
   }
 
   const { error } = await admin.from("redemptions").insert({
-    child_profile_id: childProfileId,
+    child_profile_id: session.childProfileId,
     cost_at_redemption: reward.cost,
-    family_id: familyId,
+    family_id: session.familyId,
     reward_id: reward.id,
     status: "pending",
   });

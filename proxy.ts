@@ -6,5 +6,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/auth/:path*", "/parent/:path*", "/api/:path*"],
+  matcher: ["/", "/auth/:path*", "/parent/:path*", "/child/:path*", "/api/:path*"],
 };

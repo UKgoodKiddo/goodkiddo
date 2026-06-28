@@ -1,25 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CHILD_MODE_FAMILY_STORAGE_KEY,
+  CHILD_MODE_ENABLED_STORAGE_KEY,
   CHILD_MODE_STORAGE_KEY,
+  LEGACY_CHILD_MODE_ENABLED_STORAGE_KEY,
   LEGACY_CHILD_MODE_STORAGE_KEY,
 } from "@/lib/app-constants";
 
 export function ChildSelectionGuard({
+  familyId,
   childProfileId,
   children,
 }: {
+  familyId: string | null;
   childProfileId: string | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const isUnlockPage = pathname === "/child/unlock";
-  const [phase, setPhase] = useState<"checking" | "restoring" | "missing">("checking");
+  const restoreAttemptRef = useRef<string | null>(null);
+  const [phase, setPhase] = useState<"checking" | "missing" | "ready" | "restoring">("checking");
 
   useEffect(() => {
     if (isUnlockPage) {
@@ -27,13 +32,34 @@ export function ChildSelectionGuard({
     }
 
     let cancelled = false;
-    const deferPhase = (nextPhase: "checking" | "restoring" | "missing") => {
+    const deferPhase = (nextPhase: "checking" | "missing" | "ready" | "restoring") => {
       window.setTimeout(() => {
         if (!cancelled) {
           setPhase(nextPhase);
         }
       }, 0);
     };
+
+    if (childProfileId && familyId) {
+      window.localStorage.setItem(CHILD_MODE_STORAGE_KEY, childProfileId);
+      window.localStorage.setItem(CHILD_MODE_FAMILY_STORAGE_KEY, familyId);
+      window.localStorage.setItem(CHILD_MODE_ENABLED_STORAGE_KEY, "true");
+      window.localStorage.setItem(LEGACY_CHILD_MODE_STORAGE_KEY, childProfileId);
+      window.localStorage.setItem(LEGACY_CHILD_MODE_ENABLED_STORAGE_KEY, "true");
+
+      console.debug("[goodKiddo][child-mode] session-saved", {
+        childProfileId,
+        familyId,
+        pathname,
+        source: "child-selection-guard",
+      });
+
+      restoreAttemptRef.current = null;
+      deferPhase("ready");
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const storedChildProfileId =
       window.localStorage.getItem(CHILD_MODE_STORAGE_KEY) ??
@@ -47,16 +73,23 @@ export function ChildSelectionGuard({
       storedFamilyId,
     });
 
-    if (childProfileId) {
-      deferPhase("checking");
-      return;
-    }
-
     if (!storedChildProfileId || !storedFamilyId) {
+      restoreAttemptRef.current = null;
       deferPhase("missing");
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
+    const restoreAttemptKey = `${storedFamilyId}:${storedChildProfileId}`;
+
+    if (restoreAttemptRef.current === restoreAttemptKey && phase === "restoring") {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    restoreAttemptRef.current = restoreAttemptKey;
     deferPhase("restoring");
 
     void fetch("/api/child/restore-session", {
@@ -97,9 +130,9 @@ export function ChildSelectionGuard({
     return () => {
       cancelled = true;
     };
-  }, [childProfileId, isUnlockPage, pathname, router]);
+  }, [childProfileId, familyId, isUnlockPage, pathname, phase, router]);
 
-  if (isUnlockPage || childProfileId) {
+  if (isUnlockPage || (childProfileId && familyId)) {
     return <>{children}</>;
   }
 

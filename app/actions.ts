@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   clearChildModeSession,
-  readChildModeSelection,
-  readChildModeSession,
+  resolveChildModeSessionForParent,
   setChildModeSelection,
   setChildModeSession,
 } from "@/lib/child-mode";
@@ -227,57 +226,11 @@ async function getChildModeActionContextOrRedirect() {
   }
 
   const admin = createSupabaseAdminClient();
-  const [session, selectedChildProfileId] = await Promise.all([
-    readChildModeSession(),
-    readChildModeSelection(),
-  ]);
-
-  let deviceMode:
-    | {
-        child_profile_id: string;
-        device_label: string | null;
-        family_id: string;
-      }
-    | null = null;
-
-  if (session) {
-    const { data } = await admin
-      .from("device_child_mode")
-      .select("*")
-      .eq("id", session.deviceId)
-      .maybeSingle();
-
-    if (data) {
-      deviceMode = data;
-    }
-  }
-
-  if (!deviceMode && selectedChildProfileId) {
-    const { data: family } = await parentSupabase
-      .from("families")
-      .select("*")
-      .eq("parent_user_id", user.id)
-      .maybeSingle();
-
-    if (!family) {
-      redirect("/auth/login");
-    }
-
-    const { data: child } = await admin
-      .from("child_profiles")
-      .select("id, family_id")
-      .eq("id", selectedChildProfileId)
-      .eq("family_id", family.id)
-      .maybeSingle();
-
-    if (child) {
-      deviceMode = {
-        child_profile_id: child.id,
-        device_label: null,
-        family_id: child.family_id,
-      };
-    }
-  }
+  const deviceMode = await resolveChildModeSessionForParent({
+    admin,
+    parentSupabase,
+    parentUserId: user.id,
+  });
 
   if (!deviceMode) {
     redirect("/child?status=child-mode-required");
@@ -286,7 +239,7 @@ async function getChildModeActionContextOrRedirect() {
   const { data: family } = await parentSupabase
     .from("families")
     .select("*")
-    .eq("id", deviceMode.family_id)
+    .eq("id", deviceMode.familyId)
     .eq("parent_user_id", user.id)
     .maybeSingle();
 
@@ -296,7 +249,11 @@ async function getChildModeActionContextOrRedirect() {
 
   return {
     admin,
-    deviceMode,
+    deviceMode: {
+      child_profile_id: deviceMode.childProfileId,
+      device_label: deviceMode.deviceLabel,
+      family_id: deviceMode.familyId,
+    },
     family,
     parentSupabase,
     user,
@@ -1478,21 +1435,30 @@ export async function launchChildModeAction(formData: FormData) {
     redirect("/parent/child-mode?status=family-required");
   }
 
-  const { data: deviceMode, error } = await supabase
+  const { data: child } = await supabase
+    .from("child_profiles")
+    .select("id, family_id")
+    .eq("id", parsed.data.childProfileId)
+    .eq("family_id", parsed.data.familyId)
+    .maybeSingle();
+
+  if (!child) {
+    redirect("/parent/child-mode?status=action-failed");
+  }
+
+  await supabase
     .from("device_child_mode")
     .insert({
       child_profile_id: parsed.data.childProfileId,
       device_label: parsed.data.deviceLabel || "House tablet",
       family_id: parsed.data.familyId,
-    })
-    .select("id")
-    .single();
+    });
 
-  if (error || !deviceMode) {
-    redirect("/parent/child-mode?status=action-failed");
-  }
-
-  await setChildModeSession({ deviceId: deviceMode.id });
+  await setChildModeSession({
+    childProfileId: child.id,
+    deviceLabel: parsed.data.deviceLabel || "House tablet",
+    familyId: child.family_id,
+  });
   await setChildModeSelection({ childProfileId: parsed.data.childProfileId });
 
   revalidateChildWorkspace();
@@ -1543,7 +1509,7 @@ export async function updateParentPinAction(formData: FormData) {
 
 export async function exitChildModeAction() {
   await clearChildModeSession();
-  redirect("/parent/child-mode?status=child-mode-exited");
+  redirect("/parent?status=child-mode-exited&unlock=1");
 }
 
 export async function unlockChildModeAction(

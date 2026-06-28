@@ -15,7 +15,7 @@ import {
   isServiceRoleConfigured,
   isSupabaseConfigured,
 } from "@/lib/env";
-import { readChildModeSelection, readChildModeSession } from "@/lib/child-mode";
+import { resolveChildModeSessionForParent } from "@/lib/child-mode";
 import { buildChildTaskView } from "@/lib/tasks";
 import type {
   BoopTransactionView,
@@ -237,55 +237,11 @@ export async function getChildModeData(): Promise<ChildModeData> {
   }
 
   const supabase = createSupabaseAdminClient();
-  const [session, selectedChildProfileId] = await Promise.all([
-    readChildModeSession(),
-    readChildModeSelection(),
-  ]);
-
-  let resolvedDeviceMode:
-    | {
-        child_profile_id: string;
-        device_label: string | null;
-        family_id: string;
-      }
-    | null = null;
-
-  if (session) {
-    const { data: deviceMode } = await supabase
-      .from("device_child_mode")
-      .select("*")
-      .eq("id", session.deviceId)
-      .maybeSingle();
-
-    if (deviceMode) {
-      resolvedDeviceMode = deviceMode;
-    }
-  }
-
-  if (!resolvedDeviceMode && selectedChildProfileId) {
-    const { data: family } = await parentSupabase
-      .from("families")
-      .select("id")
-      .eq("parent_user_id", user.id)
-      .maybeSingle();
-
-    if (family) {
-      const { data: child } = await supabase
-        .from("child_profiles")
-        .select("id, family_id")
-        .eq("id", selectedChildProfileId)
-        .eq("family_id", family.id)
-        .maybeSingle();
-
-      if (child) {
-        resolvedDeviceMode = {
-          child_profile_id: child.id,
-          device_label: null,
-          family_id: child.family_id,
-        };
-      }
-    }
-  }
+  const resolvedDeviceMode = await resolveChildModeSessionForParent({
+    admin: supabase,
+    parentSupabase,
+    parentUserId: user.id,
+  });
 
   if (!resolvedDeviceMode) {
     return {
@@ -302,9 +258,7 @@ export async function getChildModeData(): Promise<ChildModeData> {
       redemptions: [],
       rewards: [],
       setupMessage:
-        selectedChildProfileId
-          ? "The saved child profile could not be restored for this device."
-          : "Launch child mode from the parent dashboard to bind this device.",
+        "Launch child mode from the parent dashboard to bind this device.",
       usingDemoMode: false,
     };
   }
@@ -313,55 +267,55 @@ export async function getChildModeData(): Promise<ChildModeData> {
   const weekStart = getWeekStartForDate(referenceDate);
   const [familyResult, childResult, tasksResult, taskCompletionsResult, rewardsResult, redemptionsResult, transactionsResult, pendingAwardsResult, dailyCheckInsResult] =
     await Promise.all([
-    supabase.from("families").select("family_name").eq("id", resolvedDeviceMode.family_id).single(),
+    supabase.from("families").select("family_name").eq("id", resolvedDeviceMode.familyId).single(),
     supabase
       .from("child_profiles")
       .select("*")
-      .eq("id", resolvedDeviceMode.child_profile_id)
+      .eq("id", resolvedDeviceMode.childProfileId)
       .single(),
     supabase
       .from("tasks")
       .select("*")
-      .eq("family_id", resolvedDeviceMode.family_id)
+      .eq("family_id", resolvedDeviceMode.familyId)
       .eq("active", true)
       .order("created_at"),
     supabase
       .from("task_completions")
       .select("*")
-      .eq("child_profile_id", resolvedDeviceMode.child_profile_id)
+      .eq("child_profile_id", resolvedDeviceMode.childProfileId)
       .order("submitted_at", { ascending: false }),
     supabase
       .from("rewards")
       .select("*")
-      .eq("family_id", resolvedDeviceMode.family_id)
+      .eq("family_id", resolvedDeviceMode.familyId)
       .eq("active", true)
       .order("cost"),
     supabase
       .from("redemptions")
       .select("*")
-      .eq("family_id", resolvedDeviceMode.family_id)
-      .eq("child_profile_id", resolvedDeviceMode.child_profile_id)
+      .eq("family_id", resolvedDeviceMode.familyId)
+      .eq("child_profile_id", resolvedDeviceMode.childProfileId)
       .order("created_at", { ascending: false })
       .limit(8),
     supabase
       .from("boop_transactions")
       .select("*")
-      .eq("family_id", resolvedDeviceMode.family_id)
-      .eq("child_profile_id", resolvedDeviceMode.child_profile_id)
+      .eq("family_id", resolvedDeviceMode.familyId)
+      .eq("child_profile_id", resolvedDeviceMode.childProfileId)
       .order("created_at", { ascending: false })
       .limit(8),
     supabase
       .from("pending_boop_awards")
       .select("*")
-      .eq("family_id", resolvedDeviceMode.family_id)
-      .eq("child_profile_id", resolvedDeviceMode.child_profile_id)
+      .eq("family_id", resolvedDeviceMode.familyId)
+      .eq("child_profile_id", resolvedDeviceMode.childProfileId)
       .is("claimed_at", null)
       .order("created_at", { ascending: false }),
     supabase
       .from("child_daily_checkins")
       .select("checkin_date")
-      .eq("family_id", resolvedDeviceMode.family_id)
-      .eq("child_profile_id", resolvedDeviceMode.child_profile_id)
+      .eq("family_id", resolvedDeviceMode.familyId)
+      .eq("child_profile_id", resolvedDeviceMode.childProfileId)
       .gte("checkin_date", weekStart)
       .lte("checkin_date", referenceDate)
       .order("checkin_date"),
@@ -372,7 +326,7 @@ export async function getChildModeData(): Promise<ChildModeData> {
   );
   const visibleTasks = ((tasksResult.data ?? []) as Task[]).filter(
     (task) =>
-      !task.child_profile_id || task.child_profile_id === resolvedDeviceMode.child_profile_id,
+      !task.child_profile_id || task.child_profile_id === resolvedDeviceMode.childProfileId,
   );
   const childTasks = visibleTasks.map((task) =>
     buildChildTaskView(
@@ -390,7 +344,7 @@ export async function getChildModeData(): Promise<ChildModeData> {
       (dailyCheckInsResult.data ?? []).map((row) => row.checkin_date),
       referenceDate,
     ),
-    deviceLabel: resolvedDeviceMode.device_label,
+    deviceLabel: resolvedDeviceMode.deviceLabel,
     familyName: familyResult.data?.family_name ?? null,
     pendingBoopAwards: (pendingAwardsResult.data ?? []) as PendingBoopAward[],
     pendingBoopTotal: ((pendingAwardsResult.data ?? []) as PendingBoopAward[]).reduce(

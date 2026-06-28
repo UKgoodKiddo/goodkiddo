@@ -7,8 +7,10 @@ import { env, isChildModeConfigured } from "@/lib/env";
 const COOKIE_NAME = "goodkiddo-child-mode";
 const SELECTION_COOKIE_NAME = "goodkiddo-child-profile";
 
-type ChildModeSession = {
-  deviceId: string;
+export type ChildModeSession = {
+  childProfileId: string;
+  deviceLabel?: string | null;
+  familyId: string;
 };
 
 export type ChildModeSelection = {
@@ -49,13 +51,21 @@ function parseSession(rawValue: string): ChildModeSession | null {
   try {
     const parsed = JSON.parse(
       Buffer.from(payload, "base64url").toString("utf8"),
-    ) as ChildModeSession;
+    ) as Partial<ChildModeSession>;
 
-    if (!parsed.deviceId) {
+    if (
+      typeof parsed.childProfileId !== "string" ||
+      typeof parsed.familyId !== "string"
+    ) {
       return null;
     }
 
-    return parsed;
+    return {
+      childProfileId: parsed.childProfileId,
+      deviceLabel:
+        typeof parsed.deviceLabel === "string" ? parsed.deviceLabel : null,
+      familyId: parsed.familyId,
+    };
   } catch {
     return null;
   }
@@ -96,11 +106,88 @@ export async function setChildModeSelection(selection: ChildModeSelection) {
 
 export async function readChildModeSelection() {
   const cookieStore = await cookies();
-  return cookieStore.get(SELECTION_COOKIE_NAME)?.value ?? null;
+  const explicitSelection = cookieStore.get(SELECTION_COOKIE_NAME)?.value;
+
+  if (explicitSelection) {
+    return explicitSelection;
+  }
+
+  const session = await readChildModeSession();
+  return session?.childProfileId ?? null;
 }
 
 export async function clearChildModeSession() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
   cookieStore.delete(SELECTION_COOKIE_NAME);
+}
+
+export async function resolveChildModeSessionForParent(params: {
+  admin: ReturnType<typeof import("@/lib/supabase/server").createSupabaseAdminClient>;
+  parentSupabase: Awaited<
+    ReturnType<typeof import("@/lib/supabase/server").createSupabaseServerClient>
+  >;
+  parentUserId: string;
+}) {
+  const { admin, parentSupabase, parentUserId } = params;
+  const [session, selectedChildProfileId] = await Promise.all([
+    readChildModeSession(),
+    readChildModeSelection(),
+  ]);
+
+  if (session) {
+    const [{ data: family }, { data: child }] = await Promise.all([
+      parentSupabase
+        .from("families")
+        .select("id")
+        .eq("id", session.familyId)
+        .eq("parent_user_id", parentUserId)
+        .maybeSingle(),
+      admin
+        .from("child_profiles")
+        .select("id, family_id")
+        .eq("id", session.childProfileId)
+        .eq("family_id", session.familyId)
+        .maybeSingle(),
+    ]);
+
+    if (family && child) {
+      return {
+        childProfileId: child.id,
+        deviceLabel: session.deviceLabel ?? null,
+        familyId: child.family_id,
+      };
+    }
+  }
+
+  if (!selectedChildProfileId) {
+    return null;
+  }
+
+  const { data: family } = await parentSupabase
+    .from("families")
+    .select("id")
+    .eq("parent_user_id", parentUserId)
+    .maybeSingle();
+
+  if (!family) {
+    return null;
+  }
+
+  const { data: child } = await admin
+    .from("child_profiles")
+    .select("id, family_id")
+    .eq("id", selectedChildProfileId)
+    .eq("family_id", family.id)
+    .maybeSingle();
+
+  if (!child) {
+    return null;
+  }
+
+  return {
+    childProfileId: child.id,
+    deviceLabel: null,
+    familyId: child.family_id,
+  };
 }

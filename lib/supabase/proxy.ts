@@ -40,9 +40,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const childModeSelection = request.cookies.get("goodkiddo-child-profile")?.value;
+  const hasChildModeSelection =
+    Boolean(request.cookies.get("goodkiddo-child-profile")?.value) ||
+    Boolean(request.cookies.get("goodkiddo-child-mode")?.value);
   const shouldRedirectToChild =
-    Boolean(user && childModeSelection) &&
+    Boolean(user && hasChildModeSelection) &&
     (pathname === "/" || pathname.startsWith("/parent")) &&
     request.nextUrl.searchParams.get("unlock") !== "1";
 
