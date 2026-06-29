@@ -1,12 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  claimPendingBoopsAction,
   submitTaskCompletionAction,
   updateChildAvatarPresetAction,
 } from "@/app/actions";
 import { ChildRewardRequestButton } from "@/components/child-reward-request-button";
-import { NfcUidCapture } from "@/components/nfc-uid-capture";
 import { StatusPill } from "@/components/status-pill";
 import { CHILD_AVATAR_PRESETS, type ChildPageRoute } from "@/lib/child-ui";
 import {
@@ -75,6 +73,9 @@ export function ChildSummaryCard({
                 ? `${formatBoops(childMode.pendingBoopTotal)} waiting to collect`
                 : "No boops waiting right now"}
             </p>
+            <p className="mt-2 text-sm font-bold text-[#ffe37f]">
+              Ask a grown-up to scan your Booper.
+            </p>
           </div>
         </div>
 
@@ -101,20 +102,18 @@ export function ChildSummaryCard({
   );
 }
 
-export function ChildCollectCard({
+export function ChildWaitingBoopsCard({
   childMode,
-  returnTo,
 }: {
   childMode: ChildModeData;
-  returnTo: ChildPageRoute;
 }) {
   return (
     <div className="child-panel rounded-[2rem] p-5 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-2xl font-black">Collect waiting boops</p>
+          <p className="text-2xl font-black">Waiting Boops</p>
           <p className="mt-1 text-sm text-white/70">
-            Tap your Booper wristband to move waiting boops into your spendable balance.
+            Your grown-up can scan your Booper on their phone to move these into your spendable balance.
           </p>
         </div>
         <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/80">
@@ -122,24 +121,12 @@ export function ChildCollectCard({
         </div>
       </div>
 
-      <form action={claimPendingBoopsAction} className="mt-5 grid gap-3">
-        <input type="hidden" name="returnTo" value={returnTo} />
-        <NfcUidCapture
-          autoSubmit
-          buttonLabel="Tap Booper to collect"
-          helperText={
-            childMode.pendingBoopTotal > 0
-              ? "On supported devices, the scan will submit automatically. You can also type the UID manually for testing."
-              : "You can still scan to check the correct Booper, but there are no waiting boops at the moment."
-          }
-          inputLabel="Booper UID"
-          inputName="nfcUid"
-          required
-        />
-        <button className="btn btn-secondary" type="submit">
-          Collect waiting boops
-        </button>
-      </form>
+      <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/8 px-4 py-4">
+        <p className="text-lg font-black">How collection works</p>
+        <p className="mt-2 text-sm leading-6 text-white/76">
+          1. Finish a task. 2. Wait for parent approval. 3. Ask a grown-up to scan your Booper on their NFC phone.
+        </p>
+      </div>
 
       {childMode.pendingBoopAwards.length ? (
         <div className="mt-5 space-y-3">
@@ -162,7 +149,7 @@ export function ChildCollectCard({
         </div>
       ) : (
         <div className="mt-5 rounded-[1.4rem] border border-white/10 bg-white/8 px-4 py-4 text-sm text-white/75">
-          No waiting boops right now.
+          No waiting boops right now. Finish a task, then wait for a grown-up to approve it.
         </div>
       )}
     </div>

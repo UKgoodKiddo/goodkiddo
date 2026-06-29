@@ -123,6 +123,11 @@ const claimPendingBoopsSchema = z.object({
   returnTo: z.enum(CHILD_PAGE_ROUTES).optional(),
 });
 
+const parentClaimPendingBoopsSchema = z.object({
+  childProfileId: z.uuid(),
+  nfcUid: z.string().trim().min(4).max(120),
+});
+
 const childAvatarPresetSchema = z.object({
   avatarUrl: z.enum(CHILD_AVATAR_PRESET_URLS),
   returnTo: z.enum(CHILD_PAGE_ROUTES).optional(),
@@ -1069,6 +1074,82 @@ export async function claimPendingBoopsAction(formData: FormData) {
   revalidateParentWorkspace();
   revalidateChildWorkspace();
   redirect(buildChildStatusPath(returnTo, "boops-collected"));
+}
+
+export async function collectWaitingBoopsForChildAction(formData: FormData) {
+  const parsed = parentClaimPendingBoopsSchema.safeParse({
+    childProfileId: formData.get("childProfileId"),
+    nfcUid: formData.get("nfcUid"),
+  });
+
+  if (!parsed.success) {
+    redirect("/parent/boopers?status=action-failed");
+  }
+
+  const { family, user } = await getParentContextOrRedirect();
+
+  if (!family) {
+    redirect("/parent/boopers?status=family-required");
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: child } = await admin
+    .from("child_profiles")
+    .select("id, display_name")
+    .eq("id", parsed.data.childProfileId)
+    .eq("family_id", family.id)
+    .maybeSingle();
+
+  if (!child) {
+    redirect("/parent/boopers?status=action-failed");
+  }
+
+  const { readNfcUid } = await getNfcHelpers();
+  const nfcRead = await readNfcUid(parsed.data.nfcUid);
+
+  if (!nfcRead.nfc_uid) {
+    redirect("/parent/boopers?status=action-failed");
+  }
+
+  const { data, error } = await admin.rpc("claim_pending_boop_awards", {
+    target_booper_uid: nfcRead.nfc_uid,
+    target_child_profile_id: child.id,
+    target_family_id: family.id,
+  });
+
+  if (error) {
+    redirect(
+      error.message.toLowerCase().includes("assigned booper")
+        ? "/parent/boopers?status=wrong-booper"
+        : "/parent/boopers?status=action-failed",
+    );
+  }
+
+  const claimResult = data?.[0];
+
+  if (!claimResult || claimResult.claimed_count === 0) {
+    redirect("/parent/boopers?status=no-boops-waiting");
+  }
+
+  const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
+  await writeSuperAdminAuditLog({
+    action: "pending_boops_collected_by_parent",
+    actorUserId: user.id,
+    metadata: {
+      childDisplayName: child.display_name,
+      childProfileId: child.id,
+      claimedCount: claimResult.claimed_count,
+      claimedTotal: claimResult.claimed_total,
+      familyId: family.id,
+      uid: nfcRead.nfc_uid,
+    },
+    targetId: child.id,
+    targetType: "child_profiles",
+  });
+
+  revalidateParentWorkspace();
+  revalidateChildWorkspace();
+  redirect("/parent/boopers?status=boops-collected-parent");
 }
 
 export async function updateChildAvatarPresetAction(formData: FormData) {

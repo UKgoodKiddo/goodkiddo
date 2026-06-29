@@ -27,7 +27,7 @@ const navItems: ChildNavItem[] = [
   {
     href: "/child/collect",
     icon: GOODKIDDO_ASSETS.plainBoopLogo,
-    label: "Collect",
+    label: "Waiting",
     isPrimary: true,
   },
   {
@@ -89,7 +89,7 @@ export function ChildBottomNav({
                 </span>
               ) : null}
             </div>
-            <span className="mt-2">{item.isPrimary ? "Collect Boops" : item.label}</span>
+            <span className="mt-2">{item.isPrimary ? "Waiting Boops" : item.label}</span>
           </Link>
         ))}
       </div>

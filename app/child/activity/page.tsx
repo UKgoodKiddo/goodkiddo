@@ -26,11 +26,11 @@ export default async function ChildActivityPage(props: {
               <div>
                 <p className="text-2xl font-black">Waiting activity</p>
                 <p className="mt-1 text-sm text-white/70">
-                  These boops are ready to be collected the next time the Booper is tapped.
+                  These boops are ready to move across after a grown-up scans the correct Booper on their phone.
                 </p>
               </div>
               <Link className="btn btn-secondary px-4 py-2 text-sm" href="/child/collect">
-                Collect
+                View waiting
               </Link>
             </div>
 

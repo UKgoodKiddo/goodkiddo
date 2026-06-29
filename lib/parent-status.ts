@@ -84,6 +84,11 @@ export function getParentStatusBanner(code?: string) {
         tone: "mint" as const,
         message: "Boops sent to the child's waiting-to-collect stack.",
       };
+    case "boops-collected-parent":
+      return {
+        tone: "mint" as const,
+        message: "Waiting boops collected successfully on this parent device.",
+      };
     case "pin-updated":
       return {
         tone: "mint" as const,
@@ -129,6 +134,17 @@ export function getParentStatusBanner(code?: string) {
         tone: "rose" as const,
         message:
           "That UID is not an assigned imported Booper paired to a child yet, so no boop was awarded.",
+      };
+    case "wrong-booper":
+      return {
+        tone: "rose" as const,
+        message:
+          "That Booper does not belong to the selected child, or it is lost, disabled, or no longer assigned.",
+      };
+    case "no-boops-waiting":
+      return {
+        tone: "sun" as const,
+        message: "That child has no waiting boops to collect right now.",
       };
     case "action-failed":
       return {

@@ -1,5 +1,5 @@
 import { ChildPageScaffold } from "@/components/child-page-scaffold";
-import { ChildCollectCard, ChildSummaryCard } from "@/components/child-sections";
+import { ChildSummaryCard, ChildWaitingBoopsCard } from "@/components/child-sections";
 import { getChildModeData } from "@/lib/data";
 
 export default async function ChildCollectPage(props: {
@@ -17,7 +17,7 @@ export default async function ChildCollectPage(props: {
     <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
       <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <ChildSummaryCard childMode={childMode} />
-        <ChildCollectCard childMode={childMode} returnTo="/child/collect" />
+        <ChildWaitingBoopsCard childMode={childMode} />
       </section>
     </ChildPageScaffold>
   );

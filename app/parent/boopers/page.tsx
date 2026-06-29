@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import {
   assignBooperToChildAction,
+  collectWaitingBoopsForChildAction,
   awardBoopFromNfcAction,
   pairBooperAction,
   updateBooperStatusAction,
@@ -40,11 +41,75 @@ export default async function ParentBoopersPage(props: {
     );
   }
 
+  const pendingByChildId = new Map<string, number>();
+  for (const award of dashboard.pendingBoopAwards) {
+    pendingByChildId.set(
+      award.child_profile_id,
+      (pendingByChildId.get(award.child_profile_id) ?? 0) + award.amount,
+    );
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-6">
       {banner ? <Banner message={banner.message} tone={banner.tone} /> : null}
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <ShellCard className="rounded-[1.8rem] p-6">
+          <h2 className="text-3xl font-extrabold">Collect waiting Boops</h2>
+          <p className="mt-3 text-sm leading-6 text-[color:var(--ink-soft)]">
+            Use this on the parent phone. Scan the child&apos;s assigned Booper to move approved waiting boops into their spendable balance.
+          </p>
+          <div className="mt-6 grid gap-4">
+            {dashboard.children.length ? (
+              dashboard.children.map((child) => {
+                const waitingBoops = pendingByChildId.get(child.id) ?? 0;
+
+                return (
+                  <form
+                    action={collectWaitingBoopsForChildAction}
+                    className="parent-soft-panel rounded-[1.5rem] p-4"
+                    key={child.id}
+                  >
+                    <input type="hidden" name="childProfileId" value={child.id} />
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-extrabold">{child.display_name}</p>
+                        <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
+                          {waitingBoops} waiting boop{waitingBoops === 1 ? "" : "s"} to collect
+                        </p>
+                      </div>
+                      <StatusPill tone={waitingBoops > 0 ? "sun" : "sky"}>
+                        {waitingBoops > 0 ? "Ready to collect" : "Nothing waiting"}
+                      </StatusPill>
+                    </div>
+                    <div className="mt-4">
+                      <NfcUidCapture
+                        autoSubmit
+                        buttonLabel={`Scan Booper to collect for ${child.display_name}`}
+                        helperText={
+                          waitingBoops > 0
+                            ? "On supported phones, scanning will auto-submit. Desktop testing can still use manual UID entry."
+                            : "This child has nothing waiting right now, but you can still test with a manual UID on desktop."
+                        }
+                        inputLabel="Assigned Booper UID"
+                        inputName="nfcUid"
+                        required
+                      />
+                    </div>
+                    <button className="btn btn-secondary mt-4 w-full sm:w-auto" type="submit">
+                      Collect waiting Boops
+                    </button>
+                  </form>
+                );
+              })
+            ) : (
+              <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
+                Create a child profile first, then use the parent phone to collect waiting boops here.
+              </div>
+            )}
+          </div>
+        </ShellCard>
+
         <ShellCard className="rounded-[1.8rem] p-6">
           <h2 className="text-3xl font-extrabold">Assign a new Booper</h2>
           <p className="mt-3 text-sm leading-6 text-[color:var(--ink-soft)]">
@@ -68,9 +133,9 @@ export default async function ParentBoopersPage(props: {
                         {booperCountByChildId.get(child.id) ?? 0} linked Boopers
                       </p>
                     </div>
-                    <button className="btn btn-primary px-5 py-2.5 text-sm" type="submit">
-                      Assign manually
-                    </button>
+              <button className="btn btn-primary px-5 py-2.5 text-sm" type="submit">
+                Assign manually
+              </button>
                   </div>
                   <div className="mt-4">
                     <NfcUidCapture
@@ -91,7 +156,9 @@ export default async function ParentBoopersPage(props: {
             )}
           </div>
         </ShellCard>
+      </section>
 
+      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <ShellCard className="rounded-[1.8rem] p-6">
           <h2 className="text-3xl font-extrabold">Award boops from a test UID</h2>
           <p className="mt-3 text-sm leading-6 text-[color:var(--ink-soft)]">
