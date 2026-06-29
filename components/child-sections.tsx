@@ -159,9 +159,11 @@ export function ChildWaitingBoopsCard({
 export function ChildTasksCard({
   childMode,
   imageDebugMode = "off",
+  showHeader = true,
 }: {
   childMode: ChildModeData;
   imageDebugMode?: KiddoImageDebugMode;
+  showHeader?: boolean;
 }) {
   const approvedTasks = childMode.tasks.filter((task) => task.currentStatus === "approved").length;
   const totalTasks = childMode.tasks.length;
@@ -171,19 +173,21 @@ export function ChildTasksCard({
 
   return (
     <div className="child-panel rounded-[2rem] p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-2xl font-black">Today&apos;s Tasks</p>
-          <p className="mt-1 text-sm text-white/70">
-            Complete jobs and send them for parent approval.
-          </p>
+      {showHeader ? (
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-2xl font-black">Today&apos;s Tasks</p>
+            <p className="mt-1 text-sm text-white/70">
+              Complete jobs and send them for parent approval.
+            </p>
+          </div>
+          <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/80">
+            {approvedTasks}/{totalTasks || 0}
+          </div>
         </div>
-        <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/80">
-          {approvedTasks}/{totalTasks || 0}
-        </div>
-      </div>
+      ) : null}
 
-      <div className="mt-5 space-y-3">
+      <div className={showHeader ? "mt-5 space-y-3" : "space-y-3"}>
         {childMode.tasks.length ? (
           childMode.tasks.map((task) => (
             <div
@@ -191,7 +195,7 @@ export function ChildTasksCard({
               className="child-task-row rounded-[1.4rem] px-4 py-3 text-[color:var(--foreground)]"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="task-icon-frame h-14 w-14">
                     <KiddoRouteImage
                       alt=""
@@ -203,22 +207,19 @@ export function ChildTasksCard({
                       width={46}
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-base font-extrabold">{task.title}</p>
                     <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
                       {task.description || "Complete this task to earn boops."}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-base font-black text-[color:var(--primary)]">
-                  <span>+{task.boop_reward}</span>
-                  <KiddoRouteImage
-                    alt=""
-                    debugLabel="child-task-star"
-                    height={20}
-                    imageDebugMode={imageDebugMode}
-                    src={GOODKIDDO_ASSETS.starIcon}
-                    width={20}
+                <div className="child-task-reward-badge mr-[15px] shrink-0 flex-nowrap">
+                  <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
+                  <span
+                    aria-hidden="true"
+                    className="child-task-reward-star ml-1 shrink-0"
+                    style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
                   />
                 </div>
               </div>
@@ -331,10 +332,12 @@ export function ChildRewardsCard({
   childMode,
   imageDebugMode = "off",
   returnTo,
+  showHeader = true,
 }: {
   childMode: ChildModeData;
   imageDebugMode?: KiddoImageDebugMode;
   returnTo: ChildPageRoute;
+  showHeader?: boolean;
 }) {
   const boopBalance = childMode.child?.boop_balance ?? 0;
   const progressPercent = childMode.tasks.length
@@ -347,16 +350,18 @@ export function ChildRewardsCard({
 
   return (
     <div className="child-panel rounded-[2rem] p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-2xl font-black">Rewards</p>
-          <p className="mt-1 text-sm text-white/70">Save up and request something fun.</p>
+      {showHeader ? (
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-2xl font-black">Rewards</p>
+            <p className="mt-1 text-sm text-white/70">Save up and request something fun.</p>
+          </div>
+          <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/80">
+            {progressPercent}% done
+          </div>
         </div>
-        <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/80">
-          {progressPercent}% done
-        </div>
-      </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      ) : null}
+      <div className={showHeader ? "mt-5 grid gap-3 sm:grid-cols-2" : "grid gap-3 sm:grid-cols-2"}>
         {childMode.rewards.length ? (
           childMode.rewards.map((reward) => (
             <div
@@ -409,14 +414,16 @@ export function ChildRewardsCard({
 export function ChildActivityCard({
   childMode,
   imageDebugMode = "off",
+  showHeader = true,
 }: {
   childMode: ChildModeData;
   imageDebugMode?: KiddoImageDebugMode;
+  showHeader?: boolean;
 }) {
   return (
     <div className="child-panel rounded-[2rem] p-5">
-      <p className="text-2xl font-black">Recent Activity</p>
-      <div className="mt-4 space-y-3">
+      {showHeader ? <p className="text-2xl font-black">Recent Activity</p> : null}
+      <div className={showHeader ? "mt-4 space-y-3" : "space-y-3"}>
         {childMode.recentTransactions.length ? (
           childMode.recentTransactions.map((transaction) => (
             <div
@@ -460,24 +467,28 @@ export function ChildActivityCard({
 export function ChildRewardQueueCard({
   childMode,
   imageDebugMode = "off",
+  showHeader = true,
 }: {
   childMode: ChildModeData;
   imageDebugMode?: KiddoImageDebugMode;
+  showHeader?: boolean;
 }) {
   return (
     <div className="child-panel rounded-[2rem] p-5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-2xl font-black">Reward Queue</p>
-        <KiddoRouteImage
-          alt=""
-          debugLabel="child-reward-queue-avatar"
-          height={40}
-          imageDebugMode={imageDebugMode}
-          src={GOODKIDDO_ASSETS.boopSleepy}
-          width={40}
-        />
-      </div>
-      <div className="mt-4 space-y-3">
+      {showHeader ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-2xl font-black">Reward Queue</p>
+          <KiddoRouteImage
+            alt=""
+            debugLabel="child-reward-queue-avatar"
+            height={40}
+            imageDebugMode={imageDebugMode}
+            src={GOODKIDDO_ASSETS.boopSleepy}
+            width={40}
+          />
+        </div>
+      ) : null}
+      <div className={showHeader ? "mt-4 space-y-3" : "space-y-3"}>
         {childMode.redemptions.length ? (
           childMode.redemptions.map((redemption) => (
             <div
