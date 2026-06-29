@@ -45,7 +45,7 @@ export async function updateSession(request: NextRequest) {
     Boolean(request.cookies.get("goodkiddo-child-mode")?.value);
   const shouldRedirectToChild =
     Boolean(user && hasChildModeSelection) &&
-    (pathname === "/" || pathname.startsWith("/parent")) &&
+    pathname.startsWith("/parent") &&
     request.nextUrl.searchParams.get("unlock") !== "1";
 
   if (shouldRedirectToChild) {
