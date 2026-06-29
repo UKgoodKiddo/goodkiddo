@@ -96,27 +96,29 @@ export function RootSplashScreen({ redirectTo }: RootSplashScreenProps) {
   }, [redirectTo, router]);
 
   return (
-    <main className="flex min-h-screen w-full items-center justify-center bg-white px-6 py-10">
+    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-white">
       {showFallback ? (
-        <Image
-          alt="goodKiddo"
-          className="h-auto w-full max-w-[22rem] object-contain sm:max-w-[26rem]"
-          height={1254}
-          priority
-          src={GOODKIDDO_ASSETS.mainLogo}
-          width={1254}
-        />
+        <div className="flex min-h-screen w-full items-center justify-center px-6 py-10">
+          <Image
+            alt="goodKiddo"
+            className="h-auto w-full max-w-[22rem] object-contain sm:max-w-[26rem]"
+            height={1254}
+            priority
+            src={GOODKIDDO_ASSETS.mainLogo}
+            width={1254}
+          />
+        </div>
       ) : (
         <video
           ref={videoRef}
           aria-label="goodKiddo splash"
           autoPlay
-          className="h-auto w-full max-w-[24rem] object-contain sm:max-w-[28rem]"
+          className="h-screen w-screen object-cover"
           muted
           playsInline
           preload="auto"
         >
-          <source src="/goodkiddo/goodkiddo_splash.mp4" type="video/mp4" />
+          <source src="/goodkiddo/goodkiddo_splash_portrait.mp4" type="video/mp4" />
         </video>
       )}
     </main>
