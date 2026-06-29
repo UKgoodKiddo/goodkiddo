@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   CHILD_MODE_FAMILY_STORAGE_KEY,
   CHILD_MODE_ENABLED_STORAGE_KEY,
@@ -10,6 +10,8 @@ import {
   LEGACY_CHILD_MODE_ENABLED_STORAGE_KEY,
   LEGACY_CHILD_MODE_STORAGE_KEY,
 } from "@/lib/app-constants";
+
+const RESTORE_ATTEMPT_STORAGE_KEY = "goodkiddo_child_mode_restore_attempt";
 
 export function ChildSelectionGuard({
   familyId,
@@ -21,7 +23,6 @@ export function ChildSelectionGuard({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const isUnlockPage = pathname === "/child/unlock";
   const restoreAttemptRef = useRef<string | null>(null);
   const [phase, setPhase] = useState<"checking" | "missing" | "ready" | "restoring">("checking");
@@ -41,6 +42,7 @@ export function ChildSelectionGuard({
     };
 
     if (childProfileId && familyId) {
+      window.sessionStorage.removeItem(RESTORE_ATTEMPT_STORAGE_KEY);
       window.localStorage.setItem(CHILD_MODE_STORAGE_KEY, childProfileId);
       window.localStorage.setItem(CHILD_MODE_FAMILY_STORAGE_KEY, familyId);
       window.localStorage.setItem(CHILD_MODE_ENABLED_STORAGE_KEY, "true");
@@ -75,6 +77,7 @@ export function ChildSelectionGuard({
 
     if (!storedChildProfileId || !storedFamilyId) {
       restoreAttemptRef.current = null;
+      window.sessionStorage.removeItem(RESTORE_ATTEMPT_STORAGE_KEY);
       deferPhase("missing");
       return () => {
         cancelled = true;
@@ -82,55 +85,40 @@ export function ChildSelectionGuard({
     }
 
     const restoreAttemptKey = `${storedFamilyId}:${storedChildProfileId}`;
+    const storedRestoreAttempt = window.sessionStorage.getItem(RESTORE_ATTEMPT_STORAGE_KEY);
 
-    if (restoreAttemptRef.current === restoreAttemptKey && phase === "restoring") {
+    if (storedRestoreAttempt === restoreAttemptKey) {
+      console.debug("[goodKiddo][child-mode] restore-stopped-after-attempt", {
+        pathname,
+        restoreAttemptKey,
+      });
+      deferPhase("missing");
       return () => {
         cancelled = true;
       };
     }
 
     restoreAttemptRef.current = restoreAttemptKey;
+    window.sessionStorage.setItem(RESTORE_ATTEMPT_STORAGE_KEY, restoreAttemptKey);
     deferPhase("restoring");
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    const restoreUrl = new URL("/api/child/restore-session", window.location.origin);
+    restoreUrl.searchParams.set("childProfileId", storedChildProfileId);
+    restoreUrl.searchParams.set("familyId", storedFamilyId);
+    restoreUrl.searchParams.set("returnTo", returnTo);
 
-    void fetch("/api/child/restore-session", {
-      body: JSON.stringify({
-        childProfileId: storedChildProfileId,
-        familyId: storedFamilyId,
-      }),
-      headers: {
-        "content-type": "application/json",
-      },
-      method: "POST",
-    })
-      .then(async (response) => {
-        const result = (await response.json()) as { ok?: boolean };
+    console.debug("[goodKiddo][child-mode] restore-start", {
+      pathname,
+      restoreAttemptKey,
+      restoreUrl: restoreUrl.toString(),
+    });
 
-        if (cancelled) {
-          return;
-        }
-
-        console.debug("[goodKiddo][child-mode] restore-result", result);
-
-        if (result.ok) {
-          router.refresh();
-          return;
-        }
-
-        deferPhase("missing");
-      })
-      .catch((error: unknown) => {
-        if (cancelled) {
-          return;
-        }
-
-        console.debug("[goodKiddo][child-mode] restore-error", error);
-        deferPhase("missing");
-      });
+    window.location.replace(restoreUrl.toString());
 
     return () => {
       cancelled = true;
     };
-  }, [childProfileId, familyId, isUnlockPage, pathname, phase, router]);
+  }, [childProfileId, familyId, isUnlockPage, pathname]);
 
   if (isUnlockPage || (childProfileId && familyId)) {
     return <>{children}</>;

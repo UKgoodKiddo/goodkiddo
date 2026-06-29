@@ -4,30 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
-  clearChildModeSession,
-  resolveChildModeSessionForParent,
-  setChildModeSelection,
-  setChildModeSession,
-} from "@/lib/child-mode";
-import { uploadChildAvatar } from "@/lib/avatar-upload";
-import {
   buildChildStatusPath,
   CHILD_AVATAR_PRESET_URLS,
   CHILD_PAGE_ROUTES,
 } from "@/lib/child-ui";
-import {
-  isValidImportedUid,
-  parseBooperInventoryCsvFile,
-  parseBooperInventoryCsvText,
-} from "@/lib/wristband-import";
-import {
-  awardBoopFromNfc,
-  readNfcUid,
-} from "@/lib/nfc";
-import {
-  requireSuperAdmin,
-  writeSuperAdminAuditLog,
-} from "@/lib/super-admin";
 import { getTaskWindowStart } from "@/lib/tasks";
 import {
   createSupabaseAdminClient,
@@ -188,6 +168,26 @@ const familySubscriptionSchema = z.object({
   providerSubscriptionId: z.string().trim().max(120).optional(),
 });
 
+async function getChildModeHelpers() {
+  return import("@/lib/child-mode");
+}
+
+async function getAvatarUploadHelpers() {
+  return import("@/lib/avatar-upload");
+}
+
+async function getWristbandImportHelpers() {
+  return import("@/lib/wristband-import");
+}
+
+async function getNfcHelpers() {
+  return import("@/lib/nfc");
+}
+
+async function getSuperAdminHelpers() {
+  return import("@/lib/super-admin");
+}
+
 async function getParentContextOrRedirect() {
   if (!isSupabaseConfigured()) {
     redirect("/parent?status=missing-supabase");
@@ -226,6 +226,7 @@ async function getChildModeActionContextOrRedirect() {
   }
 
   const admin = createSupabaseAdminClient();
+  const { resolveChildModeSessionForParent } = await getChildModeHelpers();
   const deviceMode = await resolveChildModeSessionForParent({
     admin,
     parentSupabase,
@@ -380,6 +381,7 @@ export async function signOutAction() {
 
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
+  const { clearChildModeSession } = await getChildModeHelpers();
   await clearChildModeSession();
   redirect("/");
 }
@@ -449,6 +451,7 @@ export async function createChildProfileAction(formData: FormData) {
 
   if (avatarFile instanceof File && avatarFile.size > 0) {
     try {
+      const { uploadChildAvatar } = await getAvatarUploadHelpers();
       const avatarUrl = await uploadChildAvatar({
         childProfileId: childProfile.id,
         familyId: parsed.data.familyId,
@@ -529,6 +532,7 @@ export async function updateChildProfileAction(formData: FormData) {
 
   if (avatarFile instanceof File && avatarFile.size > 0) {
     try {
+      const { uploadChildAvatar } = await getAvatarUploadHelpers();
       const avatarUrl = await uploadChildAvatar({
         childProfileId: parsed.data.childProfileId,
         familyId: family.id,
@@ -1035,6 +1039,7 @@ export async function claimPendingBoopsAction(formData: FormData) {
   }
 
   const { admin, deviceMode } = await getChildModeActionContextOrRedirect();
+  const { readNfcUid } = await getNfcHelpers();
   const nfcRead = await readNfcUid(parsed.data.nfcUid);
 
   if (!nfcRead.nfc_uid) {
@@ -1222,6 +1227,7 @@ export async function pairBooperAction(formData: FormData) {
     redirect("/parent/boopers?status=action-failed");
   }
 
+  const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   await writeSuperAdminAuditLog({
     action: "booper_child_pairing_updated",
     actorUserId: family.parent_user_id,
@@ -1360,6 +1366,7 @@ export async function updateBooperStatusAction(formData: FormData) {
     redirect("/parent/boopers?status=action-failed");
   }
 
+  const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   await writeSuperAdminAuditLog({
     action: "booper_status_updated_by_parent",
     actorUserId: family.parent_user_id,
@@ -1394,6 +1401,7 @@ export async function awardBoopFromNfcAction(formData: FormData) {
     redirect("/parent/boopers?status=family-required");
   }
 
+  const { awardBoopFromNfc, readNfcUid } = await getNfcHelpers();
   const nfcRead = await readNfcUid(parsed.data.nfcUid);
 
   if (!nfcRead.nfc_uid) {
@@ -1445,6 +1453,8 @@ export async function launchChildModeAction(formData: FormData) {
   if (!child) {
     redirect("/parent/child-mode?status=action-failed");
   }
+
+  const { setChildModeSelection, setChildModeSession } = await getChildModeHelpers();
 
   await supabase
     .from("device_child_mode")
@@ -1508,6 +1518,7 @@ export async function updateParentPinAction(formData: FormData) {
 }
 
 export async function exitChildModeAction() {
+  const { clearChildModeSession } = await getChildModeHelpers();
   await clearChildModeSession();
   redirect("/parent?status=child-mode-exited&unlock=1");
 }
@@ -1550,6 +1561,7 @@ export async function unlockChildModeAction(
     };
   }
 
+  const { clearChildModeSession } = await getChildModeHelpers();
   await clearChildModeSession();
   revalidateChildWorkspace();
 
@@ -1582,6 +1594,7 @@ export async function unlockChildModeWithRedirectAction(formData: FormData) {
     redirect("/child/unlock?status=invalid-pin");
   }
 
+  const { clearChildModeSession } = await getChildModeHelpers();
   await clearChildModeSession();
   revalidateChildWorkspace();
   redirect("/parent?unlock=1");
@@ -1699,6 +1712,8 @@ async function assignAvailableBooperToChild(params: {
   nfcUid: string;
 }) {
   const { actorUserId, admin, childProfileId, familyId, nfcUid } = params;
+  const { readNfcUid } = await getNfcHelpers();
+  const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const nfcRead = await readNfcUid(nfcUid);
 
   if (!nfcRead.nfc_uid) {
@@ -1787,6 +1802,12 @@ export async function importBooperInventoryAction(formData: FormData) {
     redirect("/superadmin/boopers?status=uid-import-failed");
   }
 
+  const {
+    isValidImportedUid,
+    parseBooperInventoryCsvFile,
+    parseBooperInventoryCsvText,
+  } = await getWristbandImportHelpers();
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
   let rows;
@@ -1891,6 +1912,7 @@ export async function assignInventoryToFamilyAction(formData: FormData) {
     returnTo === "/superadmin/families"
       ? `/superadmin/families?familyId=${parsed.data.familyId}`
       : returnTo;
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
   const [{ data: inventory }, { data: family }] = await Promise.all([
@@ -1971,6 +1993,7 @@ export async function releaseInventoryFromFamilyAction(formData: FormData) {
   }
 
   const returnTo = parsed.data.returnTo ?? "/superadmin/boopers";
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
   const { data: inventory } = await admin
@@ -2042,6 +2065,7 @@ export async function updateInventoryStatusAction(formData: FormData) {
     redirect("/superadmin/boopers?status=action-failed");
   }
 
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
   const { data: inventory } = await admin
@@ -2128,6 +2152,7 @@ export async function viewSuperAdminFamilyAction(formData: FormData) {
     redirect("/superadmin/families?status=action-failed");
   }
 
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
   const { data: family } = await admin
@@ -2168,6 +2193,7 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
     redirect("/superadmin/families?status=action-failed");
   }
 
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
   const renewalDate = parsed.data.renewalDate
