@@ -28,6 +28,10 @@ export default async function ParentBoopersPage(props: {
   const bannerCode =
     typeof searchParams.status === "string" ? searchParams.status : undefined;
   const banner = getParentStatusBanner(bannerCode);
+  const prefilledBooperUid =
+    typeof searchParams.booperUid === "string"
+      ? searchParams.booperUid.trim().toUpperCase()
+      : "";
   const booperCountByChildId = new Map<string, number>();
 
   for (const booper of dashboard.boopers) {
@@ -52,6 +56,18 @@ export default async function ParentBoopersPage(props: {
   return (
     <main className="flex flex-1 flex-col gap-6">
       {banner ? <Banner message={banner.message} tone={banner.tone} /> : null}
+
+      {prefilledBooperUid ? (
+        <ShellCard className="rounded-[1.8rem] p-5">
+          <p className="text-sm font-bold text-[color:var(--ink-soft)]">
+            Booper tag opened
+          </p>
+          <p className="mt-2 text-xl font-extrabold">{prefilledBooperUid}</p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--ink-soft)]">
+            This UID came from the encoded wristband link. Use the sections below to collect waiting boops, assign the Booper, or run a parent-side test.
+          </p>
+        </ShellCard>
+      ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <ShellCard className="rounded-[1.8rem] p-6">
@@ -86,6 +102,7 @@ export default async function ParentBoopersPage(props: {
                       <NfcUidCapture
                         autoSubmit
                         buttonLabel={`Scan Booper to collect for ${child.display_name}`}
+                        defaultValue={prefilledBooperUid}
                         helperText={
                           waitingBoops > 0
                             ? "On supported phones, scanning will auto-submit. Desktop testing can still use manual UID entry."
@@ -141,6 +158,7 @@ export default async function ParentBoopersPage(props: {
                     <NfcUidCapture
                       autoSubmit
                       buttonLabel={`Scan wristband for ${child.display_name}`}
+                      defaultValue={prefilledBooperUid}
                       helperText="On supported devices, scanning will auto-submit. You can also type the supplier UID and use Assign manually."
                       inputLabel="Imported Booper UID"
                       inputName="nfcUid"
@@ -168,6 +186,7 @@ export default async function ParentBoopersPage(props: {
           <form action={awardBoopFromNfcAction} className="mt-6 grid gap-3">
             <NfcUidCapture
               buttonLabel="Scan Booper wristband"
+              defaultValue={prefilledBooperUid}
               helperText="Use NFC on a compatible device, or type the paired supplier UID manually."
               inputLabel="Booper UID for award test"
               inputName="nfcUid"

@@ -56,7 +56,10 @@ export type Booper = {
 export type BooperInventory = {
   id: string;
   uid: string;
+  serial_label: string;
   batch_number: string;
+  ndef_url: string | null;
+  ndef_text: string | null;
   status: BooperInventoryStatus;
   family_id: string | null;
   child_profile_id: string | null;
@@ -356,7 +359,10 @@ export type Database = {
         Insert: {
           id?: string;
           uid: string;
+          serial_label: string;
           batch_number: string;
+          ndef_url?: string | null;
+          ndef_text?: string | null;
           status?: BooperInventoryStatus;
           family_id?: string | null;
           child_profile_id?: string | null;

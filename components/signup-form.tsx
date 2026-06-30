@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signUpAction } from "@/app/actions";
 
 const initialState = {
@@ -11,9 +12,12 @@ const initialState = {
 
 export function SignupForm() {
   const [state, formAction, pending] = useActionState(signUpAction, initialState);
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") ?? "";
 
   return (
     <form action={formAction} className="grid gap-4">
+      <input name="returnTo" type="hidden" value={returnTo} />
       <label className="grid gap-2">
         <span className="text-sm font-bold">Email</span>
         <input
@@ -57,7 +61,10 @@ export function SignupForm() {
 
       <p className="text-center text-sm text-[color:var(--ink-soft)]">
         Already have a parent account?{" "}
-        <Link className="font-bold text-[color:var(--secondary)]" href="/auth/login">
+        <Link
+          className="font-bold text-[color:var(--secondary)]"
+          href={returnTo ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}` : "/auth/login"}
+        >
           Sign in
         </Link>
       </p>

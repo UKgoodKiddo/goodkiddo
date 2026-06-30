@@ -7,6 +7,7 @@ import {
 import { Banner } from "@/components/banner";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
+import { SuperAdminUidImportForm } from "@/components/superadmin-uid-import-form";
 import { getSuperAdminStatusBanner } from "@/lib/super-admin-status";
 import { getSuperAdminDashboardData } from "@/lib/super-admin";
 import { formatDateTime, formatInventoryStatus } from "@/lib/utils";
@@ -25,6 +26,13 @@ export default async function SuperAdminBoopersPage(props: {
   const familyNameLookup = new Map(
     dashboard.families.map((family) => [family.familyId, family.familyName]),
   );
+  const batchNumbers = Array.from(
+    new Set(
+      dashboard.inventory
+        .map((item) => item.batch_number)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ).sort((left, right) => left.localeCompare(right));
 
   return (
     <main className="flex flex-1 flex-col gap-6">
@@ -37,28 +45,7 @@ export default async function SuperAdminBoopersPage(props: {
             Paste supplier CSV data or upload a CSV file, assign a batch number, and import only brand-new UIDs as available boopers.
           </p>
 
-          <form action={importBooperInventoryAction} className="mt-6 grid gap-3">
-            <input
-              className="field"
-              name="batchNumber"
-              placeholder="Batch number e.g. JULY-2026-A"
-              required
-            />
-            <textarea
-              className="field min-h-36"
-              name="csvText"
-              placeholder={"Paste CSV here if you do not want to upload a file.\nuid\n04A224FF9911"}
-            />
-            <input
-              accept=".csv,text/csv"
-              className="field"
-              name="inventoryFile"
-              type="file"
-            />
-            <button className="btn btn-primary" type="submit">
-              Import booper UIDs
-            </button>
-          </form>
+          <SuperAdminUidImportForm action={importBooperInventoryAction} />
         </ShellCard>
 
         <ShellCard className="rounded-[2rem] p-6">
@@ -68,6 +55,68 @@ export default async function SuperAdminBoopersPage(props: {
             <p>New UIDs are inserted as `available` and linked to the batch number you provide.</p>
             <p>Existing UIDs are skipped and counted as duplicates in the import summary.</p>
             <p>UIDs must match the allowed import format and are normalized to uppercase with spaces removed.</p>
+            <p>Optional CSV columns `ndef_url` and `ndef_text` are supported for pre-encoded tags.</p>
+            <p>
+              You can also generate those values during import with{" "}
+              <code>{"{uid}"}</code> templates in the optional fields above.
+            </p>
+          </div>
+        </ShellCard>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <ShellCard className="rounded-[2rem] p-6">
+          <h2 className="text-3xl font-extrabold">TagWriter NDEF export</h2>
+          <p className="mt-3 text-sm leading-7 text-[color:var(--ink-soft)]">
+            Create a TagWriter-ready CSV from imported Boopers. This export writes one URL record
+            per row using stored `ndef_url` values first, then falls back to your chosen base URL
+            plus each UID.
+          </p>
+
+          <form
+            action="/superadmin/boopers/tagwriter"
+            className="mt-6 grid gap-3"
+            method="GET"
+            target="_blank"
+          >
+            <select className="field" defaultValue="" name="batchNumber">
+              <option value="">Export every imported batch</option>
+              {batchNumbers.map((batchNumber) => (
+                <option key={batchNumber} value={batchNumber}>
+                  {batchNumber}
+                </option>
+              ))}
+            </select>
+            <input
+              className="field"
+              defaultValue="https://goodkiddo.co.uk/b"
+              name="baseUrl"
+              placeholder="Base URL e.g. https://goodkiddo.co.uk/b"
+            />
+            <button className="btn btn-primary" type="submit">
+              Export TagWriter CSV
+            </button>
+          </form>
+        </ShellCard>
+
+        <ShellCard className="rounded-[2rem] p-6">
+          <h2 className="text-3xl font-extrabold">What gets encoded</h2>
+          <div className="mt-5 space-y-3 text-sm leading-7 text-[color:var(--ink-soft)]">
+            <p>
+              Format: `LINK_RECORD`,`https://goodkiddo.co.uk/b/[uid]`,`URL`,`description`
+            </p>
+            <p>
+              Best practice is still a plain HTTPS link only. The tag should not store boops,
+              names, or any family data.
+            </p>
+            <p>
+              If you imported `ndef_url`, that exact URL is exported. If not, the export builds one
+              from the base URL field and each UID.
+            </p>
+            <p>
+              The description column uses imported `ndef_text` when available, otherwise the
+              Booper serial label.
+            </p>
           </div>
         </ShellCard>
       </section>
@@ -106,6 +155,16 @@ export default async function SuperAdminBoopersPage(props: {
                     <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
                       Imported {formatDateTime(item.imported_at)}
                     </p>
+                    {item.ndef_url ? (
+                      <p className="mt-1 break-all text-sm text-[color:var(--ink-soft)]">
+                        NDEF URL: {item.ndef_url}
+                      </p>
+                    ) : null}
+                    {item.ndef_text ? (
+                      <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
+                        NDEF text: {item.ndef_text}
+                      </p>
+                    ) : null}
                     {item.notes ? (
                       <p className="mt-1 text-sm text-[color:var(--ink-soft)]">Notes: {item.notes}</p>
                     ) : null}

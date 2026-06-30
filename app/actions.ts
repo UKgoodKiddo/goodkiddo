@@ -19,11 +19,13 @@ import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 const signInSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
+  returnTo: z.string().trim().optional(),
 });
 
 const signUpSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
+  returnTo: z.string().trim().optional(),
 });
 
 const createFamilySchema = z.object({
@@ -140,7 +142,9 @@ const reviewRedemptionSchema = z.object({
 const importBooperInventorySchema = z.object({
   batchNumber: z.string().trim().min(1).max(80),
   csvText: z.string().optional(),
-  inventoryFile: z.instanceof(File).optional(),
+  inventoryFile: z.unknown().optional(),
+  ndefTextTemplate: z.string().trim().max(240).optional(),
+  ndefUrlTemplate: z.string().trim().max(400).optional(),
 });
 
 const assignInventorySchema = z.object({
@@ -216,6 +220,23 @@ async function getParentContextOrRedirect() {
   return { supabase, user, family };
 }
 
+function isUploadedFile(
+  value: unknown,
+): value is File & {
+  arrayBuffer: () => Promise<ArrayBuffer>;
+  text: () => Promise<string>;
+} {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "size" in value &&
+    "type" in value &&
+    "arrayBuffer" in value &&
+    "text" in value
+  );
+}
+
 async function getChildModeActionContextOrRedirect() {
   if (!isSupabaseConfigured() || !isChildModeConfigured()) {
     redirect("/child?status=action-failed");
@@ -287,6 +308,20 @@ function getFamilyParentPin(parentPin: string | null | undefined) {
   return /^\d{4}$/.test(parentPin ?? "") ? parentPin! : "0000";
 }
 
+function sanitizeReturnToPath(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 function revalidateSuperAdminWorkspace() {
   revalidatePath("/superadmin");
   revalidatePath("/superadmin/boopers");
@@ -312,6 +347,7 @@ export async function signInAction(
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    returnTo: formData.get("returnTo"),
   });
 
   if (!parsed.success) {
@@ -331,7 +367,7 @@ export async function signInAction(
     };
   }
 
-  redirect("/parent");
+  redirect(sanitizeReturnToPath(parsed.data.returnTo) ?? "/parent");
 }
 
 export async function signUpAction(
@@ -349,6 +385,7 @@ export async function signUpAction(
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    returnTo: formData.get("returnTo"),
   });
 
   if (!parsed.success) {
@@ -376,7 +413,7 @@ export async function signUpAction(
     };
   }
 
-  redirect("/parent");
+  redirect(sanitizeReturnToPath(parsed.data.returnTo) ?? "/parent");
 }
 
 export async function signOutAction() {
@@ -1685,6 +1722,13 @@ function getInventoryBooperLabel(batchNumber: string, uid: string) {
   return `Booper ${batchNumber} #${uid.slice(Math.max(0, uid.length - 6))}`;
 }
 
+function renderInventoryTemplate(template: string, uid: string) {
+  return template
+    .replace(/\{\{\s*uid\s*\}\}/gi, uid)
+    .replace(/\{\s*uid\s*\}/gi, uid)
+    .trim();
+}
+
 function mapInventoryStatusToBooperStatus(
   status: "available" | "assigned" | "lost" | "disabled" | "retired",
 ) {
@@ -1873,17 +1917,21 @@ export async function importBooperInventoryAction(formData: FormData) {
     batchNumber: formData.get("batchNumber"),
     csvText: formData.get("csvText"),
     inventoryFile: formData.get("inventoryFile"),
+    ndefTextTemplate: formData.get("ndefTextTemplate"),
+    ndefUrlTemplate: formData.get("ndefUrlTemplate"),
   });
 
   const csvText = parsed.success ? parsed.data.csvText?.trim() ?? "" : "";
   const inventoryFile = parsed.success ? parsed.data.inventoryFile : undefined;
-  const hasUpload = inventoryFile instanceof File && inventoryFile.size > 0;
+  const uploadedFile = isUploadedFile(inventoryFile) ? inventoryFile : null;
+  const hasUpload = Boolean(uploadedFile && uploadedFile.size > 0);
 
   if (!parsed.success || (!csvText && !hasUpload)) {
     redirect("/superadmin/boopers?status=uid-import-failed");
   }
 
   const {
+    isValidImportedNdefUrl,
     isValidImportedUid,
     parseBooperInventoryCsvFile,
     parseBooperInventoryCsvText,
@@ -1896,13 +1944,18 @@ export async function importBooperInventoryAction(formData: FormData) {
   try {
     rows = csvText
       ? parseBooperInventoryCsvText(csvText)
-      : await parseBooperInventoryCsvFile(inventoryFile as File);
+      : await parseBooperInventoryCsvFile(uploadedFile as File);
   } catch {
     redirect("/superadmin/boopers?status=uid-import-failed");
   }
 
   const seenUids = new Set<string>();
-  const validRows: string[] = [];
+  const validRows: {
+    ndefText: string | null;
+    ndefUrl: string | null;
+    serialLabel: string;
+    uid: string;
+  }[] = [];
   let invalidCount = 0;
   let skippedCount = 0;
 
@@ -1918,7 +1971,29 @@ export async function importBooperInventoryAction(formData: FormData) {
     }
 
     seenUids.add(row.uid);
-    validRows.push(row.uid);
+
+    const generatedNdefUrl = parsed.data.ndefUrlTemplate
+      ? renderInventoryTemplate(parsed.data.ndefUrlTemplate, row.uid)
+      : "";
+    const generatedNdefText = parsed.data.ndefTextTemplate
+      ? renderInventoryTemplate(parsed.data.ndefTextTemplate, row.uid)
+      : "";
+    const ndefUrl = row.ndefUrl?.trim() || generatedNdefUrl || null;
+    const ndefText = row.ndefText?.trim() || generatedNdefText || null;
+
+    if (ndefUrl && !isValidImportedNdefUrl(ndefUrl)) {
+      invalidCount += 1;
+      continue;
+    }
+
+    validRows.push({
+      ndefText,
+      ndefUrl,
+      serialLabel:
+        row.label?.trim() ||
+        `${parsed.data.batchNumber}-${row.uid.slice(Math.max(0, row.uid.length - 6))}`,
+      uid: row.uid,
+    });
   }
 
   if (!validRows.length) {
@@ -1928,25 +2003,31 @@ export async function importBooperInventoryAction(formData: FormData) {
   const { data: existingRows } = await admin
     .from("booper_inventory")
     .select("uid")
-    .in("uid", validRows);
+    .in(
+      "uid",
+      validRows.map((row) => row.uid),
+    );
 
   const existingUidSet = new Set((existingRows ?? []).map((row) => row.uid));
-  const rowsToInsert = validRows.filter((uid) => !existingUidSet.has(uid));
+  const rowsToInsert = validRows.filter((row) => !existingUidSet.has(row.uid));
   const duplicateCount = validRows.length - rowsToInsert.length;
   const addedCount = rowsToInsert.length;
 
   if (rowsToInsert.length) {
     const { error } = await admin.from("booper_inventory").insert(
-      rowsToInsert.map((uid) => ({
+      rowsToInsert.map((row) => ({
         assigned_at: null,
         batch_number: parsed.data.batchNumber,
         child_profile_id: null,
         family_id: null,
         imported_at: new Date().toISOString(),
         imported_by: user.id,
+        ndef_text: row.ndefText,
+        ndef_url: row.ndefUrl,
         notes: null,
+        serial_label: row.serialLabel,
         status: "available" as const,
-        uid,
+        uid: row.uid,
       })),
     );
 
@@ -1962,8 +2043,11 @@ export async function importBooperInventoryAction(formData: FormData) {
       addedCount,
       batchNumber: parsed.data.batchNumber,
       duplicateCount,
-      fileName: hasUpload ? (inventoryFile as File).name : null,
+      fileName: hasUpload ? uploadedFile?.name ?? null : null,
       invalidCount,
+      ndefTextTemplate: parsed.data.ndefTextTemplate || null,
+      ndefUrlTemplate: parsed.data.ndefUrlTemplate || null,
+      ndefValuesPrepared: rowsToInsert.filter((row) => row.ndefUrl || row.ndefText).length,
       rowCount: rows.length,
       skippedCount,
       source: csvText ? "paste" : "upload",

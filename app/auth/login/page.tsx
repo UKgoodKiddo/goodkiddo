@@ -5,7 +5,10 @@ import { ShellCard } from "@/components/shell-card";
 import { getParentViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
-export default async function LoginPage() {
+export default async function LoginPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const searchParams = await props.searchParams;
   const viewer = await getParentViewer();
 
   if (viewer.user) {
@@ -13,6 +16,8 @@ export default async function LoginPage() {
   }
 
   const supabaseReady = isSupabaseConfigured();
+  const returnTo =
+    typeof searchParams.returnTo === "string" ? searchParams.returnTo : "";
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 items-center px-5 py-10 sm:px-8">
@@ -58,7 +63,10 @@ export default async function LoginPage() {
           </div>
           <p className="mt-4 text-center text-sm text-[color:var(--ink-soft)]">
             Need the first parent account?{" "}
-            <Link className="font-bold text-[color:var(--secondary)]" href="/auth/signup">
+            <Link
+              className="font-bold text-[color:var(--secondary)]"
+              href={returnTo ? `/auth/signup?returnTo=${encodeURIComponent(returnTo)}` : "/auth/signup"}
+            >
               Create one
             </Link>
           </p>

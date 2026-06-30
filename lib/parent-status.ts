@@ -89,6 +89,12 @@ export function getParentStatusBanner(code?: string) {
         tone: "mint" as const,
         message: "Waiting boops collected successfully on this parent device.",
       };
+    case "booper-tap-ready":
+      return {
+        tone: "sky" as const,
+        message:
+          "Booper link opened. The wristband UID has been prefilled below for parent collection or assignment.",
+      };
     case "pin-updated":
       return {
         tone: "mint" as const,

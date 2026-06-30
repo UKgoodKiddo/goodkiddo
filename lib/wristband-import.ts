@@ -4,6 +4,8 @@ import * as XLSX from "xlsx";
 
 export type ParsedBooperInventoryRow = {
   label: string | null;
+  ndefText: string | null;
+  ndefUrl: string | null;
   rowNumber: number;
   uid: string;
 };
@@ -25,6 +27,22 @@ const LABEL_HEADER_PATTERNS = [
   /^name$/i,
 ];
 
+const NDEF_URL_HEADER_PATTERNS = [
+  /^ndef[_\s-]*url$/i,
+  /^url$/i,
+  /^tap[_\s-]*url$/i,
+  /^booper[_\s-]*url$/i,
+  /^launch[_\s-]*url$/i,
+];
+
+const NDEF_TEXT_HEADER_PATTERNS = [
+  /^ndef[_\s-]*text$/i,
+  /^text$/i,
+  /^message$/i,
+  /^tap[_\s-]*text$/i,
+  /^booper[_\s-]*text$/i,
+];
+
 function normalizeText(value: unknown) {
   return String(value ?? "").trim();
 }
@@ -35,6 +53,15 @@ export function normalizeImportedUid(value: string) {
 
 export function isValidImportedUid(value: string) {
   return /^[A-Z0-9:_-]{4,120}$/i.test(value);
+}
+
+export function isValidImportedNdefUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 function findMatchingHeader(headers: string[], patterns: RegExp[]) {
@@ -52,11 +79,15 @@ function parseWorksheet(sheet: XLSX.WorkSheet) {
     const headers = Object.keys(objectRows[0]);
     const uidHeader = findMatchingHeader(headers, UID_HEADER_PATTERNS);
     const labelHeader = findMatchingHeader(headers, LABEL_HEADER_PATTERNS);
+    const ndefUrlHeader = findMatchingHeader(headers, NDEF_URL_HEADER_PATTERNS);
+    const ndefTextHeader = findMatchingHeader(headers, NDEF_TEXT_HEADER_PATTERNS);
 
     if (uidHeader) {
       return objectRows
         .map((row, index) => ({
           label: labelHeader ? normalizeText(row[labelHeader]) || null : null,
+          ndefText: ndefTextHeader ? normalizeText(row[ndefTextHeader]) || null : null,
+          ndefUrl: ndefUrlHeader ? normalizeText(row[ndefUrlHeader]) || null : null,
           rowNumber: index + 2,
           uid: normalizeImportedUid(normalizeText(row[uidHeader])),
         }))
@@ -73,6 +104,8 @@ function parseWorksheet(sheet: XLSX.WorkSheet) {
     .slice(1)
     .map((row, index) => ({
       label: normalizeText(row[1]) || null,
+      ndefText: normalizeText(row[3]) || null,
+      ndefUrl: normalizeText(row[2]) || null,
       rowNumber: index + 2,
       uid: normalizeImportedUid(normalizeText(row[0])),
     }))

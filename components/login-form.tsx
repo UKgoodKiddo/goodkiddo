@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signInAction } from "@/app/actions";
 
 const initialState = {
@@ -10,9 +11,12 @@ const initialState = {
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(signInAction, initialState);
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") ?? "";
 
   return (
     <form action={formAction} className="grid gap-4">
+      <input name="returnTo" type="hidden" value={returnTo} />
       <label className="grid gap-2">
         <span className="text-sm font-bold">Email</span>
         <input
