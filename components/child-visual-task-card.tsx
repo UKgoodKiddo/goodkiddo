@@ -41,9 +41,11 @@ function ConfettiBurst({ active }: { active: boolean }) {
 
 export function ChildTaskBoopButton({
   imageDebugMode = "off",
+  size = "default",
   task,
 }: {
   imageDebugMode?: KiddoImageDebugMode;
+  size?: "compact" | "default";
   task: ChildTaskView;
 }) {
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -116,6 +118,7 @@ export function ChildTaskBoopButton({
         aria-label={isDoneVisual ? `${task.title} completed` : `Boop ${task.title}`}
         className="child-boop-action-button"
         data-completed={isDoneVisual ? "true" : "false"}
+        data-size={size}
         disabled={!canSubmit}
         onClick={handleBoop}
         type="button"
@@ -123,7 +126,11 @@ export function ChildTaskBoopButton({
         <ConfettiBurst active={showConfetti} />
         <KiddoRouteImage
           alt=""
-          className="h-[82px] w-[82px] drop-shadow-[0_14px_20px_rgba(8,33,102,0.2)] sm:h-[88px] sm:w-[88px]"
+          className={
+            size === "compact"
+              ? "h-[64px] w-[64px] drop-shadow-[0_12px_18px_rgba(8,33,102,0.18)] sm:h-[70px] sm:w-[70px]"
+              : "h-[82px] w-[82px] drop-shadow-[0_14px_20px_rgba(8,33,102,0.2)] sm:h-[88px] sm:w-[88px]"
+          }
           debugLabel={`child-task-boop-button:${task.title}`}
           height={220}
           imageDebugMode={imageDebugMode}
@@ -156,7 +163,7 @@ export function ChildVisualTaskCard({
       className="child-task-row child-visual-task-card rounded-[1.55rem] px-4 py-4 text-[color:var(--foreground)]"
       data-completed={isCompletedVisual ? "true" : "false"}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-stretch gap-3">
         <div className="child-visual-task-image-wrap min-w-0 flex-1">
           <KiddoRouteImage
             alt={task.title}
@@ -168,7 +175,7 @@ export function ChildVisualTaskCard({
             width={940}
           />
         </div>
-        <div className="child-visual-task-action-rail shrink-0">
+        <div className="child-task-side-rail shrink-0">
           <div className="child-task-reward-badge shrink-0 flex-nowrap">
             <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
             <span
@@ -177,7 +184,11 @@ export function ChildVisualTaskCard({
               style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
             />
           </div>
-          <ChildTaskBoopButton imageDebugMode={imageDebugMode} task={task} />
+          <ChildTaskBoopButton
+            imageDebugMode={imageDebugMode}
+            size="compact"
+            task={task}
+          />
         </div>
       </div>
     </div>

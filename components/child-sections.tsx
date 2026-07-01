@@ -217,24 +217,24 @@ export function ChildTasksCard({
                     : "false"
                 }
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-stretch justify-between gap-3">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
-                    <div className="task-icon-frame h-14 w-14">
+                    <div className="task-icon-frame h-16 w-16 shrink-0">
                       <KiddoRouteImage
                         alt=""
                         className="task-icon-art"
                         debugLabel={`child-task-icon:${task.title}`}
-                        height={46}
+                        height={54}
                         imageDebugMode={imageDebugMode}
                         src={getTaskIconPath(task.title)}
-                        width={46}
+                        width={54}
                       />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-base font-extrabold">{task.title}</p>
                     </div>
                   </div>
-                  <div className="child-visual-task-action-rail shrink-0">
+                  <div className="child-task-side-rail shrink-0">
                     <div className="child-task-reward-badge shrink-0 flex-nowrap">
                       <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
                       <span
@@ -243,7 +243,11 @@ export function ChildTasksCard({
                         style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
                       />
                     </div>
-                    <ChildTaskBoopButton imageDebugMode={imageDebugMode} task={task} />
+                    <ChildTaskBoopButton
+                      imageDebugMode={imageDebugMode}
+                      size="compact"
+                      task={task}
+                    />
                   </div>
                 </div>
               </div>
