@@ -256,6 +256,111 @@ textarea {
   border: 1px solid rgba(11, 45, 138, 0.18);
   background: #ffffff;
   box-shadow: 0 12px 24px rgba(3, 24, 89, 0.14);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.child-task-row[data-completed="true"] {
+  opacity: 0.5;
+}
+
+.child-visual-task-card {
+  background: #ffffff;
+  border-radius: 1.55rem;
+}
+
+.child-visual-task-image-wrap {
+  overflow: hidden;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(23, 86, 207, 0.14);
+  background: linear-gradient(180deg, #f9fbff, #f3f8ff);
+}
+
+.child-visual-task-action-rail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.child-boop-action-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 72px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.child-boop-action-button:disabled {
+  cursor: default;
+}
+
+.child-boop-action-button[data-completed="true"] {
+  filter: saturate(1.02);
+}
+
+.child-boop-confetti {
+  pointer-events: none;
+  position: absolute;
+  inset: -10px;
+  z-index: 2;
+}
+
+.child-boop-confetti-piece {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 15px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--confetti-rotation));
+  background: linear-gradient(180deg, #ffda51 0%, #ff6b6b 100%);
+}
+
+.child-boop-confetti-piece:nth-child(2n) {
+  background: linear-gradient(180deg, #57b7ff 0%, #8768ff 100%);
+}
+
+.child-boop-confetti-piece:nth-child(3n) {
+  background: linear-gradient(180deg, #58e1aa 0%, #19b38f 100%);
+}
+
+.child-boop-confetti-piece:nth-child(4n) {
+  background: linear-gradient(180deg, #ff9c4b 0%, #ffd84f 100%);
+}
+
+.child-boop-confetti[data-active="true"] .child-boop-confetti-piece {
+  animation: child-boop-confetti-burst 640ms ease-out forwards;
+  animation-delay: var(--confetti-delay);
+}
+
+@keyframes child-boop-confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45) rotate(var(--confetti-rotation));
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(-50% + var(--confetti-x)),
+        calc(-50% + var(--confetti-y))
+      )
+      scale(1)
+      rotate(calc(var(--confetti-rotation) + 55deg));
+  }
 }
 
 .child-task-reward-badge {

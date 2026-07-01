@@ -1,14 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  submitTaskCompletionAction,
   updateChildAvatarPresetAction,
 } from "@/app/actions";
+import {
+  ChildTaskBoopButton,
+  ChildVisualTaskCard,
+} from "@/components/child-visual-task-card";
 import { ChildRewardRequestButton } from "@/components/child-reward-request-button";
 import { StatusPill } from "@/components/status-pill";
 import { CHILD_AVATAR_PRESETS, type ChildPageRoute } from "@/lib/child-ui";
 import {
   GOODKIDDO_ASSETS,
+  getTaskCardPath,
   getRewardIconPath,
   getTaskIconPath,
 } from "@/lib/goodkiddo-assets";
@@ -189,69 +193,62 @@ export function ChildTasksCard({
 
       <div className={showHeader ? "mt-5 space-y-3" : "space-y-3"}>
         {childMode.tasks.length ? (
-          childMode.tasks.map((task) => (
-            <div
-              key={task.id}
-              className="child-task-row rounded-[1.4rem] px-4 py-3 text-[color:var(--foreground)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  <div className="task-icon-frame h-14 w-14">
-                    <KiddoRouteImage
-                      alt=""
-                      className="task-icon-art"
-                      debugLabel={`child-task-icon:${task.title}`}
-                      height={46}
-                      imageDebugMode={imageDebugMode}
-                      src={getTaskIconPath(task.title)}
-                      width={46}
-                    />
+          childMode.tasks.map((task) => {
+            const taskCardPath = getTaskCardPath(task.title);
+
+            if (taskCardPath) {
+              return (
+                <ChildVisualTaskCard
+                  key={task.id}
+                  cardSrc={taskCardPath}
+                  imageDebugMode={imageDebugMode}
+                  task={task}
+                />
+              );
+            }
+
+            return (
+              <div
+                key={task.id}
+                className="child-task-row rounded-[1.4rem] px-4 py-3 text-[color:var(--foreground)]"
+                data-completed={
+                  task.currentStatus === "approved" || task.currentStatus === "pending"
+                    ? "true"
+                    : "false"
+                }
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <div className="task-icon-frame h-14 w-14">
+                      <KiddoRouteImage
+                        alt=""
+                        className="task-icon-art"
+                        debugLabel={`child-task-icon:${task.title}`}
+                        height={46}
+                        imageDebugMode={imageDebugMode}
+                        src={getTaskIconPath(task.title)}
+                        width={46}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-extrabold">{task.title}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-base font-extrabold">{task.title}</p>
-                    <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-                      {task.description || "Complete this task to earn boops."}
-                    </p>
+                  <div className="child-visual-task-action-rail shrink-0">
+                    <div className="child-task-reward-badge shrink-0 flex-nowrap">
+                      <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
+                      <span
+                        aria-hidden="true"
+                        className="child-task-reward-star ml-1 shrink-0"
+                        style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
+                      />
+                    </div>
+                    <ChildTaskBoopButton imageDebugMode={imageDebugMode} task={task} />
                   </div>
                 </div>
-                <div className="child-task-reward-badge mr-[15px] shrink-0 flex-nowrap">
-                  <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
-                  <span
-                    aria-hidden="true"
-                    className="child-task-reward-star ml-1 shrink-0"
-                    style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
-                  />
-                </div>
               </div>
-
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <StatusPill
-                  tone={
-                    task.currentStatus === "approved"
-                      ? "mint"
-                      : task.currentStatus === "pending"
-                        ? "sun"
-                        : task.currentStatus === "rejected"
-                          ? "rose"
-                          : "sky"
-                  }
-                >
-                  {task.currentStatus === "ready" ? "Ready" : task.currentStatus}
-                </StatusPill>
-
-                <form action={submitTaskCompletionAction}>
-                  <input type="hidden" name="taskId" value={task.id} />
-                  <button
-                    className="btn btn-secondary px-4 py-2 text-sm"
-                    disabled={!task.canMarkComplete}
-                    type="submit"
-                  >
-                    Mark Complete
-                  </button>
-                </form>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="child-panel rounded-[1.4rem] p-4 text-sm leading-6 text-white/76">
             Tasks will show up here once your parent adds them.

@@ -111,6 +111,10 @@ const taskCompletionSchema = z.object({
   taskId: z.uuid(),
 });
 
+export type SubmitTaskCompletionInlineState = {
+  status: "already-submitted" | "error" | "idle" | "submitted";
+};
+
 const reviewTaskCompletionSchema = z.object({
   completionId: z.uuid(),
 });
@@ -894,15 +898,45 @@ export async function deleteTaskAction(formData: FormData) {
 }
 
 export async function submitTaskCompletionAction(formData: FormData) {
+  const result = await submitTaskCompletionInlineAction(
+    { status: "idle" },
+    formData,
+  );
+
+  if (result.status === "already-submitted") {
+    redirect("/child?status=task-already-submitted");
+  }
+
+  if (result.status === "submitted") {
+    redirect("/child?status=task-submitted");
+  }
+
+  redirect("/child?status=action-failed");
+}
+
+export async function submitTaskCompletionInlineAction(
+  _previousState: SubmitTaskCompletionInlineState,
+  formData: FormData,
+): Promise<SubmitTaskCompletionInlineState> {
   const parsed = taskCompletionSchema.safeParse({
     taskId: formData.get("taskId"),
   });
 
   if (!parsed.success) {
-    redirect("/child?status=action-failed");
+    return { status: "error" };
   }
 
-  const { admin, deviceMode } = await getChildModeActionContextOrRedirect();
+  let admin;
+  let deviceMode;
+
+  try {
+    const context = await getChildModeActionContextOrRedirect();
+    admin = context.admin;
+    deviceMode = context.deviceMode;
+  } catch {
+    return { status: "error" };
+  }
+
   const { data: task } = await admin
     .from("tasks")
     .select("*")
@@ -915,7 +949,7 @@ export async function submitTaskCompletionAction(formData: FormData) {
     !task.active ||
     (task.child_profile_id && task.child_profile_id !== deviceMode.child_profile_id)
   ) {
-    redirect("/child?status=action-failed");
+    return { status: "error" };
   }
 
   const { data: completions, error: completionError } = await admin
@@ -923,10 +957,10 @@ export async function submitTaskCompletionAction(formData: FormData) {
     .select("*")
     .eq("task_id", task.id)
     .eq("child_profile_id", deviceMode.child_profile_id)
-    .order("submitted_at", { ascending: false });
+      .order("submitted_at", { ascending: false });
 
   if (completionError) {
-    redirect("/child?status=action-failed");
+    return { status: "error" };
   }
 
   const effectiveWindowStart = getTaskWindowStart(task.recurring_type);
@@ -944,7 +978,7 @@ export async function submitTaskCompletionAction(formData: FormData) {
     (latestRelevantCompletion.status === "pending" ||
       latestRelevantCompletion.status === "approved")
   ) {
-    redirect("/child?status=task-already-submitted");
+    return { status: "already-submitted" };
   }
 
   const { error } = await admin.from("task_completions").insert({
@@ -954,12 +988,12 @@ export async function submitTaskCompletionAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/child?status=action-failed");
+    return { status: "error" };
   }
 
   revalidateParentWorkspace();
   revalidateChildWorkspace();
-  redirect("/child?status=task-submitted");
+  return { status: "submitted" };
 }
 
 export async function approveTaskCompletionAction(formData: FormData) {

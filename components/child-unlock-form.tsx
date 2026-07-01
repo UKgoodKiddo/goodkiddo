@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export function ChildUnlockForm({
   action,
   errorMessage,
@@ -38,11 +36,8 @@ export function ChildUnlockForm({
           </div>
         ) : null}
 
-        <div className="flex gap-3">
-          <Link className="btn btn-ghost flex-1" href="/child">
-            Cancel
-          </Link>
-          <button className="btn btn-primary flex-1" type="submit">
+        <div className="flex justify-center">
+          <button className="btn btn-primary w-full max-w-[14rem]" type="submit">
             Unlock
           </button>
         </div>

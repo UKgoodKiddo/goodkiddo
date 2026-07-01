@@ -7,6 +7,8 @@ export const GOODKIDDO_ASSETS = {
   boopHappy: "/goodkiddo/boop-happy.png",
   boopSleepy: "/goodkiddo/boop-sleepy.png",
   boopSurprised: "/goodkiddo/boop-surprised.png",
+  boopTaskCompleteButton: "/goodkiddo/boop-task-complete-button.png",
+  boopTaskPendingButton: "/goodkiddo/boop-task-pending-button.png",
   boopWink: "/goodkiddo/boop-wink.png",
   brushTeethTaskIcon: "/goodkiddo/task-icons/brush-teeth.png",
   cleaningIcon: "/goodkiddo/cleaning-icon.png",
@@ -47,6 +49,22 @@ export const GOODKIDDO_ASSETS = {
   setTableTaskIcon: "/goodkiddo/task-icons/set-the-table.png",
   starIcon: "/goodkiddo/star-icon.png",
   sweepFloorTaskIcon: "/goodkiddo/task-icons/sweep-floor.png",
+  taskCardBrushHair: "/goodkiddo/task-cards/brush-your-hair-card.png",
+  taskCardBrushTeeth: "/goodkiddo/task-cards/brush-your-teeth-card.png",
+  taskCardChooseHealthySnack: "/goodkiddo/task-cards/choose-healthy-snack-card.png",
+  taskCardClearTheTable: "/goodkiddo/task-cards/clear-the-table-card.png",
+  taskCardCloseTheDoor: "/goodkiddo/task-cards/close-the-door-card.png",
+  taskCardDrinkWater: "/goodkiddo/task-cards/drink-your-water-card.png",
+  taskCardFeedThePet: "/goodkiddo/task-cards/feed-the-pet-card.png",
+  taskCardHaveShower: "/goodkiddo/task-cards/have-a-shower-card.png",
+  taskCardMakeBed: "/goodkiddo/task-cards/make-bed-card.png",
+  taskCardOrganiseBooks: "/goodkiddo/task-cards/organise-books-card.png",
+  taskCardPutClothesAway: "/goodkiddo/task-cards/put-clothes-away-card.png",
+  taskCardPutToysAway: "/goodkiddo/task-cards/put-toys-away-card.png",
+  taskCardTurnOffLights: "/goodkiddo/task-cards/turn-off-lights-card.png",
+  taskCardUseTheToilet: "/goodkiddo/task-cards/use-the-toilet-card.png",
+  taskCardWashYourPlate: "/goodkiddo/task-cards/wash-your-plate-card.png",
+  taskCardWaterThePlant: "/goodkiddo/task-cards/water-the-plant-card.png",
   takeOutTrashTaskIcon: "/goodkiddo/task-icons/take-out-trash.png",
   tidyUpToysTaskIcon: "/goodkiddo/task-icons/tidy-up-toys.png",
   uiBgGradient: "/goodkiddo/ui-bg-gradient.png",
@@ -207,6 +225,73 @@ const REWARD_ICON_MATCHERS = [
   },
 ] as const;
 
+const TASK_CARD_MATCHERS = [
+  {
+    card: GOODKIDDO_ASSETS.taskCardMakeBed,
+    patterns: ["make bed", "make your bed", "bed", "duvet"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardPutClothesAway,
+    patterns: ["put clothes away", "clothes away", "put laundry away", "laundry"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardPutToysAway,
+    patterns: ["put toys away", "tidy up toys", "tidy toys", "tidy room"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardTurnOffLights,
+    patterns: ["turn off the lights", "turn off lights", "lights off", "light off"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardDrinkWater,
+    patterns: ["drink your water", "drink water", "glass of water", "water break"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardWashYourPlate,
+    patterns: ["wash your plate", "wash plate", "clear plate"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardBrushTeeth,
+    patterns: ["brush your teeth", "brush teeth", "toothbrush"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardBrushHair,
+    patterns: ["brush your hair", "brush hair", "hair brush"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardChooseHealthySnack,
+    patterns: ["choose healthy snack", "healthy snack", "eat healthy"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardClearTheTable,
+    patterns: ["clear the table", "set the table", "lay the table"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardCloseTheDoor,
+    patterns: ["close the door", "shut the door"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardFeedThePet,
+    patterns: ["feed the pet", "feed pet", "pet food", "feed dog", "feed cat"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardHaveShower,
+    patterns: ["have a shower", "have shower", "shower"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardOrganiseBooks,
+    patterns: ["organise books", "organize books", "read book", "books"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardUseTheToilet,
+    patterns: ["use the toilet", "toilet"],
+  },
+  {
+    card: GOODKIDDO_ASSETS.taskCardWaterThePlant,
+    patterns: ["water the plant", "water plants", "plants"],
+  },
+] as const;
+
 export function getTaskIconPath(title: string) {
   const normalized = title
     .toLowerCase()
@@ -220,6 +305,21 @@ export function getTaskIconPath(title: string) {
   }
 
   return GOODKIDDO_ASSETS.starIcon;
+}
+
+export function getTaskCardPath(title: string) {
+  const normalized = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+  for (const matcher of TASK_CARD_MATCHERS) {
+    if (matcher.patterns.some((pattern) => normalized.includes(pattern))) {
+      return matcher.card;
+    }
+  }
+
+  return null;
 }
 
 export function getRewardIconPath(title: string) {
