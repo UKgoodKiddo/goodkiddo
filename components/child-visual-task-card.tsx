@@ -160,14 +160,14 @@ export function ChildVisualTaskCard({
 
   return (
     <div
-      className="child-task-row child-visual-task-card rounded-[1.55rem] px-4 py-4 text-[color:var(--foreground)]"
+      className="child-task-row child-visual-task-card relative rounded-[1.55rem] px-4 py-4 pr-[5.9rem] text-[color:var(--foreground)]"
       data-completed={isCompletedVisual ? "true" : "false"}
     >
-      <div className="flex items-stretch gap-3">
+      <div className="flex min-h-[7.25rem] items-center">
         <div className="child-visual-task-image-wrap min-w-0 flex-1">
           <KiddoRouteImage
             alt={task.title}
-            className="h-auto w-full object-contain"
+            className="child-visual-task-image h-auto w-full object-contain"
             debugLabel={`child-task-card:${task.title}`}
             height={420}
             imageDebugMode={imageDebugMode}
@@ -175,21 +175,21 @@ export function ChildVisualTaskCard({
             width={940}
           />
         </div>
-        <div className="child-task-side-rail shrink-0">
-          <div className="child-task-reward-badge shrink-0 flex-nowrap">
-            <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
-            <span
-              aria-hidden="true"
-              className="child-task-reward-star ml-1 shrink-0"
-              style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
-            />
-          </div>
-          <ChildTaskBoopButton
-            imageDebugMode={imageDebugMode}
-            size="compact"
-            task={task}
-          />
-        </div>
+      </div>
+      <div className="child-task-reward-badge absolute right-4 top-4 shrink-0 flex-nowrap">
+        <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
+        <span
+          aria-hidden="true"
+          className="child-task-reward-star ml-1 shrink-0"
+          style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
+        />
+      </div>
+      <div className="absolute bottom-4 right-4">
+        <ChildTaskBoopButton
+          imageDebugMode={imageDebugMode}
+          size="compact"
+          task={task}
+        />
       </div>
     </div>
   );

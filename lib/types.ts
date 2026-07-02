@@ -125,6 +125,7 @@ export type ChildCheckInDay = {
 };
 
 export type TaskRecurringType = "none" | "daily" | "weekly";
+export type TaskWeekday = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export type Task = {
   id: string;
@@ -134,6 +135,7 @@ export type Task = {
   description: string | null;
   boop_reward: number;
   recurring_type: TaskRecurringType;
+  weekly_days?: TaskWeekday[] | null;
   active: boolean;
   created_at: string;
 };
@@ -455,6 +457,7 @@ export type Database = {
           description?: string | null;
           boop_reward: number;
           recurring_type?: TaskRecurringType;
+          weekly_days?: TaskWeekday[] | null;
           active?: boolean;
           created_at?: string;
         };

@@ -23,6 +23,9 @@ export default async function ChildPage(props: {
     searchParams.imageDebug === "placeholders" || searchParams.imageDebug === "log"
       ? (searchParams.imageDebug as KiddoImageDebugMode)
       : "off";
+  const completedTaskCount = childMode.tasks.filter(
+    (task) => task.currentStatus === "approved" || task.currentStatus === "pending",
+  ).length;
 
   return (
     <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
@@ -39,11 +42,10 @@ export default async function ChildPage(props: {
               </div>
               <div className="child-home-collapsible-meta">
                 <div className="rounded-full bg-white/12 px-4 py-2 text-sm font-black text-white/90">
-                  {childMode.tasks.filter((task) => task.currentStatus === "approved").length}/
-                  {childMode.tasks.length || 0}
+                  {completedTaskCount}/{childMode.tasks.length || 0}
                 </div>
                 <span aria-hidden="true" className="child-home-collapsible-chevron">
-                  ▾
+                  v
                 </span>
               </div>
             </summary>
@@ -67,17 +69,12 @@ export default async function ChildPage(props: {
               <div className="child-home-collapsible-meta">
                 <div className="rounded-full bg-white/12 px-4 py-2 text-sm font-black text-white/90">
                   {childMode.tasks.length
-                    ? Math.round(
-                        (childMode.tasks.filter((task) => task.currentStatus === "approved")
-                          .length /
-                          childMode.tasks.length) *
-                          100,
-                      )
+                    ? Math.round((completedTaskCount / childMode.tasks.length) * 100)
                     : 0}
                   % done
                 </div>
                 <span aria-hidden="true" className="child-home-collapsible-chevron">
-                  ▾
+                  v
                 </span>
               </div>
             </summary>
@@ -100,7 +97,7 @@ export default async function ChildPage(props: {
               </div>
               <div className="child-home-collapsible-meta">
                 <span aria-hidden="true" className="child-home-collapsible-chevron">
-                  ▾
+                  v
                 </span>
               </div>
             </summary>
@@ -125,7 +122,7 @@ export default async function ChildPage(props: {
                   {childMode.redemptions.length}
                 </div>
                 <span aria-hidden="true" className="child-home-collapsible-chevron">
-                  ▾
+                  v
                 </span>
               </div>
             </summary>

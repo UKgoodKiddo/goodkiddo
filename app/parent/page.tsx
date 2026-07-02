@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { createFamilyAction } from "@/app/actions";
 import { Banner } from "@/components/banner";
 import { ClearChildModeStorage } from "@/components/clear-child-mode-storage";
+import { ParentTaskWizardLauncher } from "@/components/parent-task-wizard-launcher";
 import { ShellCard } from "@/components/shell-card";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
-import { buildChildTaskView } from "@/lib/tasks";
+import { getTaskCardCatalog } from "@/lib/task-card-catalog";
+import { buildChildTaskView, isTaskScheduledForDate } from "@/lib/tasks";
 import { getParentStatusBanner } from "@/lib/parent-status";
 import { getParentDashboardData } from "@/lib/data";
 import { getServerLocalDateString } from "@/lib/daily-bonus";
@@ -15,9 +17,10 @@ import { formatBoops, formatDateTime } from "@/lib/utils";
 export default async function ParentPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [dashboard, searchParams] = await Promise.all([
+  const [dashboard, searchParams, taskCatalog] = await Promise.all([
     getParentDashboardData(),
     props.searchParams,
+    getTaskCardCatalog(),
   ]);
 
   if (dashboard.requiresAuth) {
@@ -89,7 +92,10 @@ export default async function ParentPage(props: {
 
   const childSnapshotCards = dashboard.children.map((child) => {
     const visibleTasks = dashboard.tasks.filter(
-      (task) => task.active && (!task.child_profile_id || task.child_profile_id === child.id),
+      (task) =>
+        task.active &&
+        (!task.child_profile_id || task.child_profile_id === child.id) &&
+        isTaskScheduledForDate(task),
     );
     const childTaskViews = visibleTasks.map((task) =>
       buildChildTaskView(
@@ -117,6 +123,11 @@ export default async function ParentPage(props: {
       waitingToCollectBoops: pendingAwardsByChildId.get(child.id) ?? 0,
     };
   });
+  const childOptions = dashboard.children.map((child) => ({
+    avatarUrl: child.avatar_url,
+    id: child.id,
+    name: child.display_name,
+  }));
 
   return (
     <main className="flex flex-1 flex-col gap-6">
@@ -242,6 +253,23 @@ export default async function ParentPage(props: {
               {dashboard.redemptions.filter((redemption) => redemption.status === "pending").length} reward
               requests waiting.
             </p>
+          </div>
+        </ShellCard>
+      </section>
+
+      <section>
+        <ShellCard className="rounded-[1.8rem] p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-[color:var(--ink-soft)]">Create task</p>
+              <h2 className="mt-1 text-3xl font-extrabold">Add a new task</h2>
+            </div>
+            <ParentTaskWizardLauncher
+              childOptions={childOptions}
+              returnTo="/parent"
+              taskCatalog={taskCatalog.categories}
+              triggerLabel="Create task"
+            />
           </div>
         </ShellCard>
       </section>

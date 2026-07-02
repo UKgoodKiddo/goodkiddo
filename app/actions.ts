@@ -8,12 +8,12 @@ import {
   CHILD_AVATAR_PRESET_URLS,
   CHILD_PAGE_ROUTES,
 } from "@/lib/child-ui";
-import { getTaskWindowStart } from "@/lib/tasks";
+import { getTaskWindowStartForTask } from "@/lib/tasks";
 import {
   createSupabaseAdminClient,
   createSupabaseServerClient,
 } from "@/lib/supabase/server";
-import type { ActionState } from "@/lib/types";
+import type { ActionState, TaskWeekday } from "@/lib/types";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 
 const signInSchema = z.object({
@@ -93,15 +93,41 @@ const nfcAwardSchema = z.object({
   reason: z.string().trim().min(2).max(160),
 });
 
-const taskSchema = z.object({
-  taskId: z.string().trim().optional(),
-  title: z.string().trim().min(1).max(80),
-  description: z.string().trim().max(240).optional(),
-  boopReward: z.coerce.number().int().min(1).max(500),
-  recurringType: z.enum(["none", "daily", "weekly"]),
-  active: z.union([z.literal("on"), z.literal("off"), z.literal("")]).optional(),
-  childProfileId: z.string().trim().optional(),
-});
+const taskSchema = z
+  .object({
+    taskId: z.string().trim().optional(),
+    title: z.string().trim().min(1).max(80),
+    description: z.string().trim().max(240).optional(),
+    boopReward: z.coerce.number().int().min(1).max(500),
+    recurringType: z.enum(["none", "daily", "weekly"]),
+    returnTo: z.enum(["/parent", "/parent/tasks"]).optional(),
+    weeklyDays: z
+      .array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]))
+      .max(7)
+      .optional(),
+    active: z.union([z.literal("on"), z.literal("off"), z.literal("")]).optional(),
+    childProfileId: z.string().trim().optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.recurringType === "weekly" && !(value.weeklyDays?.length)) {
+      context.addIssue({
+        code: "custom",
+        message: "Choose at least one weekday for weekly tasks.",
+        path: ["weeklyDays"],
+      });
+    }
+  });
+
+function normalizeTaskWeeklyDays(values: FormDataEntryValue[]): TaskWeekday[] {
+  const weekdays = values
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value): value is TaskWeekday =>
+      ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].includes(value),
+    );
+
+  return Array.from(new Set(weekdays));
+}
 
 const deleteTaskSchema = z.object({
   taskId: z.uuid(),
@@ -792,17 +818,21 @@ export async function createTaskAction(formData: FormData) {
     childProfileId: formData.get("childProfileId"),
     description: formData.get("description"),
     recurringType: formData.get("recurringType"),
+    returnTo: formData.get("returnTo"),
     title: formData.get("title"),
+    weeklyDays: normalizeTaskWeeklyDays(formData.getAll("weeklyDays")),
   });
 
   if (!parsed.success) {
     redirect("/parent/tasks?status=action-failed");
   }
 
+  const returnTo = parsed.data.returnTo ?? "/parent";
+
   const { supabase, family } = await getParentContextOrRedirect();
 
   if (!family) {
-    redirect("/parent/tasks?status=family-required");
+    redirect(`${returnTo}?status=family-required`);
   }
 
   const { error } = await supabase.from("tasks").insert({
@@ -813,15 +843,17 @@ export async function createTaskAction(formData: FormData) {
     family_id: family.id,
     recurring_type: parsed.data.recurringType,
     title: parsed.data.title,
+    weekly_days:
+      parsed.data.recurringType === "weekly" ? parsed.data.weeklyDays ?? [] : null,
   });
 
   if (error) {
-    redirect("/parent/tasks?status=action-failed");
+    redirect(`${returnTo}?status=action-failed`);
   }
 
   revalidateParentWorkspace();
   revalidateChildWorkspace();
-  redirect("/parent/tasks?status=task-created");
+  redirect(`${returnTo}?status=task-created`);
 }
 
 export async function updateTaskAction(formData: FormData) {
@@ -831,18 +863,22 @@ export async function updateTaskAction(formData: FormData) {
     childProfileId: formData.get("childProfileId"),
     description: formData.get("description"),
     recurringType: formData.get("recurringType"),
+    returnTo: formData.get("returnTo"),
     taskId: formData.get("taskId"),
     title: formData.get("title"),
+    weeklyDays: normalizeTaskWeeklyDays(formData.getAll("weeklyDays")),
   });
 
   if (!parsed.success || !parsed.data.taskId) {
     redirect("/parent/tasks?status=action-failed");
   }
 
+  const returnTo = parsed.data.returnTo ?? "/parent/tasks";
+
   const { supabase, family } = await getParentContextOrRedirect();
 
   if (!family) {
-    redirect("/parent/tasks?status=family-required");
+    redirect(`${returnTo}?status=family-required`);
   }
 
   const { error } = await supabase
@@ -854,17 +890,19 @@ export async function updateTaskAction(formData: FormData) {
       description: parsed.data.description || null,
       recurring_type: parsed.data.recurringType,
       title: parsed.data.title,
+      weekly_days:
+        parsed.data.recurringType === "weekly" ? parsed.data.weeklyDays ?? [] : null,
     })
     .eq("id", parsed.data.taskId)
     .eq("family_id", family.id);
 
   if (error) {
-    redirect("/parent/tasks?status=action-failed");
+    redirect(`${returnTo}?status=action-failed`);
   }
 
   revalidateParentWorkspace();
   revalidateChildWorkspace();
-  redirect("/parent/tasks?status=task-updated");
+  redirect(`${returnTo}?status=task-updated`);
 }
 
 export async function deleteTaskAction(formData: FormData) {
@@ -963,7 +1001,7 @@ export async function submitTaskCompletionInlineAction(
     return { status: "error" };
   }
 
-  const effectiveWindowStart = getTaskWindowStart(task.recurring_type);
+  const effectiveWindowStart = getTaskWindowStartForTask(task);
   const relevantCompletions = (completions ?? []).filter((completion) => {
     if (!effectiveWindowStart) {
       return true;

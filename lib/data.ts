@@ -16,7 +16,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/env";
 import { resolveChildModeSessionForParent } from "@/lib/child-mode";
-import { buildChildTaskView } from "@/lib/tasks";
+import { buildChildTaskView, isTaskScheduledForDate } from "@/lib/tasks";
 import type {
   BoopTransactionView,
   ChildModeData,
@@ -326,7 +326,8 @@ export async function getChildModeData(): Promise<ChildModeData> {
   );
   const visibleTasks = ((tasksResult.data ?? []) as Task[]).filter(
     (task) =>
-      !task.child_profile_id || task.child_profile_id === resolvedDeviceMode.childProfileId,
+      (!task.child_profile_id || task.child_profile_id === resolvedDeviceMode.childProfileId) &&
+      isTaskScheduledForDate(task),
   );
   const childTasks = visibleTasks.map((task) =>
     buildChildTaskView(

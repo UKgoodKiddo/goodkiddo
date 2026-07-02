@@ -4,6 +4,7 @@ import type {
   Task,
   TaskCompletion,
   TaskRecurringType,
+  TaskWeekday,
 } from "@/lib/types";
 
 function startOfUtcDay(value: Date) {
@@ -18,15 +19,41 @@ function startOfUtcWeek(value: Date) {
   return weekStart;
 }
 
-export function getTaskWindowStart(recurringType: TaskRecurringType, now = new Date()) {
+export function getCurrentTaskWeekday(now = new Date()): TaskWeekday {
+  return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][now.getUTCDay()] as TaskWeekday;
+}
+
+export function isTaskScheduledForDate(task: Task, now = new Date()) {
+  if (task.recurring_type !== "weekly") {
+    return true;
+  }
+
+  const weeklyDays = task.weekly_days ?? null;
+
+  if (!weeklyDays?.length) {
+    return true;
+  }
+
+  return weeklyDays.includes(getCurrentTaskWeekday(now));
+}
+
+export function getTaskWindowStart(
+  recurringType: TaskRecurringType,
+  now = new Date(),
+  weeklyDays?: TaskWeekday[] | null,
+) {
   switch (recurringType) {
     case "daily":
       return startOfUtcDay(now);
     case "weekly":
-      return startOfUtcWeek(now);
+      return weeklyDays?.length ? startOfUtcDay(now) : startOfUtcWeek(now);
     default:
       return null;
   }
+}
+
+export function getTaskWindowStartForTask(task: Task, now = new Date()) {
+  return getTaskWindowStart(task.recurring_type, now, task.weekly_days ?? null);
 }
 
 export function getRelevantTaskCompletions(
@@ -34,7 +61,7 @@ export function getRelevantTaskCompletions(
   completions: TaskCompletion[],
   now = new Date(),
 ) {
-  const windowStart = getTaskWindowStart(task.recurring_type, now);
+  const windowStart = getTaskWindowStartForTask(task, now);
 
   return completions
     .filter((completion) => {
@@ -84,11 +111,12 @@ export function canMarkTaskComplete(
 export function buildChildTaskView(task: Task, completions: TaskCompletion[], now = new Date()): ChildTaskView {
   const latestCompletion = getRelevantTaskCompletions(task, completions, now)[0];
   const currentStatus = getChildTaskStatus(task, completions, now);
+  const scheduledToday = isTaskScheduledForDate(task, now);
 
   return {
     ...task,
-    canMarkComplete: canMarkTaskComplete(task, completions, now),
-    currentStatus,
+    canMarkComplete: scheduledToday && canMarkTaskComplete(task, completions, now),
+    currentStatus: scheduledToday ? currentStatus : "ready",
     lastSubmittedAt: latestCompletion?.submitted_at ?? null,
     reviewedAt: latestCompletion?.reviewed_at ?? null,
   };
