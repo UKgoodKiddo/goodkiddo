@@ -2,6 +2,7 @@ import "server-only";
 
 import { readdir } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
@@ -51,7 +52,6 @@ export const TASK_CARD_ASSET_BUCKET = "task-card-assets";
 export const TASK_CARD_ASSET_MAX_BYTES = 8 * 1024 * 1024;
 
 const DISCOVERABLE_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
-const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const INVALID_TASK_ASSET_NAME_PATTERN = /[<>:"/\\|?*\u0000-\u001f]/;
 
 function toPublicAssetSrc(absolutePath: string) {
@@ -191,17 +191,27 @@ export function buildCanonicalTaskAssetFileName(taskName: string) {
   return `${canonicalizeTaskAssetTitle(taskName)}.png`;
 }
 
-export async function isPngTaskAssetUpload(file: File) {
+export async function validateTaskAssetUpload(file: File) {
   if (file.size <= 0 || file.size > TASK_CARD_ASSET_MAX_BYTES) {
     return false;
   }
 
-  if (path.extname(file.name).toLowerCase() !== ".png") {
+  const fileExtension = path.extname(file.name).toLowerCase();
+  const supportedByName = DISCOVERABLE_IMAGE_EXTENSIONS.has(fileExtension);
+  const supportedByMime = file.type.startsWith("image/");
+
+  if (!supportedByName && !supportedByMime) {
     return false;
   }
 
-  const header = Buffer.from(await file.slice(0, PNG_SIGNATURE.length).arrayBuffer());
-  return header.equals(PNG_SIGNATURE);
+  try {
+    const inputBuffer = Buffer.from(await file.arrayBuffer());
+    const metadata = await sharp(inputBuffer).metadata();
+
+    return Boolean(metadata.width && metadata.height);
+  } catch {
+    return false;
+  }
 }
 
 export async function ensureTaskCardAssetBucket() {
@@ -332,9 +342,29 @@ export async function uploadTaskAssetPair(params: {
   const fileName = buildCanonicalTaskAssetFileName(params.taskName);
   const parentObjectPath = buildStorageTaskAssetPath("parent", params.category, fileName);
   const childObjectPath = buildStorageTaskAssetPath("child", params.category, fileName);
-  const [parentBuffer, childBuffer] = await Promise.all([
+  const [parentInputBuffer, childInputBuffer] = await Promise.all([
     params.parentAssetFile.arrayBuffer(),
     params.childAssetFile.arrayBuffer(),
+  ]);
+  const [parentBuffer, childBuffer] = await Promise.all([
+    sharp(Buffer.from(parentInputBuffer))
+      .rotate()
+      .keepMetadata()
+      .png({
+        adaptiveFiltering: true,
+        compressionLevel: 9,
+        palette: false,
+      })
+      .toBuffer(),
+    sharp(Buffer.from(childInputBuffer))
+      .rotate()
+      .keepMetadata()
+      .png({
+        adaptiveFiltering: true,
+        compressionLevel: 9,
+        palette: false,
+      })
+      .toBuffer(),
   ]);
 
   const [parentUpload, childUpload] = await Promise.all([

@@ -2175,7 +2175,7 @@ export async function uploadTaskAssetAction(formData: FormData) {
   const {
     buildCanonicalTaskAssetFileName,
     canonicalizeTaskAssetTitle,
-    isPngTaskAssetUpload,
+    validateTaskAssetUpload,
     taskAssetExists,
     uploadTaskAssetPair,
   } = await getTaskAssetHelpers();
@@ -2190,12 +2190,12 @@ export async function uploadTaskAssetAction(formData: FormData) {
     redirect("/superadmin/tasks?status=task-asset-name-invalid");
   }
 
-  const [parentIsPng, childIsPng] = await Promise.all([
-    isPngTaskAssetUpload(parentAssetFile),
-    isPngTaskAssetUpload(childAssetFile),
+  const [parentIsValidImage, childIsValidImage] = await Promise.all([
+    validateTaskAssetUpload(parentAssetFile),
+    validateTaskAssetUpload(childAssetFile),
   ]);
 
-  if (!parentIsPng || !childIsPng) {
+  if (!parentIsValidImage || !childIsValidImage) {
     redirect("/superadmin/tasks?status=task-asset-file-invalid");
   }
 

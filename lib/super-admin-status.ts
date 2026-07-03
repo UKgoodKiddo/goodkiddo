@@ -91,7 +91,7 @@ export function getSuperAdminStatusBanner(
       };
     case "task-asset-file-invalid":
       return {
-        message: "Both task asset uploads must be valid PNG files.",
+        message: "Both task asset uploads must be valid image files that can be converted into PNG task assets.",
         tone: "rose" as const,
       };
     case "task-asset-upload-failed":

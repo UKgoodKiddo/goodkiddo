@@ -99,7 +99,7 @@ export function SuperAdminTaskAssetForm({
             Parent icon
           </span>
           <input
-            accept="image/png,.png"
+            accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
             className="field mt-3"
             name="parentAssetFile"
             onChange={(event) => setParentFile(event.currentTarget.files?.[0] ?? null)}
@@ -114,7 +114,7 @@ export function SuperAdminTaskAssetForm({
                 src={parentPreview}
               />
             ) : (
-              <p className="text-center text-sm text-[color:var(--ink-soft)]">PNG preview</p>
+              <p className="text-center text-sm text-[color:var(--ink-soft)]">Image preview</p>
             )}
           </div>
         </label>
@@ -124,7 +124,7 @@ export function SuperAdminTaskAssetForm({
             Child task card
           </span>
           <input
-            accept="image/png,.png"
+            accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
             className="field mt-3"
             name="childAssetFile"
             onChange={(event) => setChildFile(event.currentTarget.files?.[0] ?? null)}
@@ -139,7 +139,7 @@ export function SuperAdminTaskAssetForm({
                 src={childPreview}
               />
             ) : (
-              <p className="text-center text-sm text-[color:var(--ink-soft)]">PNG preview</p>
+              <p className="text-center text-sm text-[color:var(--ink-soft)]">Image preview</p>
             )}
           </div>
         </label>
