@@ -90,15 +90,29 @@ export function getSuperAdminStatusBanner(
         tone: "rose" as const,
       };
     case "task-asset-file-invalid":
-      return {
-        message: "Both task asset uploads must be valid image files that can be converted into PNG task assets.",
-        tone: "rose" as const,
-      };
+      {
+        const details =
+          typeof searchParams?.details === "string" ? decodeURIComponent(searchParams.details) : "";
+
+        return {
+          message: details
+            ? `Those task images could not be validated: ${details}.`
+            : "Both task asset uploads must be valid JPG, PNG, or WebP image files.",
+          tone: "rose" as const,
+        };
+      }
     case "task-asset-upload-failed":
-      return {
-        message: "The task assets could not be saved. Check the files and try again.",
-        tone: "rose" as const,
-      };
+      {
+        const details =
+          typeof searchParams?.details === "string" ? decodeURIComponent(searchParams.details) : "";
+
+        return {
+          message: details
+            ? `The task assets could not be saved: ${details}.`
+            : "The task assets could not be saved. Check the files and try again.",
+          tone: "rose" as const,
+        };
+      }
     case "booper-conflict":
       return {
         message: "That booper could not be reassigned cleanly. Review the current family link and try again.",

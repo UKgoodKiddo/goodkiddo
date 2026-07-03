@@ -1,5 +1,6 @@
 "use server";
 
+import { File as NodeFile } from "node:buffer";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -180,8 +181,10 @@ const importBooperInventorySchema = z.object({
 
 const uploadTaskAssetSchema = z.object({
   category: z.enum(TASK_CARD_CATEGORY_ORDER),
-  childAssetFile: z.unknown(),
-  parentAssetFile: z.unknown(),
+  childAssetDataUrl: z.string().optional(),
+  childAssetOriginalName: z.string().optional(),
+  parentAssetDataUrl: z.string().optional(),
+  parentAssetOriginalName: z.string().optional(),
   replaceExisting: z.union([z.literal("on"), z.literal("off"), z.literal("")]).optional(),
   taskName: z.string().trim().min(1).max(80),
 });
@@ -278,6 +281,58 @@ function isUploadedFile(
     "arrayBuffer" in value &&
     "text" in value
   );
+}
+
+function buildFileNameFromOriginalName(originalName: string | undefined, fallbackStem: string) {
+  const trimmed = originalName?.trim();
+
+  if (!trimmed) {
+    return `${fallbackStem}.upload`;
+  }
+
+  return trimmed;
+}
+
+function dataUrlMimeToExtension(mimeType: string) {
+  switch (mimeType) {
+    case "image/jpeg":
+      return ".jpg";
+    case "image/png":
+      return ".png";
+    case "image/webp":
+      return ".webp";
+    default:
+      return ".img";
+  }
+}
+
+function fileFromDataUrl(
+  dataUrl: string | undefined,
+  originalName: string | undefined,
+  fallbackStem: string,
+) {
+  const trimmed = dataUrl?.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const match = trimmed.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const mimeType = match[1];
+  const base64Payload = match[2];
+  const fileNameCandidate = buildFileNameFromOriginalName(originalName, fallbackStem);
+  const hasExtension = /\.[a-z0-9]+$/i.test(fileNameCandidate);
+  const fileName = hasExtension
+    ? fileNameCandidate
+    : `${fileNameCandidate}${dataUrlMimeToExtension(mimeType)}`;
+  const buffer = Buffer.from(base64Payload, "base64");
+
+  return new NodeFile([buffer], fileName, { type: mimeType });
 }
 
 async function getChildModeActionContextOrRedirect() {
@@ -2150,18 +2205,29 @@ export async function importBooperInventoryAction(formData: FormData) {
 export async function uploadTaskAssetAction(formData: FormData) {
   const parsed = uploadTaskAssetSchema.safeParse({
     category: formData.get("category"),
-    childAssetFile: formData.get("childAssetFile"),
-    parentAssetFile: formData.get("parentAssetFile"),
+    childAssetDataUrl: formData.get("childAssetDataUrl"),
+    childAssetOriginalName: formData.get("childAssetOriginalName"),
+    parentAssetDataUrl: formData.get("parentAssetDataUrl"),
+    parentAssetOriginalName: formData.get("parentAssetOriginalName"),
     replaceExisting: formData.get("replaceExisting"),
     taskName: formData.get("taskName"),
   });
 
   if (!parsed.success) {
-    redirect("/superadmin/tasks?status=task-asset-upload-failed");
+    console.error("uploadTaskAssetAction: schema parse failed", parsed.error.flatten());
+    redirect("/superadmin/tasks?status=task-asset-upload-failed&details=schema-parse-failed");
   }
 
-  const parentAssetFile = parsed.data.parentAssetFile;
-  const childAssetFile = parsed.data.childAssetFile;
+  const parentAssetFile = fileFromDataUrl(
+    parsed.data.parentAssetDataUrl,
+    parsed.data.parentAssetOriginalName,
+    "parent-task-asset",
+  );
+  const childAssetFile = fileFromDataUrl(
+    parsed.data.childAssetDataUrl,
+    parsed.data.childAssetOriginalName,
+    "child-task-asset",
+  );
 
   if (
     !isUploadedFile(parentAssetFile) ||
@@ -2169,11 +2235,28 @@ export async function uploadTaskAssetAction(formData: FormData) {
     !isUploadedFile(childAssetFile) ||
     childAssetFile.size <= 0
   ) {
-    redirect("/superadmin/tasks?status=task-asset-upload-failed");
+    console.error("uploadTaskAssetAction: uploaded file missing or empty", {
+      childAssetFile:
+        childAssetFile && typeof childAssetFile === "object"
+          ? {
+              name: "name" in childAssetFile ? childAssetFile.name : null,
+              size: "size" in childAssetFile ? childAssetFile.size : null,
+              type: "type" in childAssetFile ? childAssetFile.type : null,
+            }
+          : childAssetFile,
+      parentAssetFile:
+        parentAssetFile && typeof parentAssetFile === "object"
+          ? {
+              name: "name" in parentAssetFile ? parentAssetFile.name : null,
+              size: "size" in parentAssetFile ? parentAssetFile.size : null,
+              type: "type" in parentAssetFile ? parentAssetFile.type : null,
+            }
+          : parentAssetFile,
+    });
+    redirect("/superadmin/tasks?status=task-asset-upload-failed&details=missing-image-data");
   }
 
   const {
-    buildCanonicalTaskAssetFileName,
     canonicalizeTaskAssetTitle,
     validateTaskAssetUpload,
     taskAssetExists,
@@ -2196,10 +2279,24 @@ export async function uploadTaskAssetAction(formData: FormData) {
   ]);
 
   if (!parentIsValidImage || !childIsValidImage) {
-    redirect("/superadmin/tasks?status=task-asset-file-invalid");
+    const detail = [
+      !parentIsValidImage
+        ? `parent=${encodeURIComponent(parentAssetFile.name || "unknown")}:${encodeURIComponent(parentAssetFile.type || "unknown")}`
+        : null,
+      !childIsValidImage
+        ? `child=${encodeURIComponent(childAssetFile.name || "unknown")}:${encodeURIComponent(childAssetFile.type || "unknown")}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(",");
+
+    console.error("uploadTaskAssetAction: image validation failed", {
+      child: { name: childAssetFile.name, size: childAssetFile.size, type: childAssetFile.type },
+      parent: { name: parentAssetFile.name, size: parentAssetFile.size, type: parentAssetFile.type },
+    });
+    redirect(`/superadmin/tasks?status=task-asset-file-invalid&details=${detail}`);
   }
 
-  const fileName = buildCanonicalTaskAssetFileName(canonicalTaskName);
   const alreadyExists = await taskAssetExists({
     category: parsed.data.category,
     taskName: canonicalTaskName,
@@ -2214,15 +2311,30 @@ export async function uploadTaskAssetAction(formData: FormData) {
     );
   }
 
+  let uploadedAssetFileNames: {
+    childFileName: string;
+    parentFileName: string;
+  };
+
   try {
-    await uploadTaskAssetPair({
+    uploadedAssetFileNames = await uploadTaskAssetPair({
       category: parsed.data.category,
       childAssetFile,
       parentAssetFile,
       taskName: canonicalTaskName,
     });
-  } catch {
-    redirect("/superadmin/tasks?status=task-asset-upload-failed");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown upload failure";
+    console.error("uploadTaskAssetAction: uploadTaskAssetPair failed", {
+      category: parsed.data.category,
+      childAssetFile: { name: childAssetFile.name, size: childAssetFile.size, type: childAssetFile.type },
+      message,
+      parentAssetFile: { name: parentAssetFile.name, size: parentAssetFile.size, type: parentAssetFile.type },
+      taskName: canonicalTaskName,
+    });
+    redirect(
+      `/superadmin/tasks?status=task-asset-upload-failed&details=${encodeURIComponent(message)}`,
+    );
   }
 
   await writeSuperAdminAuditLog({
@@ -2230,9 +2342,10 @@ export async function uploadTaskAssetAction(formData: FormData) {
     actorUserId: user.id,
     metadata: {
       category: parsed.data.category,
-      childFileName: childAssetFile.name,
-      fileName,
-      parentFileName: parentAssetFile.name,
+      childFileName: uploadedAssetFileNames.childFileName,
+      originalChildFileName: childAssetFile.name,
+      originalParentFileName: parentAssetFile.name,
+      parentFileName: uploadedAssetFileNames.parentFileName,
       taskName: canonicalTaskName,
     },
     targetId: `${parsed.data.category}:${canonicalTaskName}`,

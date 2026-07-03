@@ -51,8 +51,13 @@ export const TASK_CARD_ASSET_BUCKET = "task-card-assets";
 export const TASK_CARD_ASSET_MAX_BYTES = 8 * 1024 * 1024;
 
 const DISCOVERABLE_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
-const SUPPORTED_TASK_ASSET_UPLOAD_FORMATS = new Set(["jpeg", "png", "webp"]);
 const INVALID_TASK_ASSET_NAME_PATTERN = /[<>:"/\\|?*\u0000-\u001f]/;
+const TASK_ASSET_UPLOAD_FORMATS = {
+  jpeg: { extension: ".jpg", mimeType: "image/jpeg" },
+  png: { extension: ".png", mimeType: "image/png" },
+  webp: { extension: ".webp", mimeType: "image/webp" },
+} as const;
+type SupportedTaskAssetUploadFormat = keyof typeof TASK_ASSET_UPLOAD_FORMATS;
 
 async function getSharp() {
   const sharpModule = await import("sharp");
@@ -196,25 +201,38 @@ export function buildCanonicalTaskAssetFileName(taskName: string) {
   return `${canonicalizeTaskAssetTitle(taskName)}.png`;
 }
 
-export async function validateTaskAssetUpload(file: File) {
+export function buildTaskAssetFileName(taskName: string, extension: string) {
+  return `${canonicalizeTaskAssetTitle(taskName)}${extension}`;
+}
+
+async function inspectTaskAssetUpload(file: File) {
   if (file.size <= 0 || file.size > TASK_CARD_ASSET_MAX_BYTES) {
-    return false;
+    return null;
   }
 
   try {
     const inputBuffer = Buffer.from(await file.arrayBuffer());
     const sharp = await getSharp();
     const metadata = await sharp(inputBuffer).metadata();
+    const format = metadata.format as SupportedTaskAssetUploadFormat | undefined;
 
-    return Boolean(
-      metadata.width &&
-        metadata.height &&
-        metadata.format &&
-        SUPPORTED_TASK_ASSET_UPLOAD_FORMATS.has(metadata.format),
-    );
+    if (!metadata.width || !metadata.height || !format || !(format in TASK_ASSET_UPLOAD_FORMATS)) {
+      return null;
+    }
+
+    return {
+      buffer: inputBuffer,
+      extension: TASK_ASSET_UPLOAD_FORMATS[format].extension,
+      format,
+      mimeType: TASK_ASSET_UPLOAD_FORMATS[format].mimeType,
+    };
   } catch {
-    return false;
+    return null;
   }
+}
+
+export async function validateTaskAssetUpload(file: File) {
+  return Boolean(await inspectTaskAssetUpload(file));
 }
 
 export async function ensureTaskCardAssetBucket() {
@@ -338,11 +356,46 @@ export async function taskAssetExists(params: {
   category: TaskCardCategoryName;
   taskName: string;
 }) {
-  const fileName = buildCanonicalTaskAssetFileName(params.taskName);
   const coverage = await getTaskAssetCoverage();
-  const key = getCoverageKey(params.category, normalizeTaskCardTitle(fileName));
+  const key = getCoverageKey(params.category, normalizeTaskCardTitle(params.taskName));
 
   return coverage.some((record) => record.key === key);
+}
+
+async function removeExistingStorageTaskAssetVariants(params: {
+  category: TaskCardCategoryName;
+  collection: "child" | "parent";
+  normalizedTitle: string;
+  supabase: ReturnType<typeof createSupabaseAdminClient>;
+}) {
+  const { data, error } = await params.supabase.storage
+    .from(TASK_CARD_ASSET_BUCKET)
+    .list(`${params.collection}/${params.category}`, {
+      limit: 1000,
+      sortBy: { column: "name", order: "asc" },
+    });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const matchingObjectPaths = (data ?? [])
+    .map((entry) => entry.name)
+    .filter((name) => DISCOVERABLE_IMAGE_EXTENSIONS.has(path.extname(name).toLowerCase()))
+    .filter((name) => normalizeTaskCardTitle(name) === params.normalizedTitle)
+    .map((name) => buildStorageTaskAssetPath(params.collection, params.category, name));
+
+  if (!matchingObjectPaths.length) {
+    return;
+  }
+
+  const { error: removeError } = await params.supabase.storage
+    .from(TASK_CARD_ASSET_BUCKET)
+    .remove(matchingObjectPaths);
+
+  if (removeError) {
+    throw new Error(removeError.message);
+  }
 }
 
 export async function uploadTaskAssetPair(params: {
@@ -351,43 +404,46 @@ export async function uploadTaskAssetPair(params: {
   parentAssetFile: File;
   taskName: string;
 }) {
-  const sharp = await getSharp();
   const supabase = await ensureTaskCardAssetBucket();
-  const fileName = buildCanonicalTaskAssetFileName(params.taskName);
-  const parentObjectPath = buildStorageTaskAssetPath("parent", params.category, fileName);
-  const childObjectPath = buildStorageTaskAssetPath("child", params.category, fileName);
-  const [parentInputBuffer, childInputBuffer] = await Promise.all([
-    params.parentAssetFile.arrayBuffer(),
-    params.childAssetFile.arrayBuffer(),
-  ]);
-  const [parentBuffer, childBuffer] = await Promise.all([
-    sharp(Buffer.from(parentInputBuffer))
-      .rotate()
-      .png({
-        adaptiveFiltering: true,
-        compressionLevel: 9,
-        palette: false,
-      })
-      .toBuffer(),
-    sharp(Buffer.from(childInputBuffer))
-      .rotate()
-      .png({
-        adaptiveFiltering: true,
-        compressionLevel: 9,
-        palette: false,
-      })
-      .toBuffer(),
+  const [parentAsset, childAsset] = await Promise.all([
+    inspectTaskAssetUpload(params.parentAssetFile),
+    inspectTaskAssetUpload(params.childAssetFile),
   ]);
 
+  if (!parentAsset || !childAsset) {
+    throw new Error("One or both task images could not be read as JPG, PNG, or WebP.");
+  }
+
+  const normalizedTitle = normalizeTaskCardTitle(params.taskName);
+  await Promise.all([
+    removeExistingStorageTaskAssetVariants({
+      category: params.category,
+      collection: "parent",
+      normalizedTitle,
+      supabase,
+    }),
+    removeExistingStorageTaskAssetVariants({
+      category: params.category,
+      collection: "child",
+      normalizedTitle,
+      supabase,
+    }),
+  ]);
+
+  const parentFileName = buildTaskAssetFileName(params.taskName, parentAsset.extension);
+  const childFileName = buildTaskAssetFileName(params.taskName, childAsset.extension);
+  const parentObjectPath = buildStorageTaskAssetPath("parent", params.category, parentFileName);
+  const childObjectPath = buildStorageTaskAssetPath("child", params.category, childFileName);
+
   const [parentUpload, childUpload] = await Promise.all([
-    supabase.storage.from(TASK_CARD_ASSET_BUCKET).upload(parentObjectPath, parentBuffer, {
+    supabase.storage.from(TASK_CARD_ASSET_BUCKET).upload(parentObjectPath, parentAsset.buffer, {
       cacheControl: "3600",
-      contentType: "image/png",
+      contentType: parentAsset.mimeType,
       upsert: true,
     }),
-    supabase.storage.from(TASK_CARD_ASSET_BUCKET).upload(childObjectPath, childBuffer, {
+    supabase.storage.from(TASK_CARD_ASSET_BUCKET).upload(childObjectPath, childAsset.buffer, {
       cacheControl: "3600",
-      contentType: "image/png",
+      contentType: childAsset.mimeType,
       upsert: true,
     }),
   ]);
@@ -402,7 +458,8 @@ export async function uploadTaskAssetPair(params: {
 
   return {
     childAssetSrc: buildStorageTaskAssetPublicUrl(childObjectPath),
-    fileName,
+    childFileName,
+    parentFileName,
     parentAssetSrc: buildStorageTaskAssetPublicUrl(parentObjectPath),
   };
 }

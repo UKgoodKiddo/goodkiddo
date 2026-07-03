@@ -26,6 +26,12 @@ export function SuperAdminTaskAssetForm({
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [parentFile, setParentFile] = useState<File | null>(null);
   const [childFile, setChildFile] = useState<File | null>(null);
+  const [parentAssetDataUrl, setParentAssetDataUrl] = useState("");
+  const [childAssetDataUrl, setChildAssetDataUrl] = useState("");
+  const [parentAssetStatus, setParentAssetStatus] = useState<string | null>(null);
+  const [childAssetStatus, setChildAssetStatus] = useState<string | null>(null);
+  const [isReadingParentAsset, setIsReadingParentAsset] = useState(false);
+  const [isReadingChildAsset, setIsReadingChildAsset] = useState(false);
 
   const parentPreview = useMemo(
     () => (parentFile ? URL.createObjectURL(parentFile) : null),
@@ -60,6 +66,53 @@ export function SuperAdminTaskAssetForm({
       }
     };
   }, [childPreview]);
+
+  async function handleAssetSelection(params: {
+    file: File | null;
+    setAssetDataUrl: (value: string) => void;
+    setAssetFile: (value: File | null) => void;
+    setAssetStatus: (value: string | null) => void;
+    setIsReading: (value: boolean) => void;
+  }) {
+    if (!params.file) {
+      params.setAssetFile(null);
+      params.setAssetDataUrl("");
+      params.setAssetStatus(null);
+      return;
+    }
+
+    params.setAssetFile(params.file);
+    params.setIsReading(true);
+    params.setAssetStatus("Preparing image...");
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result);
+            return;
+          }
+
+          reject(new Error("Image reader returned an unexpected result."));
+        };
+        reader.onerror = () => reject(reader.error ?? new Error("Image reader failed."));
+        reader.readAsDataURL(params.file as Blob);
+      });
+
+      params.setAssetDataUrl(dataUrl);
+      params.setAssetStatus("Image ready.");
+    } catch {
+      params.setAssetDataUrl("");
+      params.setAssetStatus("That image could not be read. Please try another file.");
+    } finally {
+      params.setIsReading(false);
+    }
+  }
+
+  const isReadingAnyAsset = isReadingParentAsset || isReadingChildAsset;
+  const isSubmitBlocked =
+    isReadingAnyAsset || !parentAssetDataUrl || !childAssetDataUrl || (mustConfirmReplace && !replaceExisting);
 
   return (
     <form action={action} className="mt-6 grid gap-4">
@@ -98,14 +151,26 @@ export function SuperAdminTaskAssetForm({
           <span className="block text-sm font-bold text-[color:var(--ink-soft)]">
             Parent icon (JPG, PNG, or WebP)
           </span>
+          <input name="parentAssetDataUrl" type="hidden" value={parentAssetDataUrl} />
+          <input name="parentAssetOriginalName" type="hidden" value={parentFile?.name ?? ""} />
           <input
             accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
             className="field mt-3"
-            name="parentAssetFile"
-            onChange={(event) => setParentFile(event.currentTarget.files?.[0] ?? null)}
+            onChange={(event) =>
+              handleAssetSelection({
+                file: event.currentTarget.files?.[0] ?? null,
+                setAssetDataUrl: setParentAssetDataUrl,
+                setAssetFile: setParentFile,
+                setAssetStatus: setParentAssetStatus,
+                setIsReading: setIsReadingParentAsset,
+              })
+            }
             required
             type="file"
           />
+          {parentAssetStatus ? (
+            <p className="mt-2 text-sm text-[color:var(--ink-soft)]">{parentAssetStatus}</p>
+          ) : null}
           <div className="mt-3 flex min-h-36 items-center justify-center rounded-[1.3rem] border border-dashed border-[color:var(--line)] bg-white/80 p-3">
             {parentPreview ? (
               <img
@@ -123,14 +188,26 @@ export function SuperAdminTaskAssetForm({
           <span className="block text-sm font-bold text-[color:var(--ink-soft)]">
             Child task card (JPG, PNG, or WebP)
           </span>
+          <input name="childAssetDataUrl" type="hidden" value={childAssetDataUrl} />
+          <input name="childAssetOriginalName" type="hidden" value={childFile?.name ?? ""} />
           <input
             accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
             className="field mt-3"
-            name="childAssetFile"
-            onChange={(event) => setChildFile(event.currentTarget.files?.[0] ?? null)}
+            onChange={(event) =>
+              handleAssetSelection({
+                file: event.currentTarget.files?.[0] ?? null,
+                setAssetDataUrl: setChildAssetDataUrl,
+                setAssetFile: setChildFile,
+                setAssetStatus: setChildAssetStatus,
+                setIsReading: setIsReadingChildAsset,
+              })
+            }
             required
             type="file"
           />
+          {childAssetStatus ? (
+            <p className="mt-2 text-sm text-[color:var(--ink-soft)]">{childAssetStatus}</p>
+          ) : null}
           <div className="mt-3 flex min-h-36 items-center justify-center rounded-[1.3rem] border border-dashed border-[color:var(--line)] bg-white/80 p-3">
             {childPreview ? (
               <img
@@ -151,7 +228,7 @@ export function SuperAdminTaskAssetForm({
             {(existingTask?.title ?? taskName) || "This task"} already exists.
           </span>
           <span className="mt-1 block text-[color:var(--ink-soft)]">
-            Confirm replacement to override the existing parent and child PNG pair.
+            Confirm replacement to override the existing parent and child task images.
           </span>
           <span className="mt-3 flex items-center gap-2 font-bold">
             <input
@@ -167,10 +244,14 @@ export function SuperAdminTaskAssetForm({
 
       <button
         className="btn btn-primary"
-        disabled={mustConfirmReplace && !replaceExisting}
+        disabled={isSubmitBlocked}
         type="submit"
       >
-        {mustConfirmReplace ? "Replace task assets" : "Save task assets"}
+        {isReadingAnyAsset
+          ? "Preparing images..."
+          : mustConfirmReplace
+            ? "Replace task assets"
+            : "Save task assets"}
       </button>
     </form>
   );

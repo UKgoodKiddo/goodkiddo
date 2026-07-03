@@ -72,8 +72,8 @@ export default async function SuperAdminTasksPage(props: {
           <div className="mt-5 space-y-3 text-sm leading-7 text-[color:var(--ink-soft)]">
             <p>Task name becomes the canonical stored filename, for example `Feed the fish.png`.</p>
             <p>
-              Parent and child uploads can come from normal phone image exports and are converted
-              into matching PNG task assets automatically.
+              Parent and child uploads can come from normal phone image exports. JPG, PNG, and
+              WebP files are accepted, renamed to the task name, and stored automatically.
             </p>
             <p>
               If that task already exists, tick replace to override the current art without touching
