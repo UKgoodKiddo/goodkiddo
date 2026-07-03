@@ -96,7 +96,7 @@ export function SuperAdminTaskAssetForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/70 p-4">
           <span className="block text-sm font-bold text-[color:var(--ink-soft)]">
-            Parent icon
+            Parent icon (JPG, PNG, or WebP)
           </span>
           <input
             accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
@@ -121,7 +121,7 @@ export function SuperAdminTaskAssetForm({
 
         <label className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/70 p-4">
           <span className="block text-sm font-bold text-[color:var(--ink-soft)]">
-            Child task card
+            Child task card (JPG, PNG, or WebP)
           </span>
           <input
             accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"

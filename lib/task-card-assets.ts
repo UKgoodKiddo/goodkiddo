@@ -51,6 +51,7 @@ export const TASK_CARD_ASSET_BUCKET = "task-card-assets";
 export const TASK_CARD_ASSET_MAX_BYTES = 8 * 1024 * 1024;
 
 const DISCOVERABLE_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+const SUPPORTED_TASK_ASSET_UPLOAD_FORMATS = new Set(["jpeg", "png", "webp"]);
 const INVALID_TASK_ASSET_NAME_PATTERN = /[<>:"/\\|?*\u0000-\u001f]/;
 
 async function getSharp() {
@@ -200,20 +201,17 @@ export async function validateTaskAssetUpload(file: File) {
     return false;
   }
 
-  const fileExtension = path.extname(file.name).toLowerCase();
-  const supportedByName = DISCOVERABLE_IMAGE_EXTENSIONS.has(fileExtension);
-  const supportedByMime = file.type.startsWith("image/");
-
-  if (!supportedByName && !supportedByMime) {
-    return false;
-  }
-
   try {
     const inputBuffer = Buffer.from(await file.arrayBuffer());
     const sharp = await getSharp();
     const metadata = await sharp(inputBuffer).metadata();
 
-    return Boolean(metadata.width && metadata.height);
+    return Boolean(
+      metadata.width &&
+        metadata.height &&
+        metadata.format &&
+        SUPPORTED_TASK_ASSET_UPLOAD_FORMATS.has(metadata.format),
+    );
   } catch {
     return false;
   }
@@ -230,11 +228,21 @@ export async function ensureTaskCardAssetBucket() {
   const existingBucket = buckets.find((bucket) => bucket.name === TASK_CARD_ASSET_BUCKET);
 
   if (existingBucket) {
+    const { error: updateError } = await supabase.storage.updateBucket(TASK_CARD_ASSET_BUCKET, {
+      allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
+      fileSizeLimit: TASK_CARD_ASSET_MAX_BYTES,
+      public: true,
+    });
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
     return supabase;
   }
 
   const { error } = await supabase.storage.createBucket(TASK_CARD_ASSET_BUCKET, {
-    allowedMimeTypes: ["image/png"],
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
     fileSizeLimit: TASK_CARD_ASSET_MAX_BYTES,
     public: true,
   });
@@ -355,7 +363,6 @@ export async function uploadTaskAssetPair(params: {
   const [parentBuffer, childBuffer] = await Promise.all([
     sharp(Buffer.from(parentInputBuffer))
       .rotate()
-      .keepMetadata()
       .png({
         adaptiveFiltering: true,
         compressionLevel: 9,
@@ -364,7 +371,6 @@ export async function uploadTaskAssetPair(params: {
       .toBuffer(),
     sharp(Buffer.from(childInputBuffer))
       .rotate()
-      .keepMetadata()
       .png({
         adaptiveFiltering: true,
         compressionLevel: 9,

@@ -44,8 +44,8 @@ export default async function SuperAdminTasksPage(props: {
             <div>
               <h2 className="text-3xl font-extrabold">Add Task Asset</h2>
               <p className="mt-2 text-sm leading-7 text-[color:var(--ink-soft)]">
-                Upload matching task images once and the task wizard plus child task cards will
-                discover them automatically.
+                Upload matching JPG, PNG, or WebP task images once and the task wizard plus child
+                task cards will discover them automatically.
               </p>
             </div>
           </div>
@@ -70,7 +70,7 @@ export default async function SuperAdminTasksPage(props: {
           </div>
 
           <div className="mt-5 space-y-3 text-sm leading-7 text-[color:var(--ink-soft)]">
-            <p>Task name becomes the canonical PNG filename, for example `Feed the fish.png`.</p>
+            <p>Task name becomes the canonical stored filename, for example `Feed the fish.png`.</p>
             <p>
               Parent and child uploads can come from normal phone image exports and are converted
               into matching PNG task assets automatically.
