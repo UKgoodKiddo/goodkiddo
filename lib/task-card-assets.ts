@@ -2,7 +2,6 @@ import "server-only";
 
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
@@ -53,6 +52,11 @@ export const TASK_CARD_ASSET_MAX_BYTES = 8 * 1024 * 1024;
 
 const DISCOVERABLE_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 const INVALID_TASK_ASSET_NAME_PATTERN = /[<>:"/\\|?*\u0000-\u001f]/;
+
+async function getSharp() {
+  const sharpModule = await import("sharp");
+  return sharpModule.default;
+}
 
 function toPublicAssetSrc(absolutePath: string) {
   return `/${path.relative(PUBLIC_ROOT, absolutePath).split(path.sep).join("/")}`;
@@ -206,6 +210,7 @@ export async function validateTaskAssetUpload(file: File) {
 
   try {
     const inputBuffer = Buffer.from(await file.arrayBuffer());
+    const sharp = await getSharp();
     const metadata = await sharp(inputBuffer).metadata();
 
     return Boolean(metadata.width && metadata.height);
@@ -338,6 +343,7 @@ export async function uploadTaskAssetPair(params: {
   parentAssetFile: File;
   taskName: string;
 }) {
+  const sharp = await getSharp();
   const supabase = await ensureTaskCardAssetBucket();
   const fileName = buildCanonicalTaskAssetFileName(params.taskName);
   const parentObjectPath = buildStorageTaskAssetPath("parent", params.category, fileName);
