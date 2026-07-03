@@ -1,8 +1,5 @@
 import "server-only";
 
-import { readdir } from "node:fs/promises";
-import path from "node:path";
-import { cache } from "react";
 import {
   getLooseTaskCardTitle,
   normalizeTaskCardTitle,
@@ -10,6 +7,7 @@ import {
   taskCardTitlesMatch,
   type TaskCardCategoryName,
 } from "@/lib/task-card-utils";
+import { getTaskCardAssetFiles, type TaskCardAssetFileRecord } from "@/lib/task-card-assets";
 
 export type TaskCardAssetRecord = {
   category: TaskCardCategoryName;
@@ -29,60 +27,12 @@ export type TaskCardCatalog = {
   tasks: TaskCardAssetRecord[];
 };
 
-const PUBLIC_ROOT = path.join(process.cwd(), "public");
-const PARENT_TASK_CARD_ROOT = path.join(
-  PUBLIC_ROOT,
-  "goodkiddo",
-  "Task Cards",
-  "Parent UI task cards",
-);
-const CHILD_TASK_CARD_ROOT = path.join(
-  PUBLIC_ROOT,
-  "goodkiddo",
-  "Task Cards",
-  "Child UI task cards",
-);
-const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
-
-function toPublicAssetSrc(absolutePath: string) {
-  return `/${path.relative(PUBLIC_ROOT, absolutePath).split(path.sep).join("/")}`;
-}
-
-async function readTaskCardCategory(
-  rootDirectory: string,
-  category: TaskCardCategoryName,
-) {
-  const categoryDirectory = path.join(rootDirectory, category);
-  const entries = await readdir(categoryDirectory, { withFileTypes: true });
-
-  return entries
-    .filter((entry) => entry.isFile())
-    .filter((entry) => IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
-    .map((entry) => ({
-      assetSrc: toPublicAssetSrc(path.join(categoryDirectory, entry.name)),
-      category,
-      fileName: entry.name,
-      looseTitle: getLooseTaskCardTitle(entry.name),
-      normalizedTitle: normalizeTaskCardTitle(entry.name),
-      title: entry.name.replace(/\.[^.]+$/, ""),
-    }))
-    .sort((left, right) => left.title.localeCompare(right.title));
-}
-
 function resolveMatchingChildAsset(
-  parentAsset: {
-    category: TaskCardCategoryName;
-    looseTitle: string;
-    normalizedTitle: string;
-    title: string;
-  },
-  childAssets: Array<{
-    assetSrc: string;
-    category: TaskCardCategoryName;
-    looseTitle: string;
-    normalizedTitle: string;
-    title: string;
-  }>,
+  parentAsset: Pick<
+    TaskCardAssetFileRecord,
+    "category" | "looseTitle" | "normalizedTitle" | "title"
+  >,
+  childAssets: TaskCardAssetFileRecord[],
 ) {
   return (
     childAssets.find(
@@ -103,23 +53,9 @@ function resolveMatchingChildAsset(
   );
 }
 
-export const getTaskCardCatalog = cache(async (): Promise<TaskCardCatalog> => {
-  const [parentTaskGroups, childTaskGroups] = await Promise.all([
-    Promise.all(
-      TASK_CARD_CATEGORY_ORDER.map((category) =>
-        readTaskCardCategory(PARENT_TASK_CARD_ROOT, category),
-      ),
-    ),
-    Promise.all(
-      TASK_CARD_CATEGORY_ORDER.map((category) =>
-        readTaskCardCategory(CHILD_TASK_CARD_ROOT, category),
-      ),
-    ),
-  ]);
-
-  const childTaskAssets = childTaskGroups.flat();
-  const tasks = parentTaskGroups
-    .flat()
+export async function getTaskCardCatalog(): Promise<TaskCardCatalog> {
+  const { childAssets: childTaskAssets, parentAssets } = await getTaskCardAssetFiles();
+  const tasks = parentAssets
     .map((parentAsset) => {
       const childAsset = resolveMatchingChildAsset(parentAsset, childTaskAssets);
 
@@ -141,7 +77,7 @@ export const getTaskCardCatalog = cache(async (): Promise<TaskCardCatalog> => {
     })),
     tasks,
   };
-});
+}
 
 export function findTaskCardAssetInCatalog(
   title: string,

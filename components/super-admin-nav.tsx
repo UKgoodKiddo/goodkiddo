@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/superadmin", label: "Overview" },
   { href: "/superadmin/boopers", label: "Boopers" },
+  { href: "/superadmin/tasks", label: "Task assets" },
   { href: "/superadmin/hardware", label: "Hardware" },
   { href: "/superadmin/families", label: "Families" },
   { href: "/superadmin/users", label: "Users" },

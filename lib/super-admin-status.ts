@@ -55,6 +55,50 @@ export function getSuperAdminStatusBanner(
         message: "The UID CSV could not be imported. Check the batch number, CSV data, and UID format.",
         tone: "rose" as const,
       };
+    case "task-asset-uploaded": {
+      const taskName =
+        typeof searchParams?.taskName === "string" ? searchParams.taskName : "that task";
+
+      return {
+        message: `Task assets uploaded for ${taskName}. The task wizard will discover it automatically.`,
+        tone: "mint" as const,
+      };
+    }
+    case "task-asset-replaced": {
+      const taskName =
+        typeof searchParams?.taskName === "string" ? searchParams.taskName : "that task";
+
+      return {
+        message: `Task assets replaced for ${taskName}. The updated artwork is now live.`,
+        tone: "mint" as const,
+      };
+    }
+    case "task-asset-exists": {
+      const taskName =
+        typeof searchParams?.taskName === "string" ? searchParams.taskName : "That task";
+      const category =
+        typeof searchParams?.category === "string" ? searchParams.category : "the selected category";
+
+      return {
+        message: `${taskName} already exists in ${category}. Tick replace to overwrite both images.`,
+        tone: "sun" as const,
+      };
+    }
+    case "task-asset-name-invalid":
+      return {
+        message: "Task names cannot use slashes or reserved filename characters.",
+        tone: "rose" as const,
+      };
+    case "task-asset-file-invalid":
+      return {
+        message: "Both task asset uploads must be valid PNG files.",
+        tone: "rose" as const,
+      };
+    case "task-asset-upload-failed":
+      return {
+        message: "The task assets could not be saved. Check the files and try again.",
+        tone: "rose" as const,
+      };
     case "booper-conflict":
       return {
         message: "That booper could not be reassigned cleanly. Review the current family link and try again.",

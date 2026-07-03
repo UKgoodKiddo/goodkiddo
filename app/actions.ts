@@ -8,6 +8,7 @@ import {
   CHILD_AVATAR_PRESET_URLS,
   CHILD_PAGE_ROUTES,
 } from "@/lib/child-ui";
+import { TASK_CARD_CATEGORY_ORDER } from "@/lib/task-card-utils";
 import { getTaskWindowStartForTask } from "@/lib/tasks";
 import {
   createSupabaseAdminClient,
@@ -177,6 +178,14 @@ const importBooperInventorySchema = z.object({
   ndefUrlTemplate: z.string().trim().max(400).optional(),
 });
 
+const uploadTaskAssetSchema = z.object({
+  category: z.enum(TASK_CARD_CATEGORY_ORDER),
+  childAssetFile: z.unknown(),
+  parentAssetFile: z.unknown(),
+  replaceExisting: z.union([z.literal("on"), z.literal("off"), z.literal("")]).optional(),
+  taskName: z.string().trim().min(1).max(80),
+});
+
 const assignInventorySchema = z.object({
   familyId: z.uuid(),
   inventoryId: z.uuid(),
@@ -217,6 +226,10 @@ async function getAvatarUploadHelpers() {
 
 async function getWristbandImportHelpers() {
   return import("@/lib/wristband-import");
+}
+
+async function getTaskAssetHelpers() {
+  return import("@/lib/task-card-assets");
 }
 
 async function getNfcHelpers() {
@@ -355,6 +368,7 @@ function sanitizeReturnToPath(value: string | null | undefined) {
 function revalidateSuperAdminWorkspace() {
   revalidatePath("/superadmin");
   revalidatePath("/superadmin/boopers");
+  revalidatePath("/superadmin/tasks");
   revalidatePath("/superadmin/families");
   revalidatePath("/superadmin/users");
   revalidatePath("/superadmin/audit");
@@ -2130,6 +2144,108 @@ export async function importBooperInventoryAction(formData: FormData) {
   revalidateSuperAdminWorkspace();
   redirect(
     `/superadmin/boopers?status=uid-imported&added=${addedCount}&duplicates=${duplicateCount}&skipped=${skippedCount}&invalid=${invalidCount}`,
+  );
+}
+
+export async function uploadTaskAssetAction(formData: FormData) {
+  const parsed = uploadTaskAssetSchema.safeParse({
+    category: formData.get("category"),
+    childAssetFile: formData.get("childAssetFile"),
+    parentAssetFile: formData.get("parentAssetFile"),
+    replaceExisting: formData.get("replaceExisting"),
+    taskName: formData.get("taskName"),
+  });
+
+  if (!parsed.success) {
+    redirect("/superadmin/tasks?status=task-asset-upload-failed");
+  }
+
+  const parentAssetFile = parsed.data.parentAssetFile;
+  const childAssetFile = parsed.data.childAssetFile;
+
+  if (
+    !isUploadedFile(parentAssetFile) ||
+    parentAssetFile.size <= 0 ||
+    !isUploadedFile(childAssetFile) ||
+    childAssetFile.size <= 0
+  ) {
+    redirect("/superadmin/tasks?status=task-asset-upload-failed");
+  }
+
+  const {
+    buildCanonicalTaskAssetFileName,
+    canonicalizeTaskAssetTitle,
+    isPngTaskAssetUpload,
+    taskAssetExists,
+    uploadTaskAssetPair,
+  } = await getTaskAssetHelpers();
+  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
+  const { user } = await requireSuperAdmin();
+
+  let canonicalTaskName: string;
+
+  try {
+    canonicalTaskName = canonicalizeTaskAssetTitle(parsed.data.taskName);
+  } catch {
+    redirect("/superadmin/tasks?status=task-asset-name-invalid");
+  }
+
+  const [parentIsPng, childIsPng] = await Promise.all([
+    isPngTaskAssetUpload(parentAssetFile),
+    isPngTaskAssetUpload(childAssetFile),
+  ]);
+
+  if (!parentIsPng || !childIsPng) {
+    redirect("/superadmin/tasks?status=task-asset-file-invalid");
+  }
+
+  const fileName = buildCanonicalTaskAssetFileName(canonicalTaskName);
+  const alreadyExists = await taskAssetExists({
+    category: parsed.data.category,
+    taskName: canonicalTaskName,
+  });
+  const replaceExisting = parsed.data.replaceExisting === "on";
+
+  if (alreadyExists && !replaceExisting) {
+    redirect(
+      `/superadmin/tasks?status=task-asset-exists&taskName=${encodeURIComponent(
+        canonicalTaskName,
+      )}&category=${encodeURIComponent(parsed.data.category)}`,
+    );
+  }
+
+  try {
+    await uploadTaskAssetPair({
+      category: parsed.data.category,
+      childAssetFile,
+      parentAssetFile,
+      taskName: canonicalTaskName,
+    });
+  } catch {
+    redirect("/superadmin/tasks?status=task-asset-upload-failed");
+  }
+
+  await writeSuperAdminAuditLog({
+    action: replaceExisting ? "task_asset_replaced" : "task_asset_uploaded",
+    actorUserId: user.id,
+    metadata: {
+      category: parsed.data.category,
+      childFileName: childAssetFile.name,
+      fileName,
+      parentFileName: parentAssetFile.name,
+      taskName: canonicalTaskName,
+    },
+    targetId: `${parsed.data.category}:${canonicalTaskName}`,
+    targetType: "task_assets",
+  });
+
+  revalidateParentWorkspace();
+  revalidateChildWorkspace();
+  revalidateSuperAdminWorkspace();
+  redirect(
+    `/superadmin/tasks?status=${
+      replaceExisting ? "task-asset-replaced" : "task-asset-uploaded"
+    }&taskName=${encodeURIComponent(canonicalTaskName)}`,
   );
 }
 

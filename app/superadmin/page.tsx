@@ -63,6 +63,24 @@ export default async function SuperAdminPage(props: {
         <ShellCard className="rounded-[2rem] p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
+              <h2 className="text-2xl font-extrabold">Add task asset</h2>
+              <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
+                Upload matching parent and child PNGs so new tasks appear automatically in the task wizard and child UI.
+              </p>
+            </div>
+            <Link className="text-sm font-black text-[color:var(--primary)]" href="/superadmin/tasks">
+              Open task assets
+            </Link>
+          </div>
+
+          <div className="mt-6 rounded-[1.5rem] bg-[linear-gradient(135deg,#fff1e8,#ffffff)] px-5 py-4 text-sm leading-7 text-[color:var(--ink-soft)]">
+            One task name, two PNG uploads, zero manual file copying.
+          </div>
+        </ShellCard>
+
+        <ShellCard className="rounded-[2rem] p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
               <h2 className="text-2xl font-extrabold">Family overview</h2>
               <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
                 Family-level summaries only. No child rows are queried or shown here.
