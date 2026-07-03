@@ -59,9 +59,41 @@ const TASK_ASSET_UPLOAD_FORMATS = {
 } as const;
 type SupportedTaskAssetUploadFormat = keyof typeof TASK_ASSET_UPLOAD_FORMATS;
 
-async function getSharp() {
-  const sharpModule = await import("sharp");
-  return sharpModule.default;
+function sniffTaskAssetUploadFormat(
+  buffer: Buffer,
+): SupportedTaskAssetUploadFormat | null {
+  if (
+    buffer.length >= 3 &&
+    buffer[0] === 0xff &&
+    buffer[1] === 0xd8 &&
+    buffer[2] === 0xff
+  ) {
+    return "jpeg";
+  }
+
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return "png";
+  }
+
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return "webp";
+  }
+
+  return null;
 }
 
 function toPublicAssetSrc(absolutePath: string) {
@@ -212,11 +244,9 @@ async function inspectTaskAssetUpload(file: File) {
 
   try {
     const inputBuffer = Buffer.from(await file.arrayBuffer());
-    const sharp = await getSharp();
-    const metadata = await sharp(inputBuffer).metadata();
-    const format = metadata.format as SupportedTaskAssetUploadFormat | undefined;
+    const format = sniffTaskAssetUploadFormat(inputBuffer);
 
-    if (!metadata.width || !metadata.height || !format || !(format in TASK_ASSET_UPLOAD_FORMATS)) {
+    if (!format || !(format in TASK_ASSET_UPLOAD_FORMATS)) {
       return null;
     }
 
