@@ -283,6 +283,11 @@ function isUploadedFile(
   );
 }
 
+function getFormStringValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : undefined;
+}
+
 function buildFileNameFromOriginalName(originalName: string | undefined, fallbackStem: string) {
   const trimmed = originalName?.trim();
 
@@ -2204,18 +2209,26 @@ export async function importBooperInventoryAction(formData: FormData) {
 
 export async function uploadTaskAssetAction(formData: FormData) {
   const parsed = uploadTaskAssetSchema.safeParse({
-    category: formData.get("category"),
-    childAssetDataUrl: formData.get("childAssetDataUrl"),
-    childAssetOriginalName: formData.get("childAssetOriginalName"),
-    parentAssetDataUrl: formData.get("parentAssetDataUrl"),
-    parentAssetOriginalName: formData.get("parentAssetOriginalName"),
-    replaceExisting: formData.get("replaceExisting"),
-    taskName: formData.get("taskName"),
+    category: getFormStringValue(formData, "category"),
+    childAssetDataUrl: getFormStringValue(formData, "childAssetDataUrl"),
+    childAssetOriginalName: getFormStringValue(formData, "childAssetOriginalName"),
+    parentAssetDataUrl: getFormStringValue(formData, "parentAssetDataUrl"),
+    parentAssetOriginalName: getFormStringValue(formData, "parentAssetOriginalName"),
+    replaceExisting: getFormStringValue(formData, "replaceExisting"),
+    taskName: getFormStringValue(formData, "taskName"),
   });
 
   if (!parsed.success) {
-    console.error("uploadTaskAssetAction: schema parse failed", parsed.error.flatten());
-    redirect("/superadmin/tasks?status=task-asset-upload-failed&details=schema-parse-failed");
+    const flattened = parsed.error.flatten();
+    const firstFieldError =
+      Object.entries(flattened.fieldErrors).find(([, errors]) => errors?.length)?.[1]?.[0] ??
+      flattened.formErrors[0] ??
+      "schema-parse-failed";
+
+    console.error("uploadTaskAssetAction: schema parse failed", flattened);
+    redirect(
+      `/superadmin/tasks?status=task-asset-upload-failed&details=${encodeURIComponent(firstFieldError)}`,
+    );
   }
 
   const parentAssetFile = fileFromDataUrl(
