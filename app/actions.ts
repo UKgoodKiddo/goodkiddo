@@ -16,6 +16,7 @@ import {
   createSupabaseServerClient,
 } from "@/lib/supabase/server";
 import type { ActionState, TaskWeekday } from "@/lib/types";
+import { areUidsEqual, normalizeUid } from "@/lib/uid";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 
 const signInSchema = z.object({
@@ -1453,12 +1454,18 @@ export async function pairBooperAction(formData: FormData) {
     }
   }
 
-  const { data: inventoryBooper } = await admin
-    .from("booper_inventory")
-    .select("id, batch_number, family_id, status, uid")
-    .eq("uid", booper.nfc_uid)
-    .eq("family_id", family.id)
-    .maybeSingle();
+  const { inventoryBooper } = await findInventoryBooperByUid<{
+    batch_number: string;
+    family_id: string | null;
+    id: string;
+    status: "available" | "assigned" | "lost" | "disabled" | "retired";
+    uid: string;
+  }>({
+    admin,
+    familyId: family.id,
+    select: "id, batch_number, family_id, status, uid",
+    uid: booper.nfc_uid,
+  });
 
   if (!inventoryBooper) {
     await admin.from("boopers").delete().eq("id", booper.id);
@@ -1589,12 +1596,19 @@ export async function updateBooperStatusAction(formData: FormData) {
     redirect("/parent/boopers?status=action-failed");
   }
 
-  const { data: inventoryBooper } = await admin
-    .from("booper_inventory")
-    .select("id, batch_number, child_profile_id, family_id, status, uid")
-    .eq("uid", booper.nfc_uid)
-    .eq("family_id", family.id)
-    .maybeSingle();
+  const { inventoryBooper } = await findInventoryBooperByUid<{
+    batch_number: string;
+    child_profile_id: string | null;
+    family_id: string | null;
+    id: string;
+    status: "available" | "assigned" | "lost" | "disabled" | "retired";
+    uid: string;
+  }>({
+    admin,
+    familyId: family.id,
+    select: "id, batch_number, child_profile_id, family_id, status, uid",
+    uid: booper.nfc_uid,
+  });
 
   if (!inventoryBooper) {
     await admin.from("boopers").delete().eq("id", booper.id);
@@ -1875,6 +1889,62 @@ function renderInventoryTemplate(template: string, uid: string) {
     .trim();
 }
 
+async function findInventoryBooperByUid<T extends { uid: string | null }>(params: {
+  admin: ReturnType<typeof createSupabaseAdminClient>;
+  familyId?: string | null;
+  select: string;
+  uid: string;
+}) {
+  let query = params.admin.from("booper_inventory").select(params.select);
+
+  if (params.familyId) {
+    query = query.eq("family_id", params.familyId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return { error, inventoryBooper: null };
+  }
+
+  const normalizedUid = normalizeUid(params.uid);
+  const inventoryBooper =
+    (data ?? []).find((row) => {
+      if (!row || typeof row !== "object" || !("uid" in row)) {
+        return false;
+      }
+
+      const rowUid = (row as { uid: string | null }).uid;
+      return areUidsEqual(rowUid, normalizedUid);
+    }) ?? null;
+
+  return { error: null, inventoryBooper: inventoryBooper as T | null };
+}
+
+async function findBoopersByUid<T extends { nfc_uid: string | null }>(params: {
+  admin: ReturnType<typeof createSupabaseAdminClient>;
+  select: string;
+  uid: string;
+}) {
+  const { data, error } = await params.admin.from("boopers").select(params.select);
+
+  if (error) {
+    return { boopers: [] as T[], error };
+  }
+
+  const normalizedUid = normalizeUid(params.uid);
+  const boopers = (data ?? []).filter((row) => {
+    if (!row || typeof row !== "object" || !("nfc_uid" in row)) {
+      return false;
+    }
+
+    const rowUid = (row as { nfc_uid: string | null }).nfc_uid;
+    return areUidsEqual(rowUid, normalizedUid);
+  });
+
+  return { boopers: boopers as unknown as T[], error: null };
+}
+
 function mapInventoryStatusToBooperStatus(
   status: "available" | "assigned" | "lost" | "disabled" | "retired",
 ) {
@@ -1920,10 +1990,15 @@ async function syncInventoryWithParentBooper(params: {
   const label = getInventoryBooperLabel(batchNumber, uid);
   const booperStatus = mapInventoryStatusToBooperStatus(status);
 
-  const { data: existingBoopers, error: existingError } = await admin
-    .from("boopers")
-    .select("id, family_id")
-    .eq("nfc_uid", uid);
+  const { boopers: existingBoopers, error: existingError } = await findBoopersByUid<{
+    family_id: string | null;
+    id: string;
+    nfc_uid: string | null;
+  }>({
+    admin,
+    select: "id, family_id, nfc_uid",
+    uid,
+  });
 
   if (existingError) {
     return { error: existingError };
@@ -1931,7 +2006,10 @@ async function syncInventoryWithParentBooper(params: {
 
   if (!familyId || status === "retired") {
     if (existingBoopers?.length) {
-      const { error } = await admin.from("boopers").delete().eq("nfc_uid", uid);
+      const booperIds = existingBoopers
+        .map((booper) => ("id" in booper ? String(booper.id) : null))
+        .filter((booperId): booperId is string => Boolean(booperId));
+      const { error } = await admin.from("boopers").delete().in("id", booperIds);
 
       if (error) {
         return { error };
@@ -1957,7 +2035,10 @@ async function syncInventoryWithParentBooper(params: {
   }
 
   if (existingBoopers?.length) {
-    const { error } = await admin.from("boopers").delete().eq("nfc_uid", uid);
+    const booperIds = existingBoopers
+      .map((booper) => ("id" in booper ? String(booper.id) : null))
+      .filter((booperId): booperId is string => Boolean(booperId));
+    const { error } = await admin.from("boopers").delete().in("id", booperIds);
 
     if (error) {
       return { error };
@@ -1991,11 +2072,25 @@ async function assignAvailableBooperToChild(params: {
     return { status: "invalid" as const };
   }
 
-  const { data: inventoryBooper } = await admin
-    .from("booper_inventory")
-    .select("*")
-    .eq("uid", nfcRead.nfc_uid)
-    .maybeSingle();
+  const { inventoryBooper } = await findInventoryBooperByUid<{
+    assigned_at: string | null;
+    batch_number: string;
+    child_profile_id: string | null;
+    family_id: string | null;
+    id: string;
+    imported_at: string;
+    imported_by: string;
+    ndef_text: string | null;
+    ndef_url: string | null;
+    notes: string | null;
+    serial_label: string;
+    status: "available" | "assigned" | "lost" | "disabled" | "retired";
+    uid: string;
+  }>({
+    admin,
+    select: "*",
+    uid: nfcRead.nfc_uid,
+  });
 
   if (!inventoryBooper) {
     return { status: "not-found" as const };
@@ -2146,16 +2241,9 @@ export async function importBooperInventoryAction(formData: FormData) {
     redirect("/superadmin/boopers?status=uid-import-failed");
   }
 
-  const { data: existingRows } = await admin
-    .from("booper_inventory")
-    .select("uid")
-    .in(
-      "uid",
-      validRows.map((row) => row.uid),
-    );
-
-  const existingUidSet = new Set((existingRows ?? []).map((row) => row.uid));
-  const rowsToInsert = validRows.filter((row) => !existingUidSet.has(row.uid));
+  const { data: existingRows } = await admin.from("booper_inventory").select("uid");
+  const existingUidSet = new Set((existingRows ?? []).map((row) => normalizeUid(row.uid)));
+  const rowsToInsert = validRows.filter((row) => !existingUidSet.has(normalizeUid(row.uid)));
   const duplicateCount = validRows.length - rowsToInsert.length;
   const addedCount = rowsToInsert.length;
 

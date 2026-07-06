@@ -1,6 +1,7 @@
 import "server-only";
 
 import * as XLSX from "xlsx";
+import { normalizeUid } from "@/lib/uid";
 
 export type ParsedBooperInventoryRow = {
   label: string | null;
@@ -48,7 +49,7 @@ function normalizeText(value: unknown) {
 }
 
 export function normalizeImportedUid(value: string) {
-  return value.replace(/\s+/g, "").toUpperCase();
+  return normalizeUid(value);
 }
 
 export function isValidImportedUid(value: string) {

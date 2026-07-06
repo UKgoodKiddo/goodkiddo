@@ -2,10 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types";
-
-function normalizeUid(value: string) {
-  return value.trim().toUpperCase();
-}
+import { areUidsEqual, normalizeUid } from "@/lib/uid";
 
 export async function readNfcUid(manualUid?: string) {
   return {
@@ -22,11 +19,36 @@ export async function pairBooperToChild(
   child_profile_id: string | null,
 ) {
   const normalizedUid = normalizeUid(nfc_uid);
+  const { data: boopers, error: fetchError } = await supabase
+    .from("boopers")
+    .select("id, nfc_uid, child_profile_id");
+
+  if (fetchError) {
+    return {
+      booper: null,
+      error: fetchError,
+      nfc_uid: normalizedUid,
+      placeholder: true,
+    };
+  }
+
+  const matchingBooper = (boopers ?? []).find((booper) =>
+    areUidsEqual(booper.nfc_uid, normalizedUid),
+  );
+
+  if (!matchingBooper) {
+    return {
+      booper: null,
+      error: new Error("No Booper matched this UID."),
+      nfc_uid: normalizedUid,
+      placeholder: true,
+    };
+  }
 
   const { data, error } = await supabase
     .from("boopers")
     .update({ child_profile_id })
-    .eq("nfc_uid", normalizedUid)
+    .eq("id", matchingBooper.id)
     .select("id, nfc_uid, child_profile_id")
     .single();
 
@@ -47,13 +69,14 @@ export async function awardBoopFromNfc(
   family_id: string,
 ) {
   const normalizedUid = normalizeUid(nfc_uid);
-
-  const { data: inventoryBooper, error: booperError } = await supabase
+  const { data: inventoryBoopers, error: booperError } = await supabase
     .from("booper_inventory")
-    .select("id, child_profile_id, status")
-    .eq("family_id", family_id)
-    .eq("uid", normalizedUid)
-    .maybeSingle();
+    .select("id, child_profile_id, status, uid")
+    .eq("family_id", family_id);
+
+  const inventoryBooper = (inventoryBoopers ?? []).find((booper) =>
+    areUidsEqual(booper.uid, normalizedUid),
+  );
 
   if (
     booperError ||

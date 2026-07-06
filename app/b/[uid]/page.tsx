@@ -1,14 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getParentViewer } from "@/lib/auth";
 import { readChildModeSelection } from "@/lib/child-mode";
-
-function normalizeBooperUid(value: string) {
-  return value.trim().toUpperCase();
-}
-
-function isValidBooperUid(value: string) {
-  return /^[A-Z0-9:_-]{4,120}$/.test(value);
-}
+import { isNormalizedUidValid, normalizeUid } from "@/lib/uid";
 
 export default async function BooperTapPage(props: {
   params: Promise<{ uid: string }>;
@@ -19,9 +12,9 @@ export default async function BooperTapPage(props: {
     readChildModeSelection(),
   ]);
 
-  const normalizedUid = normalizeBooperUid(uid);
+  const normalizedUid = normalizeUid(uid);
 
-  if (!isValidBooperUid(normalizedUid)) {
+  if (!isNormalizedUidValid(normalizedUid)) {
     notFound();
   }
 

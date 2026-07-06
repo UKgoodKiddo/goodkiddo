@@ -49,7 +49,7 @@ export function NfcUidCapture({
   }, []);
 
   function updateUid(nextUid: string) {
-    setUid(nextUid.toUpperCase());
+    setUid(nextUid);
   }
 
   function setFeedback(nextTone: ScanTone, nextMessage: string) {
@@ -76,7 +76,7 @@ export function NfcUidCapture({
     try {
       const reader = new Reader();
       reader.onreading = (event) => {
-        const scannedUid = event.serialNumber.trim().toUpperCase();
+        const scannedUid = event.serialNumber?.trim() ?? "";
 
         if (!scannedUid) {
           setIsScanning(false);

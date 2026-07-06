@@ -30,7 +30,7 @@ export default async function ParentBoopersPage(props: {
   const banner = getParentStatusBanner(bannerCode);
   const prefilledBooperUid =
     typeof searchParams.booperUid === "string"
-      ? searchParams.booperUid.trim().toUpperCase()
+      ? searchParams.booperUid.trim()
       : "";
   const booperCountByChildId = new Map<string, number>();
 
