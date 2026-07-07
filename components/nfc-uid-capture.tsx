@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -20,19 +21,27 @@ type WebNfcWindow = Window & {
 export function NfcUidCapture({
   autoSubmit = false,
   buttonLabel,
+  buttonChildren,
+  buttonClassName,
   defaultValue = "",
   helperText = "Scan with a compatible device, or type the supplier UID manually.",
   inputLabel = "Booper UID",
   inputName,
   required = false,
+  showInput = true,
+  showMessage = true,
 }: {
   autoSubmit?: boolean;
   buttonLabel: string;
+  buttonChildren?: ReactNode;
+  buttonClassName?: string;
   defaultValue?: string;
   helperText?: string;
   inputLabel?: string;
   inputName: string;
   required?: boolean;
+  showInput?: boolean;
+  showMessage?: boolean;
 }) {
   const fieldId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -155,45 +164,59 @@ export function NfcUidCapture({
     <div className="grid gap-3">
       <div className="flex flex-wrap gap-2">
         <button
-          className="btn btn-secondary"
+          className={cn("btn btn-secondary", buttonClassName)}
           onClick={() => void startScan()}
           type="button"
         >
-          {isScanning ? "Waiting for wristband..." : buttonLabel}
+          {isScanning
+            ? "Waiting for wristband..."
+            : buttonChildren ?? buttonLabel}
         </button>
       </div>
 
-      <label className="grid gap-2" htmlFor={fieldId}>
-        <span className="text-sm font-bold text-[color:var(--ink-soft)]">
-          {inputLabel}
-        </span>
+      {showInput ? (
+        <label className="grid gap-2" htmlFor={fieldId}>
+          <span className="text-sm font-bold text-[color:var(--ink-soft)]">
+            {inputLabel}
+          </span>
+          <input
+            autoCapitalize="characters"
+            autoCorrect="off"
+            className="field"
+            id={fieldId}
+            name={inputName}
+            onChange={(event) => updateUid(event.target.value)}
+            placeholder="Scanned UID appears here"
+            ref={inputRef}
+            required={required}
+            spellCheck={false}
+            value={uid}
+          />
+        </label>
+      ) : (
         <input
-          autoCapitalize="characters"
-          autoCorrect="off"
-          className="field"
-          id={fieldId}
           name={inputName}
-          onChange={(event) => updateUid(event.target.value)}
-          placeholder="Scanned UID appears here"
           ref={inputRef}
           required={required}
-          spellCheck={false}
+          type="hidden"
           value={uid}
         />
-      </label>
+      )}
 
-      <p
-        className={cn(
-          "text-sm leading-6",
-          tone === "error"
-            ? "text-rose-700"
-            : tone === "success"
-              ? "text-[color:var(--secondary)]"
-              : "text-[color:var(--ink-soft)]",
-        )}
-      >
-        {message}
-      </p>
+      {showMessage || tone === "error" ? (
+        <p
+          className={cn(
+            "text-sm leading-6",
+            tone === "error"
+              ? "text-rose-700"
+              : tone === "success"
+                ? "text-[color:var(--secondary)]"
+                : "text-[color:var(--ink-soft)]",
+          )}
+        >
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }

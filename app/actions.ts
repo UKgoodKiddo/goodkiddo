@@ -144,6 +144,12 @@ export type SubmitTaskCompletionInlineState = {
   status: "already-submitted" | "error" | "idle" | "submitted";
 };
 
+export type CollectWaitingBoopsInlineState = {
+  claimedCount?: number;
+  claimedTotal?: number;
+  status: "error" | "idle" | "no-boops-waiting" | "submitted" | "wrong-booper";
+};
+
 const reviewTaskCompletionSchema = z.object({
   completionId: z.uuid(),
 });
@@ -1260,6 +1266,76 @@ export async function claimPendingBoopsAction(formData: FormData) {
   redirect(buildChildStatusPath(returnTo, "boops-collected"));
 }
 
+async function collectWaitingBoopsForParent(params: {
+  actorUserId: string;
+  admin: ReturnType<typeof createSupabaseAdminClient>;
+  childProfileId: string;
+  familyId: string;
+  nfcUid: string;
+}) {
+  const { actorUserId, admin, childProfileId, familyId, nfcUid } = params;
+  const { data: child } = await admin
+    .from("child_profiles")
+    .select("id, display_name")
+    .eq("id", childProfileId)
+    .eq("family_id", familyId)
+    .maybeSingle();
+
+  if (!child) {
+    return { status: "error" as const };
+  }
+
+  const { readNfcUid } = await getNfcHelpers();
+  const nfcRead = await readNfcUid(nfcUid);
+
+  if (!nfcRead.nfc_uid) {
+    return { status: "error" as const };
+  }
+
+  const { data, error } = await admin.rpc("claim_pending_boop_awards", {
+    target_booper_uid: nfcRead.nfc_uid,
+    target_child_profile_id: child.id,
+    target_family_id: familyId,
+  });
+
+  if (error) {
+    return {
+      status: error.message.toLowerCase().includes("assigned booper")
+        ? ("wrong-booper" as const)
+        : ("error" as const),
+    };
+  }
+
+  const claimResult = data?.[0];
+
+  if (!claimResult || claimResult.claimed_count === 0) {
+    return { status: "no-boops-waiting" as const };
+  }
+
+  const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
+  await writeSuperAdminAuditLog({
+    action: "pending_boops_collected_by_parent",
+    actorUserId,
+    metadata: {
+      childDisplayName: child.display_name,
+      childProfileId: child.id,
+      claimedCount: claimResult.claimed_count,
+      claimedTotal: claimResult.claimed_total,
+      familyId,
+      uid: nfcRead.nfc_uid,
+    },
+    targetId: child.id,
+    targetType: "child_profiles",
+  });
+
+  return {
+    childDisplayName: child.display_name,
+    claimedCount: claimResult.claimed_count,
+    claimedTotal: claimResult.claimed_total,
+    status: "submitted" as const,
+  };
+}
+
 export async function collectWaitingBoopsForChildAction(formData: FormData) {
   const parsed = parentClaimPendingBoopsSchema.safeParse({
     childProfileId: formData.get("childProfileId"),
@@ -1277,63 +1353,80 @@ export async function collectWaitingBoopsForChildAction(formData: FormData) {
   }
 
   const admin = createSupabaseAdminClient();
-  const { data: child } = await admin
-    .from("child_profiles")
-    .select("id, display_name")
-    .eq("id", parsed.data.childProfileId)
-    .eq("family_id", family.id)
-    .maybeSingle();
-
-  if (!child) {
-    redirect("/parent/boopers?status=action-failed");
-  }
-
-  const { readNfcUid } = await getNfcHelpers();
-  const nfcRead = await readNfcUid(parsed.data.nfcUid);
-
-  if (!nfcRead.nfc_uid) {
-    redirect("/parent/boopers?status=action-failed");
-  }
-
-  const { data, error } = await admin.rpc("claim_pending_boop_awards", {
-    target_booper_uid: nfcRead.nfc_uid,
-    target_child_profile_id: child.id,
-    target_family_id: family.id,
+  const result = await collectWaitingBoopsForParent({
+    actorUserId: user.id,
+    admin,
+    childProfileId: parsed.data.childProfileId,
+    familyId: family.id,
+    nfcUid: parsed.data.nfcUid,
   });
 
-  if (error) {
-    redirect(
-      error.message.toLowerCase().includes("assigned booper")
-        ? "/parent/boopers?status=wrong-booper"
-        : "/parent/boopers?status=action-failed",
-    );
+  if (result.status === "wrong-booper") {
+    redirect("/parent/boopers?status=wrong-booper");
   }
 
-  const claimResult = data?.[0];
-
-  if (!claimResult || claimResult.claimed_count === 0) {
+  if (result.status === "no-boops-waiting") {
     redirect("/parent/boopers?status=no-boops-waiting");
   }
 
-  const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
-  await writeSuperAdminAuditLog({
-    action: "pending_boops_collected_by_parent",
-    actorUserId: user.id,
-    metadata: {
-      childDisplayName: child.display_name,
-      childProfileId: child.id,
-      claimedCount: claimResult.claimed_count,
-      claimedTotal: claimResult.claimed_total,
-      familyId: family.id,
-      uid: nfcRead.nfc_uid,
-    },
-    targetId: child.id,
-    targetType: "child_profiles",
-  });
+  if (result.status !== "submitted") {
+    redirect("/parent/boopers?status=action-failed");
+  }
 
   revalidateParentWorkspace();
   revalidateChildWorkspace();
   redirect("/parent/boopers?status=boops-collected-parent");
+}
+
+export async function collectWaitingBoopsForChildInlineAction(
+  _previousState: CollectWaitingBoopsInlineState,
+  formData: FormData,
+): Promise<CollectWaitingBoopsInlineState> {
+  const parsed = parentClaimPendingBoopsSchema.safeParse({
+    childProfileId: formData.get("childProfileId"),
+    nfcUid: formData.get("nfcUid"),
+  });
+
+  if (!parsed.success) {
+    return { status: "error" };
+  }
+
+  let family;
+  let user;
+
+  try {
+    const context = await getParentContextOrRedirect();
+    family = context.family;
+    user = context.user;
+  } catch {
+    return { status: "error" };
+  }
+
+  if (!family) {
+    return { status: "error" };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const result = await collectWaitingBoopsForParent({
+    actorUserId: user.id,
+    admin,
+    childProfileId: parsed.data.childProfileId,
+    familyId: family.id,
+    nfcUid: parsed.data.nfcUid,
+  });
+
+  if (result.status !== "submitted") {
+    return { status: result.status };
+  }
+
+  revalidateParentWorkspace();
+  revalidateChildWorkspace();
+
+  return {
+    claimedCount: result.claimedCount,
+    claimedTotal: result.claimedTotal,
+    status: "submitted",
+  };
 }
 
 export async function updateChildAvatarPresetAction(formData: FormData) {

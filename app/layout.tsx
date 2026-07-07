@@ -29,6 +29,11 @@ export const metadata: Metadata = {
     title: "goodKiddo",
     statusBarStyle: "default",
   },
+  icons: {
+    apple: "/apple-icon.png",
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export const viewport: Viewport = {

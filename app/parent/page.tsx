@@ -168,9 +168,9 @@ export default async function ParentPage(props: {
                   {childSnapshotCards.map((child) => (
                     <Link
                       key={child.id}
-                      aria-label={`Open ${child.name}'s child profile`}
+                      aria-label={`Collect waiting boops for ${child.name}`}
                       className="flex min-h-[10.75rem] w-full flex-col rounded-[1.9rem] border border-[rgba(31,71,178,0.12)] bg-white p-4 text-left shadow-[0_18px_38px_rgba(31,71,178,0.08)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2"
-                      href={`/parent/children#child-${child.id}`}
+                      href={`/parent/collect/${child.id}`}
                     >
                       <div className="grid grid-cols-[2.55rem_minmax(0,1fr)] items-start gap-3">
                         {child.avatarUrl ? (

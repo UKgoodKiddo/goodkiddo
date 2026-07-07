@@ -411,6 +411,96 @@ textarea {
   vertical-align: middle;
 }
 
+.parent-collect-star-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.parent-collect-star-button:hover {
+  transform: none;
+}
+
+.parent-collect-star-button img {
+  filter: drop-shadow(0 20px 34px rgba(20, 86, 216, 0.18));
+}
+
+.parent-collect-star-image {
+  display: block;
+  width: 100%;
+  max-width: min(100%, 34rem);
+  margin-inline: auto;
+}
+
+.parent-collect-success-overlay {
+  background:
+    radial-gradient(circle at top left, rgba(255, 213, 63, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(20, 86, 216, 0.1), transparent 24%),
+    rgba(255, 255, 255, 0.98);
+}
+
+.parent-collect-confetti {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.parent-collect-confetti-piece {
+  position: absolute;
+  top: -10vh;
+  left: var(--collect-confetti-left);
+  width: 12px;
+  height: 24px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: rotate(var(--collect-confetti-rotation));
+  background: linear-gradient(180deg, #ffda51 0%, #ff6b6b 100%);
+}
+
+.parent-collect-confetti-piece:nth-child(2n) {
+  background: linear-gradient(180deg, #57b7ff 0%, #8768ff 100%);
+}
+
+.parent-collect-confetti-piece:nth-child(3n) {
+  background: linear-gradient(180deg, #58e1aa 0%, #19b38f 100%);
+}
+
+.parent-collect-confetti-piece:nth-child(4n) {
+  background: linear-gradient(180deg, #ff9c4b 0%, #ffd84f 100%);
+}
+
+.parent-collect-confetti[data-active="true"] .parent-collect-confetti-piece {
+  animation: parent-collect-confetti-fall 1240ms cubic-bezier(0.18, 0.84, 0.42, 1)
+    forwards;
+  animation-delay: var(--collect-confetti-delay);
+}
+
+@keyframes parent-collect-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-4vh) scale(0.7) rotate(var(--collect-confetti-rotation));
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translateY(112vh)
+      translateX(-18px)
+      scale(1)
+      rotate(calc(var(--collect-confetti-rotation) + 220deg));
+  }
+}
+
 .child-home-collapsible {
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 2rem;
