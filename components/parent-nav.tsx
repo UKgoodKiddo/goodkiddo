@@ -13,7 +13,6 @@ const navItems = [
   { href: "/parent/tasks", label: "Tasks" },
   { href: "/parent/approvals", label: "Approvals" },
   { href: "/parent/rewards", label: "Rewards" },
-  { href: "/parent/boopers", label: "Boopers" },
   { href: "/parent/activity", label: "Activity" },
   { href: "/parent/child-mode", label: "Child mode" },
   { href: "/parent/settings", label: "Settings" },

@@ -1,8 +1,10 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
+  assignBooperToChildAction,
   createChildProfileAction,
   deleteChildProfileAction,
+  updateBooperStatusAction,
   updateChildProfileAction,
 } from "@/app/actions";
 import { Banner } from "@/components/banner";
@@ -28,7 +30,13 @@ export default async function ParentChildrenPage(props: {
   const bannerCode =
     typeof searchParams.status === "string" ? searchParams.status : undefined;
   const banner = getParentStatusBanner(bannerCode);
+  const statusChildId =
+    typeof searchParams.childId === "string" ? searchParams.childId : undefined;
   const pendingByChildId = new Map<string, number>();
+  const boopersByChildId = new Map<
+    string,
+    typeof dashboard.boopers
+  >();
 
   for (const award of dashboard.pendingBoopAwards) {
     pendingByChildId.set(
@@ -37,9 +45,37 @@ export default async function ParentChildrenPage(props: {
     );
   }
 
+  for (const booper of dashboard.boopers) {
+    if (!booper.child_profile_id) {
+      continue;
+    }
+
+    const existing = boopersByChildId.get(booper.child_profile_id) ?? [];
+    existing.push(booper);
+    boopersByChildId.set(booper.child_profile_id, existing);
+  }
+
+  const booperAssignmentMessage =
+    bannerCode === "booper-assigned" && statusChildId
+      ? `Booper successfully assigned to ${
+          dashboard.children.find((child) => child.id === statusChildId)?.display_name ?? "child"
+        }`
+      : bannerCode &&
+          statusChildId &&
+          ["action-failed", "booper-not-available", "booper-not-imported"].includes(bannerCode)
+        ? "Booper failed to assign, please try again."
+        : null;
+
   return (
     <main className="flex flex-1 flex-col gap-6">
       {banner ? <Banner message={banner.message} tone={banner.tone} /> : null}
+      {booperAssignmentMessage ? (
+        <ShellCard className="rounded-[1.8rem] p-5">
+          <p className="text-sm font-bold text-[color:var(--foreground)]">
+            {booperAssignmentMessage}
+          </p>
+        </ShellCard>
+      ) : null}
 
       <section>
         <ShellCard className="rounded-[1.8rem] p-6">
@@ -122,7 +158,7 @@ export default async function ParentChildrenPage(props: {
               className="rounded-[1.8rem] p-6"
               id={`child-${child.id}`}
             >
-              <details className="group">
+              <details className="group" open={statusChildId === child.id ? true : undefined}>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
                   <div className="flex min-w-0 items-center gap-3">
                     {child.avatar_url ? (
@@ -168,6 +204,72 @@ export default async function ParentChildrenPage(props: {
                   <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
                     {formatBoops(pendingByChildId.get(child.id) ?? 0)} waiting to collect
                   </p>
+
+                  {(() => {
+                    const linkedBoopers = boopersByChildId.get(child.id) ?? [];
+                    const primaryBooper =
+                      linkedBoopers.find((booper) => booper.status === "active") ??
+                      linkedBoopers[0] ??
+                      null;
+
+                    return (
+                      <div className="mt-5 rounded-[1.6rem] bg-[#f8fbff] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-lg font-extrabold">Booper</p>
+                            <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
+                              {primaryBooper
+                                ? `${linkedBoopers.length} linked Booper${
+                                    linkedBoopers.length === 1 ? "" : "s"
+                                  }`
+                                : "No Booper linked yet"}
+                            </p>
+                          </div>
+                          <StatusPill tone={primaryBooper?.status === "active" ? "mint" : "sky"}>
+                            {primaryBooper?.status ?? "unassigned"}
+                          </StatusPill>
+                        </div>
+
+                        <form action={assignBooperToChildAction} className="mt-4">
+                          <input type="hidden" name="childProfileId" value={child.id} />
+                          <input type="hidden" name="returnTo" value="/parent/children" />
+                          <NfcUidCapture
+                            autoSubmit
+                            buttonClassName="w-full justify-center"
+                            buttonLabel={`Assign a Booper to ${child.display_name}`}
+                            helperText=""
+                            inputName="nfcUid"
+                            required
+                            showInput={false}
+                            showMessage={false}
+                          />
+                        </form>
+
+                        {primaryBooper ? (
+                          <div className="mt-3 flex flex-wrap gap-3">
+                            <form action={updateBooperStatusAction} className="flex-1">
+                              <input type="hidden" name="booperId" value={primaryBooper.id} />
+                              <input type="hidden" name="childProfileId" value={child.id} />
+                              <input type="hidden" name="returnTo" value="/parent/children" />
+                              <input type="hidden" name="status" value="active" />
+                              <button className="btn btn-secondary w-full" type="submit">
+                                Mark active
+                              </button>
+                            </form>
+                            <form action={updateBooperStatusAction} className="flex-1">
+                              <input type="hidden" name="booperId" value={primaryBooper.id} />
+                              <input type="hidden" name="childProfileId" value={child.id} />
+                              <input type="hidden" name="returnTo" value="/parent/children" />
+                              <input type="hidden" name="status" value="lost" />
+                              <button className="btn btn-ghost w-full" type="submit">
+                                Mark lost
+                              </button>
+                            </form>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
 
                   <form
                     action={updateChildProfileAction}

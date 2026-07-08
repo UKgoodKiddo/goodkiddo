@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { createFamilyAction } from "@/app/actions";
 import { Banner } from "@/components/banner";
 import { ClearChildModeStorage } from "@/components/clear-child-mode-storage";
+import { ParentRewardWizardLauncher } from "@/components/parent-reward-wizard-launcher";
+import { ParentSurpriseBoopsWizardLauncher } from "@/components/parent-surprise-boops-wizard-launcher";
 import { ParentTaskWizardLauncher } from "@/components/parent-task-wizard-launcher";
 import { ShellCard } from "@/components/shell-card";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
@@ -256,14 +258,41 @@ export default async function ParentPage(props: {
         <ShellCard className="rounded-[1.8rem] p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-bold text-[color:var(--ink-soft)]">Create task</p>
-              <h2 className="mt-1 text-3xl font-extrabold">Add a new task</h2>
+              <h2 className="text-3xl font-extrabold">Add a new task</h2>
             </div>
             <ParentTaskWizardLauncher
               childOptions={childOptions}
               returnTo="/parent"
               taskCatalog={taskCatalog.categories}
               triggerLabel="Create task"
+            />
+          </div>
+        </ShellCard>
+      </section>
+
+      <section>
+        <ShellCard className="rounded-[1.8rem] p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-3xl font-extrabold">Add a new reward</h2>
+            </div>
+            <ParentRewardWizardLauncher
+              childOptions={childOptions}
+              triggerLabel="Create reward"
+            />
+          </div>
+        </ShellCard>
+      </section>
+
+      <section>
+        <ShellCard className="rounded-[1.8rem] p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-3xl font-extrabold">Send a little extra joy</h2>
+            </div>
+            <ParentSurpriseBoopsWizardLauncher
+              childOptions={childOptions}
+              triggerLabel="Award surprise boops"
             />
           </div>
         </ShellCard>

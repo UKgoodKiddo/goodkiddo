@@ -55,7 +55,13 @@ const deleteChildSchema = z.object({
 const awardBoopsSchema = z.object({
   childProfileId: z.uuid(),
   amount: z.coerce.number().int().min(1).max(500),
-  reason: z.string().trim().min(2).max(160),
+  reason: z.string().trim().min(2).max(300),
+});
+
+const awardSurpriseBoopsInlineSchema = z.object({
+  amount: z.coerce.number().int().min(1).max(500),
+  childTarget: z.string().trim().min(1).max(40),
+  reason: z.string().trim().min(2).max(300),
 });
 
 const rewardSchema = z.object({
@@ -73,12 +79,15 @@ const pairBooperSchema = z.object({
 
 const booperStatusSchema = z.object({
   booperId: z.uuid(),
-  status: z.enum(["active", "lost", "disabled"]),
+  childProfileId: z.uuid().optional(),
+  returnTo: z.enum(["/parent/boopers", "/parent/children"]).optional(),
+  status: z.enum(["active", "lost"]),
 });
 
 const assignChildBooperSchema = z.object({
   childProfileId: z.uuid(),
   nfcUid: z.string().trim().min(4).max(120),
+  returnTo: z.enum(["/parent/boopers", "/parent/children"]).optional(),
 });
 
 const childModeSchema = z.object({
@@ -133,6 +142,27 @@ function normalizeTaskWeeklyDays(values: FormDataEntryValue[]): TaskWeekday[] {
   return Array.from(new Set(weekdays));
 }
 
+function buildParentBooperRedirectPath({
+  childProfileId,
+  returnTo,
+  status,
+}: {
+  childProfileId?: string;
+  returnTo?: "/parent/boopers" | "/parent/children";
+  status: string;
+}) {
+  const base = returnTo ?? "/parent/boopers";
+  const params = new URLSearchParams({ status });
+
+  if (childProfileId) {
+    params.set("childId", childProfileId);
+  }
+
+  const hash = childProfileId && returnTo === "/parent/children" ? `#child-${childProfileId}` : "";
+
+  return `${base}?${params.toString()}${hash}`;
+}
+
 const deleteTaskSchema = z.object({
   taskId: z.uuid(),
 });
@@ -149,6 +179,12 @@ export type CollectWaitingBoopsInlineState = {
   claimedCount?: number;
   claimedTotal?: number;
   status: "error" | "idle" | "no-boops-waiting" | "submitted" | "wrong-booper";
+};
+
+export type AwardSurpriseBoopsInlineState = {
+  awardedChildren?: number;
+  totalAwarded?: number;
+  status: "error" | "idle" | "success";
 };
 
 const reviewTaskCompletionSchema = z.object({
@@ -800,9 +836,9 @@ export async function awardBoopsAction(formData: FormData) {
     redirect("/parent?status=family-required");
   }
 
-  const { error } = await createPendingBoopAward({
+  const { error } = await createPendingBoopAwards({
     amount: parsed.data.amount,
-    childProfileId: parsed.data.childProfileId,
+    childProfileIds: [parsed.data.childProfileId],
     createdBy: user.id,
     familyId: family.id,
     reason: parsed.data.reason,
@@ -817,6 +853,72 @@ export async function awardBoopsAction(formData: FormData) {
   revalidateParentWorkspace();
   revalidateChildWorkspace();
   redirect("/parent?status=boops-awarded");
+}
+
+export async function awardSurpriseBoopsInlineAction(
+  _previousState: AwardSurpriseBoopsInlineState,
+  formData: FormData,
+): Promise<AwardSurpriseBoopsInlineState> {
+  const parsed = awardSurpriseBoopsInlineSchema.safeParse({
+    amount: formData.get("amount"),
+    childTarget: formData.get("childTarget"),
+    reason: formData.get("reason"),
+  });
+
+  if (!parsed.success) {
+    return { status: "error" };
+  }
+
+  const { supabase, user, family } = await getParentContextOrRedirect();
+
+  if (!family) {
+    return { status: "error" };
+  }
+
+  const targetChildren =
+    parsed.data.childTarget === "all"
+      ? await supabase
+          .from("child_profiles")
+          .select("id")
+          .eq("family_id", family.id)
+      : await supabase
+          .from("child_profiles")
+          .select("id")
+          .eq("family_id", family.id)
+          .eq("id", parsed.data.childTarget);
+
+  if (targetChildren.error) {
+    return { status: "error" };
+  }
+
+  const childProfileIds = (targetChildren.data ?? []).map((child) => child.id);
+
+  if (!childProfileIds.length) {
+    return { status: "error" };
+  }
+
+  const { error } = await createPendingBoopAwards({
+    amount: parsed.data.amount,
+    childProfileIds,
+    createdBy: user.id,
+    familyId: family.id,
+    reason: parsed.data.reason,
+    sourceType: "manual",
+    supabase,
+  });
+
+  if (error) {
+    return { status: "error" };
+  }
+
+  revalidateParentWorkspace();
+  revalidateChildWorkspace();
+
+  return {
+    awardedChildren: childProfileIds.length,
+    status: "success",
+    totalAwarded: parsed.data.amount * childProfileIds.length,
+  };
 }
 
 export async function createRewardAction(formData: FormData) {
@@ -1620,16 +1722,18 @@ export async function assignBooperToChildAction(formData: FormData) {
   const parsed = assignChildBooperSchema.safeParse({
     childProfileId: formData.get("childProfileId"),
     nfcUid: formData.get("nfcUid"),
+    returnTo: formData.get("returnTo"),
   });
 
   if (!parsed.success) {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(buildParentBooperRedirectPath({ status: "action-failed" }));
   }
 
   const { family, supabase } = await getParentContextOrRedirect();
+  const redirectBase = parsed.data.returnTo;
 
   if (!family) {
-    redirect("/parent/boopers?status=family-required");
+    redirect(buildParentBooperRedirectPath({ returnTo: redirectBase, status: "family-required" }));
   }
 
   const { data: childProfile } = await supabase
@@ -1640,7 +1744,13 @@ export async function assignBooperToChildAction(formData: FormData) {
     .maybeSingle();
 
   if (!childProfile) {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "action-failed",
+      }),
+    );
   }
 
   const assignmentResult = await assignAvailableBooperToChild({
@@ -1652,36 +1762,63 @@ export async function assignBooperToChildAction(formData: FormData) {
   });
 
   if (assignmentResult.status === "not-found") {
-    redirect("/parent/boopers?status=booper-not-imported");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "booper-not-imported",
+      }),
+    );
   }
 
   if (assignmentResult.status === "not-available") {
-    redirect("/parent/boopers?status=booper-not-available");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "booper-not-available",
+      }),
+    );
   }
 
   if (assignmentResult.status !== "success") {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "action-failed",
+      }),
+    );
   }
 
   revalidateParentWorkspace();
   revalidateSuperAdminWorkspace();
-  redirect("/parent/boopers?status=booper-assigned");
+  redirect(
+    buildParentBooperRedirectPath({
+      childProfileId: parsed.data.childProfileId,
+      returnTo: redirectBase,
+      status: "booper-assigned",
+    }),
+  );
 }
 
 export async function updateBooperStatusAction(formData: FormData) {
   const parsed = booperStatusSchema.safeParse({
     booperId: formData.get("booperId"),
+    childProfileId: formData.get("childProfileId"),
+    returnTo: formData.get("returnTo"),
     status: formData.get("status"),
   });
 
   if (!parsed.success) {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(buildParentBooperRedirectPath({ status: "action-failed" }));
   }
 
   const { supabase, family } = await getParentContextOrRedirect();
+  const redirectBase = parsed.data.returnTo;
 
   if (!family) {
-    redirect("/parent/boopers?status=family-required");
+    redirect(buildParentBooperRedirectPath({ returnTo: redirectBase, status: "family-required" }));
   }
 
   const admin = createSupabaseAdminClient();
@@ -1694,7 +1831,13 @@ export async function updateBooperStatusAction(formData: FormData) {
     .maybeSingle();
 
   if (!booper) {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "action-failed",
+      }),
+    );
   }
 
   const { inventoryBooper } = await findInventoryBooperByUid<{
@@ -1713,7 +1856,13 @@ export async function updateBooperStatusAction(formData: FormData) {
 
   if (!inventoryBooper) {
     await admin.from("boopers").delete().eq("id", booper.id);
-    redirect("/parent/boopers?status=booper-origin-required");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "booper-origin-required",
+      }),
+    );
   }
 
   const nextInventoryStatus =
@@ -1729,7 +1878,13 @@ export async function updateBooperStatusAction(formData: FormData) {
     .eq("id", inventoryBooper.id);
 
   if (error) {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "action-failed",
+      }),
+    );
   }
 
   const syncResult = await syncInventoryWithParentBooper({
@@ -1742,7 +1897,13 @@ export async function updateBooperStatusAction(formData: FormData) {
   });
 
   if (syncResult.error) {
-    redirect("/parent/boopers?status=action-failed");
+    redirect(
+      buildParentBooperRedirectPath({
+        childProfileId: parsed.data.childProfileId,
+        returnTo: redirectBase,
+        status: "action-failed",
+      }),
+    );
   }
 
   const { writeSuperAdminAuditLog } = await getSuperAdminHelpers();
@@ -1760,7 +1921,13 @@ export async function updateBooperStatusAction(formData: FormData) {
 
   revalidateParentWorkspace();
   revalidateSuperAdminWorkspace();
-  redirect("/parent/boopers?status=booper-status-updated");
+  redirect(
+    buildParentBooperRedirectPath({
+      childProfileId: parsed.data.childProfileId,
+      returnTo: redirectBase,
+      status: "booper-status-updated",
+    }),
+  );
 }
 
 export async function awardBoopFromNfcAction(formData: FormData) {
@@ -2077,6 +2244,39 @@ async function createPendingBoopAward(params: {
     reason: params.reason,
     source_type: params.sourceType,
   });
+}
+
+async function createPendingBoopAwards(params: {
+  amount: number;
+  childProfileIds: string[];
+  createdBy: string;
+  familyId: string;
+  reason: string;
+  sourceType: "manual" | "task_approval" | "nfc_award" | "daily_bonus";
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>> | ReturnType<typeof createSupabaseAdminClient>;
+}) {
+  if (params.childProfileIds.length === 1) {
+    return createPendingBoopAward({
+      amount: params.amount,
+      childProfileId: params.childProfileIds[0],
+      createdBy: params.createdBy,
+      familyId: params.familyId,
+      reason: params.reason,
+      sourceType: params.sourceType,
+      supabase: params.supabase,
+    });
+  }
+
+  return params.supabase.from("pending_boop_awards").insert(
+    params.childProfileIds.map((childProfileId) => ({
+      amount: params.amount,
+      awarded_by: params.createdBy,
+      child_profile_id: childProfileId,
+      family_id: params.familyId,
+      reason: params.reason,
+      source_type: params.sourceType,
+    })),
+  );
 }
 
 async function syncInventoryWithParentBooper(params: {
