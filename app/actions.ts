@@ -59,6 +59,7 @@ const awardBoopsSchema = z.object({
 });
 
 const rewardSchema = z.object({
+  childProfileId: z.string().trim().optional(),
   title: z.string().trim().min(1).max(80),
   cost: z.coerce.number().int().min(1).max(5000),
   description: z.string().trim().max(240).optional(),
@@ -821,6 +822,7 @@ export async function awardBoopsAction(formData: FormData) {
 export async function createRewardAction(formData: FormData) {
   const parsed = rewardSchema.safeParse({
     active: formData.get("active") ?? "",
+    childProfileId: formData.get("childProfileId"),
     cost: formData.get("cost"),
     description: formData.get("description"),
     title: formData.get("title"),
@@ -839,6 +841,7 @@ export async function createRewardAction(formData: FormData) {
   const { error } = await supabase.from("rewards").insert({
     active: parsed.data.active === "on",
     cost: parsed.data.cost,
+    child_profile_id: parsed.data.childProfileId || null,
     description: parsed.data.description || null,
     family_id: family.id,
     title: parsed.data.title,
@@ -857,6 +860,7 @@ export async function updateRewardAction(formData: FormData) {
   const rewardId = formData.get("rewardId");
   const parsed = rewardSchema.safeParse({
     active: formData.get("active") ?? "",
+    childProfileId: formData.get("childProfileId"),
     cost: formData.get("cost"),
     description: formData.get("description"),
     title: formData.get("title"),
@@ -877,6 +881,7 @@ export async function updateRewardAction(formData: FormData) {
     .update({
       active: parsed.data.active === "on",
       cost: parsed.data.cost,
+      child_profile_id: parsed.data.childProfileId || null,
       description: parsed.data.description || null,
       title: parsed.data.title,
     })
@@ -1182,7 +1187,10 @@ export async function requestRewardRedemptionAction(formData: FormData) {
     .eq("active", true)
     .maybeSingle();
 
-  if (!reward) {
+  if (
+    !reward ||
+    (reward.child_profile_id && reward.child_profile_id !== deviceMode.child_profile_id)
+  ) {
     redirect(buildChildStatusPath(returnTo, "action-failed"));
   }
 

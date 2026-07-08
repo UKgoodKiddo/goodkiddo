@@ -69,7 +69,9 @@ export default async function ParentLayout({
 
         <div className="relative mt-4 flex justify-center text-center">
           <p className="text-sm font-bold text-[color:var(--ink-soft)] sm:text-base">
-            {viewer.user?.email ?? "Guest parent"}
+            {viewer.familyName
+              ? `Welcome back ${viewer.familyName}`
+              : "Welcome back"}
           </p>
         </div>
       </header>

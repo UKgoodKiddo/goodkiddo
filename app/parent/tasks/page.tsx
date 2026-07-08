@@ -9,8 +9,8 @@ import {
   getTaskCardCatalog,
   resolveTaskCardAsset,
 } from "@/lib/task-card-catalog";
-import { formatDateTimeDetailed } from "@/lib/utils";
 import type { TaskWeekday } from "@/lib/types";
+import { formatDateTimeDetailed } from "@/lib/utils";
 
 const WEEKDAY_LABELS: Record<TaskWeekday, string> = {
   fri: "Fri",
@@ -135,90 +135,122 @@ export default async function ParentTasksPage() {
         </ShellCard>
       </section>
 
-      <section className="grid gap-4">
-        {dashboard.tasks.length ? (
-          await Promise.all(
-            dashboard.tasks.map(async (task) => {
-              const taskAsset = await resolveTaskCardAsset(task.title);
+      <ShellCard className="rounded-[1.8rem] p-6">
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
+            <div className="min-w-0">
+              <h2 className="text-3xl font-extrabold">Task list</h2>
+              <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
+                {dashboard.tasks.length
+                  ? `${dashboard.tasks.length} task${dashboard.tasks.length === 1 ? "" : "s"} ready to manage.`
+                  : "No tasks yet."}
+              </p>
+            </div>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </span>
+          </summary>
 
-              return (
-                <ShellCard key={task.id} className="rounded-[1.8rem] p-6">
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex flex-1 items-start gap-4">
-                      <div className="parent-task-edit-art shrink-0">
-                        {taskAsset?.parentAssetSrc ? (
-                          <Image
-                            alt={taskAsset.title}
-                            className="h-auto w-full object-contain"
-                            height={180}
-                            src={taskAsset.parentAssetSrc}
-                            width={180}
-                          />
-                        ) : (
-                          <span className="px-4 text-center text-base font-black text-[color:var(--foreground)]">
-                            {task.title}
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-2xl font-extrabold">{task.title}</h3>
-                          <StatusPill tone={task.active ? "mint" : "rose"}>
-                            {task.active ? "Active" : "Paused"}
-                          </StatusPill>
-                          <StatusPill tone="sky">
-                            {formatTaskSchedule(task.recurring_type, task.weekly_days)}
-                          </StatusPill>
+          <div className="mt-6">
+            {dashboard.tasks.length ? (
+              <div className="grid max-h-[68rem] gap-4 overflow-y-auto pr-1">
+                {await Promise.all(
+                  dashboard.tasks.map(async (task) => {
+                    const taskAsset = await resolveTaskCardAsset(task.title);
+
+                    return (
+                      <ShellCard key={task.id} className="rounded-[1.8rem] p-6">
+                        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="flex flex-1 items-start gap-4">
+                            <div className="parent-task-edit-art shrink-0">
+                              {taskAsset?.parentAssetSrc ? (
+                                <Image
+                                  alt={taskAsset.title}
+                                  className="h-auto w-full object-contain"
+                                  height={180}
+                                  src={taskAsset.parentAssetSrc}
+                                  width={180}
+                                />
+                              ) : (
+                                <span className="px-4 text-center text-base font-black text-[color:var(--foreground)]">
+                                  {task.title}
+                                </span>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <h3 className="text-2xl font-extrabold">{task.title}</h3>
+                                <StatusPill tone={task.active ? "mint" : "rose"}>
+                                  {task.active ? "Active" : "Paused"}
+                                </StatusPill>
+                                <StatusPill tone="sky">
+                                  {formatTaskSchedule(task.recurring_type, task.weekly_days)}
+                                </StatusPill>
+                              </div>
+                              <p className="mt-3 text-sm font-bold text-[color:var(--ink-soft)]">
+                                {dashboard.children.find((child) => child.id === task.child_profile_id)
+                                  ?.display_name ?? "All children"} · {task.boop_reward} boops
+                              </p>
+                              {taskAsset?.category ? (
+                                <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
+                                  Category · {taskAsset.category}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-3">
+                            <ParentTaskWizardLauncher
+                              childOptions={childOptions}
+                              initialTask={{
+                                active: task.active,
+                                boopReward: task.boop_reward,
+                                childProfileId: task.child_profile_id,
+                                description: task.description,
+                                recurringType: task.recurring_type,
+                                taskId: task.id,
+                                title: task.title,
+                                weeklyDays: task.weekly_days ?? [],
+                              }}
+                              returnTo="/parent/tasks"
+                              taskCatalog={taskCatalog.categories}
+                              triggerLabel="Edit task"
+                              triggerTone="secondary"
+                            />
+
+                            <form action={deleteTaskAction}>
+                              <input type="hidden" name="taskId" value={task.id} />
+                              <button className="btn btn-ghost px-4 py-2 text-sm" type="submit">
+                                Delete task
+                              </button>
+                            </form>
+                          </div>
                         </div>
-                        <p className="mt-3 text-sm font-bold text-[color:var(--ink-soft)]">
-                          {dashboard.children.find((child) => child.id === task.child_profile_id)
-                            ?.display_name ?? "All children"} · {task.boop_reward} boops
-                        </p>
-                        {taskAsset?.category ? (
-                          <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
-                            Category · {taskAsset.category}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <ParentTaskWizardLauncher
-                        childOptions={childOptions}
-                        initialTask={{
-                          active: task.active,
-                          boopReward: task.boop_reward,
-                          childProfileId: task.child_profile_id,
-                          description: task.description,
-                          recurringType: task.recurring_type,
-                          taskId: task.id,
-                          title: task.title,
-                          weeklyDays: task.weekly_days ?? [],
-                        }}
-                        returnTo="/parent/tasks"
-                        taskCatalog={taskCatalog.categories}
-                        triggerLabel="Edit task"
-                        triggerTone="secondary"
-                      />
-
-                      <form action={deleteTaskAction}>
-                        <input type="hidden" name="taskId" value={task.id} />
-                        <button className="btn btn-ghost px-4 py-2 text-sm" type="submit">
-                          Delete task
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </ShellCard>
-              );
-            }),
-          )
-        ) : (
-          <ShellCard className="rounded-[1.8rem] p-6">
-            <p className="text-sm text-[color:var(--ink-soft)]">No tasks yet.</p>
-          </ShellCard>
-        )}
-      </section>
+                      </ShellCard>
+                    );
+                  }),
+                )}
+              </div>
+            ) : (
+              <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-5 text-sm leading-6 text-[color:var(--ink-soft)]">
+                No tasks yet.
+              </div>
+            )}
+          </div>
+        </details>
+      </ShellCard>
     </main>
   );
 }

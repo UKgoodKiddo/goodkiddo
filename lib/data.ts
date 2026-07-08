@@ -321,9 +321,14 @@ export async function getChildModeData(): Promise<ChildModeData> {
       .order("checkin_date"),
     ]);
 
-  const rewardLookup = new Map(
-    (rewardsResult.data ?? []).map((reward) => [reward.id, reward.title]),
+  const allFamilyRewards = rewardsResult.data ?? [];
+  const visibleRewards = allFamilyRewards.filter(
+    (reward) =>
+      reward.active &&
+      (!reward.child_profile_id ||
+        reward.child_profile_id === resolvedDeviceMode.childProfileId),
   );
+  const rewardLookup = new Map(allFamilyRewards.map((reward) => [reward.id, reward.title]));
   const visibleTasks = ((tasksResult.data ?? []) as Task[]).filter(
     (task) =>
       (!task.child_profile_id || task.child_profile_id === resolvedDeviceMode.childProfileId) &&
@@ -362,7 +367,7 @@ export async function getChildModeData(): Promise<ChildModeData> {
       childName: childResult.data?.display_name ?? null,
       rewardTitle: rewardLookup.get(redemption.reward_id) ?? null,
     })),
-    rewards: rewardsResult.data ?? [],
+    rewards: visibleRewards,
     setupMessage: null,
     usingDemoMode: false,
   };

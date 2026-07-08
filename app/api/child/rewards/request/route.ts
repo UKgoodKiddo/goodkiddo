@@ -78,7 +78,10 @@ export async function POST(request: Request) {
     .eq("active", true)
     .maybeSingle();
 
-  if (!reward) {
+  if (
+    !reward ||
+    (reward.child_profile_id && reward.child_profile_id !== session.childProfileId)
+  ) {
     return NextResponse.json({
       ok: false,
       redirectTo: buildChildStatusPath(returnTo, "action-failed"),

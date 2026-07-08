@@ -139,14 +139,9 @@ export default async function ParentPage(props: {
           <details className="group" name="parent-dashboard-panels">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div>
-                <p className="text-sm font-bold text-[color:var(--ink-soft)]">Today&apos;s progress</p>
-                <h2 className="mt-1 text-3xl font-extrabold">Family snapshot</h2>
+                <h2 className="text-3xl font-extrabold">Boop Collector</h2>
               </div>
               <div className="flex items-center gap-3">
-                <span className="rounded-full bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--ink-soft)] shadow-[0_8px_18px_rgba(20,36,82,0.08)]">
-                  <span className="group-open:hidden">Tap to open</span>
-                  <span className="hidden group-open:inline">Close</span>
-                </span>
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
                   <svg
                     aria-hidden="true"
@@ -283,10 +278,6 @@ export default async function ParentPage(props: {
                 <h2 className="mt-1 text-3xl font-extrabold">Who&apos;s saving up?</h2>
               </div>
               <div className="flex items-center gap-3">
-                <span className="rounded-full bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--ink-soft)] shadow-[0_8px_18px_rgba(20,36,82,0.08)]">
-                  <span className="group-open:hidden">Tap to open</span>
-                  <span className="hidden group-open:inline">Close</span>
-                </span>
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
                   <svg
                     aria-hidden="true"
@@ -345,33 +336,55 @@ export default async function ParentPage(props: {
         </ShellCard>
 
         <ShellCard className="rounded-[1.8rem] p-6">
-          <p className="eyebrow">Recent activity</p>
-          <h2 className="mt-3 text-3xl font-extrabold">Latest wins</h2>
-          <div className="mt-6 grid gap-3">
-            {dashboard.transactions.length ? (
-              dashboard.transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-start justify-between gap-4 rounded-[1.4rem] bg-white px-4 py-4 shadow-[0_10px_26px_rgba(20,36,82,0.08)]"
-                >
-                  <div className="min-w-0">
-                    <p className="text-base font-extrabold">{transaction.reason}</p>
-                    <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-                      {transaction.childName ?? "Child"} · {formatDateTime(transaction.created_at)}
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-lg font-extrabold text-[color:var(--primary-strong)]">
-                    {transaction.amount > 0 ? "+" : ""}
-                    {formatBoops(transaction.amount)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
-                Activity will appear here once tasks, rewards, or manual boops start moving.
+          <details className="group" name="parent-dashboard-panels">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
+              <div>
+                <h2 className="text-3xl font-extrabold">Latest wins</h2>
               </div>
-            )}
-          </div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M10 4V16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
+                    <path d="M4 10H16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
+                  </svg>
+                </span>
+              </div>
+            </summary>
+
+            <div className="mt-6">
+              {dashboard.transactions.length ? (
+                <div className="grid max-h-[26rem] gap-3 overflow-y-auto pr-1">
+                  {dashboard.transactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-start justify-between gap-4 rounded-[1.4rem] bg-white px-4 py-4 shadow-[0_10px_26px_rgba(20,36,82,0.08)]"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-base font-extrabold">{transaction.reason}</p>
+                        <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
+                          {transaction.childName ?? "Child"} · {formatDateTime(transaction.created_at)}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-lg font-extrabold text-[color:var(--primary-strong)]">
+                        {transaction.amount > 0 ? "+" : ""}
+                        {formatBoops(transaction.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
+                  Activity will appear here once tasks, rewards, or manual boops start moving.
+                </div>
+              )}
+            </div>
+          </details>
         </ShellCard>
       </section>
     </main>

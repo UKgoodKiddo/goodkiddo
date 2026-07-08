@@ -155,6 +155,7 @@ export type TaskCompletion = {
 export type Reward = {
   id: string;
   family_id: string;
+  child_profile_id: string | null;
   title: string;
   cost: number;
   description: string | null;
@@ -483,6 +484,7 @@ export type Database = {
         Insert: {
           id?: string;
           family_id: string;
+          child_profile_id?: string | null;
           title: string;
           cost: number;
           description?: string | null;
