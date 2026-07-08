@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -54,6 +54,7 @@ export function ParentCollectBoopsClient({
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const redirectTimeoutRef = useRef<number | null>(null);
+  const autoCollectRef = useRef(false);
   const [pendingBoops, setPendingBoops] = useState(initialPendingBoops);
   const [submitState, setSubmitState] =
     useState<CollectWaitingBoopsInlineState>(INITIAL_STATE);
@@ -67,7 +68,7 @@ export function ParentCollectBoopsClient({
     };
   }, []);
 
-  async function handleSubmit(formData: FormData) {
+  const handleSubmit = useCallback(async (formData: FormData) => {
     const result = await collectWaitingBoopsForChildInlineAction(INITIAL_STATE, formData);
     setSubmitState(result);
 
@@ -83,7 +84,21 @@ export function ParentCollectBoopsClient({
         router.refresh();
       }, 2200);
     }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    if (!prefilledBooperUid || autoCollectRef.current) {
+      return;
+    }
+
+    autoCollectRef.current = true;
+
+    const formData = new FormData();
+    formData.set("childProfileId", childId);
+    formData.set("nfcUid", prefilledBooperUid);
+
+    void handleSubmit(formData);
+  }, [childId, handleSubmit, prefilledBooperUid]);
 
   const feedbackMessage =
     submitState.status === "wrong-booper"
