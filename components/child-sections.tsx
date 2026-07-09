@@ -108,6 +108,41 @@ export function ChildSummaryCard({
   );
 }
 
+export function ChildSectionLaunchButtons() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <Link
+        aria-label="Open tasks"
+        className="child-panel flex items-center justify-center rounded-[2rem] p-4 transition-transform duration-200 hover:-translate-y-1"
+        href="/child/tasks"
+      >
+        <Image
+          alt="Tasks"
+          className="h-auto w-full max-w-[10.5rem] object-contain"
+          height={512}
+          priority
+          src={GOODKIDDO_ASSETS.childTasksButton}
+          width={512}
+        />
+      </Link>
+      <Link
+        aria-label="Open rewards"
+        className="child-panel flex items-center justify-center rounded-[2rem] p-4 transition-transform duration-200 hover:-translate-y-1"
+        href="/child/rewards"
+      >
+        <Image
+          alt="Rewards"
+          className="h-auto w-full max-w-[10.5rem] object-contain"
+          height={512}
+          priority
+          src={GOODKIDDO_ASSETS.childRewardsButton}
+          width={512}
+        />
+      </Link>
+    </div>
+  );
+}
+
 export function ChildWaitingBoopsCard({
   childMode,
 }: {

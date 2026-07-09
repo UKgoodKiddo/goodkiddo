@@ -51,6 +51,8 @@ export const GOODKIDDO_ASSETS = {
   screenTimeOverTaskIcon: "/goodkiddo/task-icons/screen-time-over.png",
   setTableTaskIcon: "/goodkiddo/task-icons/set-the-table.png",
   starIcon: "/goodkiddo/star-icon.png",
+  childRewardsButton: "/goodkiddo/child ui buttons/Rewards button.png",
+  childTasksButton: "/goodkiddo/child ui buttons/Tasks button.png",
   sweepFloorTaskIcon: "/goodkiddo/task-icons/sweep-floor.png",
   taskCardBrushHair: "/goodkiddo/task-cards/brush-your-hair-card.png",
   taskCardBrushTeeth: "/goodkiddo/task-cards/brush-your-teeth-card.png",

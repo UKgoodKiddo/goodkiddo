@@ -2,9 +2,8 @@ import { ChildPageScaffold } from "@/components/child-page-scaffold";
 import {
   ChildActivityCard,
   ChildRewardQueueCard,
-  ChildRewardsCard,
+  ChildSectionLaunchButtons,
   ChildSummaryCard,
-  ChildTasksCard,
 } from "@/components/child-sections";
 import type { KiddoImageDebugMode } from "@/components/kiddo-route-image";
 import { getChildModeData } from "@/lib/data";
@@ -23,70 +22,16 @@ export default async function ChildPage(props: {
     searchParams.imageDebug === "placeholders" || searchParams.imageDebug === "log"
       ? (searchParams.imageDebug as KiddoImageDebugMode)
       : "off";
-  const completedTaskCount = childMode.tasks.filter(
-    (task) => task.currentStatus === "approved" || task.currentStatus === "pending",
-  ).length;
 
   return (
     <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
-      <section className="grid w-full gap-5 xl:grid-cols-[1.12fr_0.88fr]">
+      <section className="space-y-5">
         <section className="w-full space-y-5">
           <ChildSummaryCard childMode={childMode} imageDebugMode={imageDebugMode} />
-          <details className="child-home-collapsible" open={false}>
-            <summary className="child-home-collapsible-summary">
-              <div>
-                <p className="text-2xl font-black">Today&apos;s Tasks</p>
-                <p className="mt-1 text-sm text-white/70">
-                  Complete jobs and send them for parent approval.
-                </p>
-              </div>
-              <div className="child-home-collapsible-meta">
-                <div className="rounded-full bg-white/12 px-4 py-2 text-sm font-black text-white/90">
-                  {completedTaskCount}/{childMode.tasks.length || 0}
-                </div>
-                <span aria-hidden="true" className="child-home-collapsible-chevron">
-                  v
-                </span>
-              </div>
-            </summary>
-            <div className="mt-4">
-              <ChildTasksCard
-                childMode={childMode}
-                imageDebugMode={imageDebugMode}
-                showHeader={false}
-              />
-            </div>
-          </details>
+          <ChildSectionLaunchButtons />
         </section>
 
-        <section className="w-full space-y-5">
-          <details className="child-home-collapsible" open={false}>
-            <summary className="child-home-collapsible-summary">
-              <div>
-                <p className="text-2xl font-black">Rewards</p>
-                <p className="mt-1 text-sm text-white/70">Save up and request something fun.</p>
-              </div>
-              <div className="child-home-collapsible-meta">
-                <div className="rounded-full bg-white/12 px-4 py-2 text-sm font-black text-white/90">
-                  {childMode.tasks.length
-                    ? Math.round((completedTaskCount / childMode.tasks.length) * 100)
-                    : 0}
-                  % done
-                </div>
-                <span aria-hidden="true" className="child-home-collapsible-chevron">
-                  v
-                </span>
-              </div>
-            </summary>
-            <div className="mt-4">
-              <ChildRewardsCard
-                childMode={childMode}
-                imageDebugMode={imageDebugMode}
-                returnTo="/child"
-                showHeader={false}
-              />
-            </div>
-          </details>
+        <section className="grid w-full gap-5 xl:grid-cols-[1.02fr_0.98fr]">
           <details className="child-home-collapsible" open={false}>
             <summary className="child-home-collapsible-summary">
               <div>

@@ -3,6 +3,7 @@ import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 export const CHILD_PAGE_ROUTES = [
   "/child",
   "/child/collect",
+  "/child/tasks",
   "/child/rewards",
   "/child/activity",
   "/child/profile",
