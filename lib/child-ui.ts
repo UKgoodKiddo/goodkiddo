@@ -5,7 +5,6 @@ export const CHILD_PAGE_ROUTES = [
   "/child/collect",
   "/child/tasks",
   "/child/rewards",
-  "/child/activity",
   "/child/profile",
 ] as const;
 
@@ -22,23 +21,23 @@ export const CHILD_AVATAR_PRESET_URLS = [
 
 export const CHILD_AVATAR_PRESETS = [
   {
-    label: "Sunny Star",
+    label: "Sunny Boop",
     value: GOODKIDDO_ASSETS.boopHappy,
   },
   {
-    label: "Cool Star",
+    label: "Cool Boop",
     value: GOODKIDDO_ASSETS.boopCool,
   },
   {
-    label: "Wink Star",
+    label: "Winky Boop",
     value: GOODKIDDO_ASSETS.boopWink,
   },
   {
-    label: "Sleepy Star",
+    label: "Sleepy Boop",
     value: GOODKIDDO_ASSETS.boopSleepy,
   },
   {
-    label: "Surprise Star",
+    label: "Surprise Boop",
     value: GOODKIDDO_ASSETS.boopSurprised,
   },
   {

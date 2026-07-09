@@ -8,7 +8,6 @@ import {
   ChildVisualTaskCard,
 } from "@/components/child-visual-task-card";
 import { ChildRewardRequestButton } from "@/components/child-reward-request-button";
-import { StatusPill } from "@/components/status-pill";
 import { CHILD_AVATAR_PRESETS, type ChildPageRoute } from "@/lib/child-ui";
 import {
   GOODKIDDO_ASSETS,
@@ -392,79 +391,41 @@ export async function ChildTasksCard({
 
 export function ChildRewardsCard({
   childMode,
-  imageDebugMode = "off",
   returnTo,
   showHeader = true,
 }: {
   childMode: ChildModeData;
-  imageDebugMode?: KiddoImageDebugMode;
   returnTo: ChildPageRoute;
   showHeader?: boolean;
 }) {
   const boopBalance = childMode.child?.boop_balance ?? 0;
-  const progressPercent = childMode.tasks.length
-    ? Math.round(
-        (childMode.tasks.filter((task) => task.currentStatus === "approved").length /
-          childMode.tasks.length) *
-          100,
-      )
-    : 0;
 
   return (
-    <div className="child-panel rounded-[2rem] p-5">
+    <div className="rounded-[2rem] border border-[rgba(76,115,212,0.14)] bg-white p-5 text-[color:var(--foreground)] shadow-[0_18px_40px_rgba(8,33,102,0.16)]">
       {showHeader ? (
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-2xl font-black">Rewards</p>
-            <p className="mt-1 text-sm text-white/70">Save up and request something fun.</p>
-          </div>
-          <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white/80">
-            {progressPercent}% done
-          </div>
+        <div>
+          <p className="text-2xl font-black">Rewards</p>
         </div>
       ) : null}
-      <div className={showHeader ? "mt-5 grid gap-3 sm:grid-cols-2" : "grid gap-3 sm:grid-cols-2"}>
+      <div className={showHeader ? "mt-5 grid grid-cols-2 gap-4" : "grid grid-cols-2 gap-4"}>
         {childMode.rewards.length ? (
           childMode.rewards.map((reward) => (
             <div
               key={reward.id}
-              className="child-task-row rounded-[1.4rem] p-4 text-[color:var(--foreground)]"
+              className="child-reward-tile rounded-[1.6rem] p-4 text-[color:var(--foreground)]"
             >
-              <KiddoRouteImage
-                alt=""
-                className="mx-auto"
-                debugLabel={`child-reward-icon:${reward.title}`}
-                height={56}
-                imageDebugMode={imageDebugMode}
-                src={getRewardIconPath(reward.title)}
-                width={56}
+              <ChildRewardRequestButton
+                cost={reward.cost}
+                disabled={boopBalance < reward.cost}
+                iconSrc={getRewardIconPath(reward.title)}
+                returnTo={returnTo}
+                rewardId={reward.id}
+                rewardTitle={reward.title}
               />
-              <p className="mt-3 text-center text-base font-extrabold">{reward.title}</p>
-              <p className="mt-1 text-center text-sm text-[color:var(--ink-soft)]">
-                {reward.description || "A special reward waiting for you."}
-              </p>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 font-black text-[color:var(--primary)]">
-                  <span>{reward.cost}</span>
-                  <KiddoRouteImage
-                    alt=""
-                    debugLabel="child-reward-star"
-                    height={18}
-                    imageDebugMode={imageDebugMode}
-                    src={GOODKIDDO_ASSETS.starIcon}
-                    width={18}
-                  />
-                </div>
-                <ChildRewardRequestButton
-                  disabled={boopBalance < reward.cost}
-                  returnTo={returnTo}
-                  rewardId={reward.id}
-                />
-              </div>
             </div>
           ))
         ) : (
-          <div className="child-panel rounded-[1.4rem] p-4 text-sm leading-6 text-white/76 sm:col-span-2">
+          <div className="rounded-[1.4rem] border border-dashed border-[rgba(76,115,212,0.18)] bg-[rgba(245,249,255,0.92)] p-4 text-sm leading-6 text-[color:var(--ink-soft)] sm:col-span-2">
             Rewards will show up here once your parent adds them.
           </div>
         )}
@@ -535,56 +496,68 @@ export function ChildRewardQueueCard({
   imageDebugMode?: KiddoImageDebugMode;
   showHeader?: boolean;
 }) {
+  const queueCount = childMode.redemptions.length;
+
   return (
-    <div className="child-panel rounded-[2rem] p-5">
+    <details className="child-home-collapsible" open={!showHeader}>
       {showHeader ? (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-2xl font-black">Reward Queue</p>
-          <KiddoRouteImage
-            alt=""
-            debugLabel="child-reward-queue-avatar"
-            height={40}
-            imageDebugMode={imageDebugMode}
-            src={GOODKIDDO_ASSETS.boopSleepy}
-            width={40}
-          />
-        </div>
-      ) : null}
-      <div className={showHeader ? "mt-4 space-y-3" : "space-y-3"}>
-        {childMode.redemptions.length ? (
-          childMode.redemptions.map((redemption) => (
-            <div
-              key={redemption.id}
-              className="child-task-row rounded-[1.3rem] px-4 py-3 text-[color:var(--foreground)]"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-extrabold">{redemption.rewardTitle ?? "Reward"}</p>
-                  <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-                    {redemption.cost_at_redemption} boops
-                  </p>
-                </div>
-                <StatusPill
-                  tone={
-                    redemption.status === "approved" || redemption.status === "completed"
-                      ? "mint"
-                      : redemption.status === "rejected"
-                        ? "rose"
-                        : "sun"
-                  }
-                >
-                  {redemption.status}
-                </StatusPill>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="child-panel rounded-[1.4rem] p-4 text-sm leading-6 text-white/76">
-            No reward requests yet.
+        <summary className="child-home-collapsible-summary">
+          <div className="min-w-0 flex-1">
+            <p className="text-2xl font-black">Reward Queue</p>
           </div>
-        )}
+          <div className="child-home-collapsible-meta">
+            <span className="rounded-full bg-white/10 px-4 py-3 text-xl font-black text-white">
+              {queueCount}
+            </span>
+            <span aria-hidden="true" className="child-home-collapsible-chevron">
+              ^
+            </span>
+          </div>
+        </summary>
+      ) : null}
+      <div className={showHeader ? "px-5 pb-5" : ""}>
+        <div className={showHeader ? "space-y-3" : "space-y-3"}>
+          {queueCount ? (
+            childMode.redemptions.map((redemption) => {
+              const statusIcon =
+                redemption.status === "approved" || redemption.status === "completed"
+                  ? GOODKIDDO_ASSETS.boopSurprised
+                  : GOODKIDDO_ASSETS.boopSleepy;
+
+              return (
+                <div
+                  key={redemption.id}
+                  className="child-task-row flex items-center justify-between rounded-[1.3rem] px-4 py-4 text-[color:var(--foreground)]"
+                >
+                  <KiddoRouteImage
+                    alt={redemption.rewardTitle ?? "Reward"}
+                    className="h-[4.25rem] w-[4.25rem] object-contain"
+                    debugLabel={`child-reward-queue-reward:${redemption.rewardTitle ?? "reward"}`}
+                    height={68}
+                    imageDebugMode={imageDebugMode}
+                    src={getRewardIconPath(redemption.rewardTitle ?? "Reward")}
+                    width={68}
+                  />
+                  <KiddoRouteImage
+                    alt=""
+                    className="h-[3.45rem] w-[3.45rem] object-contain"
+                    debugLabel={`child-reward-queue-status:${redemption.status}`}
+                    height={56}
+                    imageDebugMode={imageDebugMode}
+                    src={statusIcon}
+                    width={56}
+                  />
+                </div>
+              );
+            })
+          ) : (
+            <div className="child-panel rounded-[1.4rem] p-4 text-sm leading-6 text-white/76">
+              No reward requests yet.
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -641,9 +614,6 @@ export function ChildProfileStudio({
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-2xl font-black">Choose an avatar</p>
-            <p className="mt-1 text-sm text-white/70">
-              Tap one to make it the child-mode profile picture.
-            </p>
           </div>
         </div>
 
@@ -677,28 +647,6 @@ export function ChildProfileStudio({
               </form>
             );
           })}
-        </div>
-
-        <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/8 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-lg font-black">More child pages</p>
-              <p className="mt-1 text-sm text-white/70">
-                Jump straight to what you want to do next.
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link className="btn btn-secondary px-4 py-2 text-sm" href="/child">
-              Home
-            </Link>
-            <Link className="btn btn-secondary px-4 py-2 text-sm" href="/child/rewards">
-              Rewards
-            </Link>
-            <Link className="btn btn-secondary px-4 py-2 text-sm" href="/child/activity">
-              Activity
-            </Link>
-          </div>
         </div>
       </div>
     </section>
