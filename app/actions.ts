@@ -1613,6 +1613,48 @@ export async function rejectRedemptionAction(formData: FormData) {
   redirect("/parent/approvals?status=redemption-rejected");
 }
 
+export async function completeRedemptionAction(formData: FormData) {
+  const parsed = reviewRedemptionSchema.safeParse({
+    redemptionId: formData.get("redemptionId"),
+  });
+
+  if (!parsed.success) {
+    redirect("/parent/approvals?status=action-failed");
+  }
+
+  const { supabase, family } = await getParentContextOrRedirect();
+
+  if (!family) {
+    redirect("/parent/approvals?status=family-required");
+  }
+
+  const { data: redemption, error: redemptionError } = await supabase
+    .from("redemptions")
+    .select("id, status")
+    .eq("id", parsed.data.redemptionId)
+    .eq("family_id", family.id)
+    .maybeSingle();
+
+  if (redemptionError || !redemption || redemption.status !== "approved") {
+    redirect("/parent/approvals?status=action-failed");
+  }
+
+  const { error } = await supabase
+    .from("redemptions")
+    .update({ status: "completed" })
+    .eq("id", parsed.data.redemptionId)
+    .eq("family_id", family.id)
+    .eq("status", "approved");
+
+  if (error) {
+    redirect("/parent/approvals?status=action-failed");
+  }
+
+  revalidateParentWorkspace();
+  revalidateChildWorkspace();
+  redirect("/parent/approvals");
+}
+
 export async function pairBooperAction(formData: FormData) {
   const parsed = pairBooperSchema.safeParse({
     booperId: formData.get("booperId"),

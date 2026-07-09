@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   approveRedemptionAction,
   approveTaskCompletionAction,
+  completeRedemptionAction,
   rejectRedemptionAction,
   rejectTaskCompletionAction,
 } from "@/app/actions";
@@ -22,6 +23,12 @@ export default async function ParentApprovalsPage() {
 
   const pendingRedemptions = dashboard.redemptions.filter(
     (redemption) => redemption.status === "pending",
+  );
+  const waitingToCompleteRedemptions = dashboard.redemptions.filter(
+    (redemption) => redemption.status === "approved",
+  );
+  const rewardDescriptionById = new Map(
+    dashboard.rewards.map((reward) => [reward.id, reward.description ?? null]),
   );
 
   return (
@@ -150,6 +157,56 @@ export default async function ParentApprovalsPage() {
           </div>
         </ShellCard>
       </section>
+
+      <ShellCard className="rounded-[1.8rem] p-6">
+        <p className="text-sm font-black uppercase tracking-[0.24em] text-[color:var(--ink-soft)]">
+          Reward fulfilment
+        </p>
+        <h2 className="mt-3 text-3xl font-extrabold">Waiting to complete</h2>
+        <div className="mt-6 space-y-4">
+          {waitingToCompleteRedemptions.length ? (
+            waitingToCompleteRedemptions.map((redemption) => {
+              const rewardDescription = rewardDescriptionById.get(redemption.reward_id);
+
+              return (
+                <div key={redemption.id} className="list-row rounded-[1.4rem] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-extrabold">
+                        {redemption.childName ?? "Child"} · {redemption.rewardTitle ?? "Reward"}
+                      </p>
+                      <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
+                        Approved {formatDateTimeDetailed(redemption.created_at)}
+                      </p>
+                      {rewardDescription ? (
+                        <p className="mt-2 text-sm leading-6 text-[color:var(--ink-soft)]">
+                          {rewardDescription}
+                        </p>
+                      ) : null}
+                    </div>
+                    <StatusPill tone="mint">{redemption.cost_at_redemption} boops</StatusPill>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <form action={completeRedemptionAction}>
+                      <input type="hidden" name="redemptionId" value={redemption.id} />
+                      <LoadingSubmitButton
+                        className="btn btn-primary px-4 py-2 text-sm"
+                        pendingLabel="Completing..."
+                      >
+                        Mark completed
+                      </LoadingSubmitButton>
+                    </form>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-5 text-sm leading-6 text-[color:var(--ink-soft)]">
+              No approved rewards are waiting to be completed right now.
+            </div>
+          )}
+        </div>
+      </ShellCard>
     </main>
   );
 }
