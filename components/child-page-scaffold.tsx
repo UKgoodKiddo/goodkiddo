@@ -11,7 +11,7 @@ export function ChildPageScaffold({
   childMode: ChildModeData;
   children: React.ReactNode;
 }) {
-  const banner = resolveChildBanner(bannerCode);
+  const banner = bannerCode === "child-mode-ready" ? null : resolveChildBanner(bannerCode);
 
   return (
     <main className="flex w-full flex-1 flex-col gap-5 text-white">

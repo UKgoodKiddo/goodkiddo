@@ -40,14 +40,20 @@ export default async function ParentLayout({
 
         <div className="relative flex items-start justify-between gap-4">
           <div className="-mt-1 min-w-0 flex-1 pt-0">
-            <Image
-              alt="goodKiddo Child Behaviour Support App"
-              className="h-auto w-full max-w-[15.1rem] sm:max-w-[18.25rem]"
-              height={584}
-              priority
-              src={GOODKIDDO_ASSETS.headerLogo}
-              width={1039}
-            />
+            <Link
+              aria-label="Go to parent dashboard"
+              className="block w-full max-w-[15.1rem] sm:max-w-[18.25rem]"
+              href="/parent"
+            >
+              <Image
+                alt="goodKiddo Make Family Life More Rewarding"
+                className="h-auto w-full"
+                height={584}
+                priority
+                src={GOODKIDDO_ASSETS.headerLogo}
+                width={1039}
+              />
+            </Link>
           </div>
 
           <div className="flex shrink-0 flex-col items-center gap-3">

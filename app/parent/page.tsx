@@ -236,7 +236,7 @@ export default async function ParentPage(props: {
 
         <ShellCard className="rounded-[1.8rem] p-6">
           <p className="eyebrow">Pending approvals</p>
-          <h2 className="mt-3 text-3xl font-extrabold">Needs your eyes</h2>
+          <h2 className="mt-3 text-3xl font-extrabold">Parent to do list</h2>
           <div className="mt-6 flex items-center justify-between rounded-[1.6rem] bg-[#f6f9ff] px-5 py-5">
             <div>
               <p className="text-sm font-bold text-[color:var(--ink-soft)]">
@@ -244,11 +244,11 @@ export default async function ParentPage(props: {
               </p>
               <p className="mt-2 text-4xl font-extrabold">{pendingApprovals}</p>
             </div>
-            <Link className="btn btn-secondary" href="/parent/approvals">
+            <Link className="btn btn-primary text-center" href="/parent/approvals">
               Open approvals
             </Link>
           </div>
-          <div className="mt-4 space-y-3 text-sm text-[color:var(--ink-soft)]">
+          <div className="mt-4 space-y-3 text-center text-sm text-[color:var(--ink-soft)]">
             <p>{dashboard.pendingTaskCompletions.length} task completions waiting.</p>
             <p>
               {dashboard.redemptions.filter((redemption) => redemption.status === "pending").length} reward
@@ -292,7 +292,7 @@ export default async function ParentPage(props: {
         <ShellCard className="rounded-[1.8rem] p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-3xl font-extrabold">Send a little extra joy</h2>
+              <h2 className="text-3xl font-extrabold">Give extra Boops</h2>
             </div>
             <ParentSurpriseBoopsWizardLauncher
               childOptions={childOptions}
@@ -307,8 +307,7 @@ export default async function ParentPage(props: {
           <details className="group" name="parent-dashboard-panels">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div>
-                <p className="text-sm font-bold text-[color:var(--ink-soft)]">Child boop balances</p>
-                <h2 className="mt-1 text-3xl font-extrabold">Who&apos;s saving up?</h2>
+                <h2 className="text-3xl font-extrabold">Boop Balances</h2>
               </div>
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
@@ -372,7 +371,7 @@ export default async function ParentPage(props: {
           <details className="group" name="parent-dashboard-panels">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div>
-                <h2 className="text-3xl font-extrabold">Latest wins</h2>
+                <h2 className="text-3xl font-extrabold">Latest Boops</h2>
               </div>
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
