@@ -1,3 +1,5 @@
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
+
 export function ChildUnlockForm({
   action,
   errorMessage,
@@ -37,9 +39,12 @@ export function ChildUnlockForm({
         ) : null}
 
         <div className="flex justify-center">
-          <button className="btn btn-primary w-full max-w-[14rem]" type="submit">
+          <LoadingSubmitButton
+            className="btn btn-primary w-full max-w-[14rem]"
+            pendingLabel="Unlocking..."
+          >
             Unlock
-          </button>
+          </LoadingSubmitButton>
         </div>
       </form>
     </div>

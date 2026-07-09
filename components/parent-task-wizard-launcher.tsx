@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { createTaskAction, updateTaskAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import {
   taskCardTitlesMatch,
@@ -530,9 +531,12 @@ export function ParentTaskWizardLauncher({
               </div>
             </div>
 
-            <button className="btn btn-primary h-16 text-xl font-black" type="submit">
+            <LoadingSubmitButton
+              className="btn btn-primary h-16 text-xl font-black"
+              pendingLabel={initialTask ? "Saving..." : "Creating..."}
+            >
               {initialTask ? "Save task" : "Create task"}
-            </button>
+            </LoadingSubmitButton>
           </form>
         );
       default:

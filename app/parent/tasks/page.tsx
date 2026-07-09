@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { deleteTaskAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ParentTaskWizardLauncher } from "@/components/parent-task-wizard-launcher";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
@@ -232,9 +233,12 @@ export default async function ParentTasksPage() {
 
                             <form action={deleteTaskAction}>
                               <input type="hidden" name="taskId" value={task.id} />
-                              <button className="btn btn-ghost px-4 py-2 text-sm" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-ghost px-4 py-2 text-sm"
+                                pendingLabel="Deleting..."
+                              >
                                 Delete task
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                           </div>
                         </div>

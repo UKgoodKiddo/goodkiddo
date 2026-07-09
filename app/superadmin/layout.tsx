@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signOutAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { SuperAdminNav } from "@/components/super-admin-nav";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import { getSuperAdminViewer } from "@/lib/super-admin";
@@ -45,9 +46,12 @@ export default async function SuperAdminLayout({
               Parent hub
             </Link>
             <form action={signOutAction}>
-              <button className="btn btn-primary px-4 py-2" type="submit">
+              <LoadingSubmitButton
+                className="btn btn-primary px-4 py-2"
+                pendingLabel="Signing out..."
+              >
                 Sign out
-              </button>
+              </LoadingSubmitButton>
             </form>
           </div>
         </div>

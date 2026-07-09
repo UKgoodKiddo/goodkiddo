@@ -6,6 +6,7 @@ import {
   viewSuperAdminFamilyAction,
 } from "@/app/actions";
 import { Banner } from "@/components/banner";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
 import { getSuperAdminStatusBanner } from "@/lib/super-admin-status";
@@ -50,13 +51,13 @@ export default async function SuperAdminFamiliesPage(props: {
               dashboard.families.map((family) => (
                 <form key={family.familyId} action={viewSuperAdminFamilyAction}>
                   <input name="familyId" type="hidden" value={family.familyId} />
-                  <button
+                  <LoadingSubmitButton
                     className={`list-row flex w-full items-center justify-between rounded-[1.4rem] p-4 text-left transition-colors ${
                       selectedFamily?.familyId === family.familyId
                         ? "border-[color:var(--primary)] bg-[rgba(20,86,216,0.08)]"
                         : ""
                     }`}
-                    type="submit"
+                    pendingLabel="Opening..."
                   >
                     <div>
                       <p className="text-lg font-extrabold">{family.familyName}</p>
@@ -65,7 +66,7 @@ export default async function SuperAdminFamiliesPage(props: {
                       </p>
                     </div>
                     <StatusPill tone="sky">{family.assignedInventoryCount} boopers</StatusPill>
-                  </button>
+                  </LoadingSubmitButton>
                 </form>
               ))
             ) : (
@@ -117,24 +118,33 @@ export default async function SuperAdminFamiliesPage(props: {
                               <input name="inventoryId" type="hidden" value={item.id} />
                               <input name="returnTo" type="hidden" value="/superadmin/families" />
                               <input name="status" type="hidden" value="disabled" />
-                              <button className="btn btn-secondary w-full" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-secondary w-full"
+                                pendingLabel="Saving..."
+                              >
                                 Disable
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                             <form action={updateInventoryStatusAction}>
                               <input name="inventoryId" type="hidden" value={item.id} />
                               <input name="returnTo" type="hidden" value="/superadmin/families" />
                               <input name="status" type="hidden" value="lost" />
-                              <button className="btn btn-secondary w-full" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-secondary w-full"
+                                pendingLabel="Saving..."
+                              >
                                 Mark lost
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                             <form action={releaseInventoryFromFamilyAction}>
                               <input name="inventoryId" type="hidden" value={item.id} />
                               <input name="returnTo" type="hidden" value="/superadmin/families" />
-                              <button className="btn btn-ghost w-full" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-ghost w-full"
+                                pendingLabel="Releasing..."
+                              >
                                 Release
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                           </div>
 
@@ -150,9 +160,12 @@ export default async function SuperAdminFamiliesPage(props: {
                                   </option>
                                 ))}
                               </select>
-                              <button className="btn btn-primary" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-primary"
+                                pendingLabel="Reassigning..."
+                              >
                                 Reassign
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                           ) : null}
                         </div>
@@ -204,9 +217,12 @@ export default async function SuperAdminFamiliesPage(props: {
                       name="providerSubscriptionId"
                       placeholder="Provider subscription ID"
                     />
-                    <button className="btn btn-primary" type="submit">
+                    <LoadingSubmitButton
+                      className="btn btn-primary"
+                      pendingLabel="Saving..."
+                    >
                       Save subscription placeholder
-                    </button>
+                    </LoadingSubmitButton>
                   </form>
                 </div>
               </div>

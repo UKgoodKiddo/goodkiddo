@@ -1,6 +1,7 @@
 "use client";
 
 import { launchChildModeAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import {
   CHILD_MODE_ENABLED_STORAGE_KEY,
   CHILD_MODE_FAMILY_STORAGE_KEY,
@@ -37,9 +38,12 @@ export function ParentChildModeLauncher({
       <input type="hidden" name="childProfileId" value={childProfileId} />
       <input type="hidden" name="familyId" value={familyId} />
       <input type="hidden" name="deviceLabel" value={deviceLabel} />
-      <button className="btn btn-secondary w-full text-sm" type="submit">
+      <LoadingSubmitButton
+        className="btn btn-secondary w-full text-sm"
+        pendingLabel="Launching..."
+      >
         Launch child mode
-      </button>
+      </LoadingSubmitButton>
     </form>
   );
 }

@@ -8,6 +8,7 @@ import {
   updateChildProfileAction,
 } from "@/app/actions";
 import { Banner } from "@/components/banner";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { NfcUidCapture } from "@/components/nfc-uid-capture";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
@@ -136,9 +137,9 @@ export default async function ParentChildrenPage(props: {
                     inputLabel="Optional Booper UID"
                     inputName="booperUid"
                   />
-                  <button className="btn btn-primary" type="submit">
+                  <LoadingSubmitButton className="btn btn-primary" pendingLabel="Adding...">
                     Add child profile
-                  </button>
+                  </LoadingSubmitButton>
                 </form>
               ) : (
                 <div className="mt-6 rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
@@ -252,18 +253,24 @@ export default async function ParentChildrenPage(props: {
                               <input type="hidden" name="childProfileId" value={child.id} />
                               <input type="hidden" name="returnTo" value="/parent/children" />
                               <input type="hidden" name="status" value="active" />
-                              <button className="btn btn-secondary w-full" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-secondary w-full"
+                                pendingLabel="Saving..."
+                              >
                                 Mark active
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                             <form action={updateBooperStatusAction} className="flex-1">
                               <input type="hidden" name="booperId" value={primaryBooper.id} />
                               <input type="hidden" name="childProfileId" value={child.id} />
                               <input type="hidden" name="returnTo" value="/parent/children" />
                               <input type="hidden" name="status" value="lost" />
-                              <button className="btn btn-ghost w-full" type="submit">
+                              <LoadingSubmitButton
+                                className="btn btn-ghost w-full"
+                                pendingLabel="Saving..."
+                              >
                                 Mark lost
-                              </button>
+                              </LoadingSubmitButton>
                             </form>
                           </div>
                         ) : null}
@@ -294,9 +301,12 @@ export default async function ParentChildrenPage(props: {
                         type="file"
                       />
                     </label>
-                    <button className="btn btn-primary lg:col-span-2" type="submit">
+                    <LoadingSubmitButton
+                      className="btn btn-primary lg:col-span-2"
+                      pendingLabel="Saving..."
+                    >
                       Save child
-                    </button>
+                    </LoadingSubmitButton>
                     <label className="grid gap-2 lg:col-span-2">
                       <span className="text-sm font-bold text-[color:var(--ink-soft)]">
                         Type {child.display_name} to confirm delete
@@ -307,13 +317,13 @@ export default async function ParentChildrenPage(props: {
                         placeholder={child.display_name}
                       />
                     </label>
-                    <button
+                    <LoadingSubmitButton
                       className="btn btn-danger lg:col-span-2"
                       formAction={deleteChildProfileAction}
-                      type="submit"
+                      pendingLabel="Deleting..."
                     >
                       Delete child
-                    </button>
+                    </LoadingSubmitButton>
                   </form>
                 </div>
               </details>

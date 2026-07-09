@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 
 type SuperAdminUidImportFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -84,9 +85,14 @@ export function SuperAdminUidImportForm({
           {fileStatus ? <p className="mt-1">{fileStatus}</p> : null}
         </div>
       ) : null}
-      <button className="btn btn-primary" disabled={isReadingFile} type="submit">
-        {isReadingFile ? "Preparing CSV..." : "Import booper UIDs"}
-      </button>
+      <LoadingSubmitButton
+        className="btn btn-primary"
+        disabled={isReadingFile}
+        pendingLabel="Preparing CSV..."
+        pendingOverride={isReadingFile}
+      >
+        Import booper UIDs
+      </LoadingSubmitButton>
     </form>
   );
 }

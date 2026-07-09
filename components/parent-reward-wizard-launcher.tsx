@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { createRewardAction, updateRewardAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { GOODKIDDO_ASSETS, getRewardIconPath } from "@/lib/goodkiddo-assets";
 import {
   findRewardPresetByTitle,
@@ -332,9 +333,12 @@ export function ParentRewardWizardLauncher({
               Reward is active
             </label>
 
-            <button className="btn btn-primary h-16 text-xl font-black" type="submit">
+            <LoadingSubmitButton
+              className="btn btn-primary h-16 text-xl font-black"
+              pendingLabel={initialReward ? "Saving..." : "Creating..."}
+            >
               {initialReward ? "Save reward" : "Create reward"}
-            </button>
+            </LoadingSubmitButton>
           </form>
         );
       default:

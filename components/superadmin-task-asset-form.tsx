@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState } from "react";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { normalizeTaskCardTitle, type TaskCardCategoryName } from "@/lib/task-card-utils";
 
 type ExistingTaskAsset = {
@@ -242,17 +243,20 @@ export function SuperAdminTaskAssetForm({
         </label>
       ) : null}
 
-      <button
+      <LoadingSubmitButton
         className="btn btn-primary"
         disabled={isSubmitBlocked}
-        type="submit"
+        pendingLabel={
+          isReadingAnyAsset
+            ? "Preparing images..."
+            : mustConfirmReplace
+              ? "Replacing..."
+              : "Saving..."
+        }
+        pendingOverride={isReadingAnyAsset}
       >
-        {isReadingAnyAsset
-          ? "Preparing images..."
-          : mustConfirmReplace
-            ? "Replace task assets"
-            : "Save task assets"}
-      </button>
+        {mustConfirmReplace ? "Replace task assets" : "Save task assets"}
+      </LoadingSubmitButton>
     </form>
   );
 }

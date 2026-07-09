@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signUpAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 
 const initialState = {
   status: "idle" as const,
@@ -55,9 +56,13 @@ export function SignupForm() {
         </div>
       ) : null}
 
-      <button className="btn btn-primary w-full" disabled={pending} type="submit">
-        {pending ? "Creating account..." : "Create parent account"}
-      </button>
+      <LoadingSubmitButton
+        className="btn btn-primary w-full"
+        pendingLabel="Creating account..."
+        pendingOverride={pending}
+      >
+        Create parent account
+      </LoadingSubmitButton>
 
       <p className="text-center text-sm text-[color:var(--ink-soft)]">
         Already have a parent account?{" "}

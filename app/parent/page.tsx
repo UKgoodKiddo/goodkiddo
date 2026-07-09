@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createFamilyAction } from "@/app/actions";
 import { Banner } from "@/components/banner";
 import { ClearChildModeStorage } from "@/components/clear-child-mode-storage";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ParentRewardWizardLauncher } from "@/components/parent-reward-wizard-launcher";
 import { ParentSurpriseBoopsWizardLauncher } from "@/components/parent-surprise-boops-wizard-launcher";
 import { ParentTaskWizardLauncher } from "@/components/parent-task-wizard-launcher";
@@ -58,9 +59,12 @@ export default async function ParentPage(props: {
                   placeholder="The Robinson family"
                   required
                 />
-                <button className="btn btn-primary whitespace-nowrap" type="submit">
+                <LoadingSubmitButton
+                  className="btn btn-primary whitespace-nowrap"
+                  pendingLabel="Creating..."
+                >
                   Create family
-                </button>
+                </LoadingSubmitButton>
               </form>
             </div>
 

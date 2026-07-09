@@ -5,6 +5,7 @@ import { useLayoutEffect, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { signOutAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -160,9 +161,12 @@ export function ParentNav({
 
                   <div className="mt-4">
                     <form action={signOutAction}>
-                      <button className="btn btn-primary w-full" type="submit">
+                      <LoadingSubmitButton
+                        className="btn btn-primary w-full"
+                        pendingLabel="Signing out..."
+                      >
                         Sign out
-                      </button>
+                      </LoadingSubmitButton>
                     </form>
                   </div>
                 </div>

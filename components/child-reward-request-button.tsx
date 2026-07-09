@@ -71,7 +71,14 @@ export function ChildRewardRequestButton({
       onClick={handleClick}
       type="button"
     >
-      {isPending ? "Requesting..." : "Request"}
+      {isPending ? (
+        <>
+          <span aria-hidden="true" className="btn-spinner" />
+          <span>Requesting...</span>
+        </>
+      ) : (
+        "Request"
+      )}
     </button>
   );
 }

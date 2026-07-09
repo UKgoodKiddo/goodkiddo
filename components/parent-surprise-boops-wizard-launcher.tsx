@@ -9,6 +9,7 @@ import {
   awardSurpriseBoopsInlineAction,
   type AwardSurpriseBoopsInlineState,
 } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 
 type ChildOption = {
@@ -342,13 +343,13 @@ export function ParentSurpriseBoopsWizardLauncher({
                         </div>
                       ) : null}
 
-                      <button
+                      <LoadingSubmitButton
                         className="btn btn-primary h-16 text-xl font-black"
-                        disabled={isSubmitting}
-                        type="submit"
+                        pendingLabel="Sending..."
+                        pendingOverride={isSubmitting}
                       >
-                        {isSubmitting ? "Sending..." : "Award surprise boops"}
-                      </button>
+                        Award surprise boops
+                      </LoadingSubmitButton>
                     </form>
                   ) : null}
                 </div>

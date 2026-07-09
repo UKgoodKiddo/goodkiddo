@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { updateParentPinAction } from "@/app/actions";
 import { Banner } from "@/components/banner";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ShellCard } from "@/components/shell-card";
 import { getParentDashboardData } from "@/lib/data";
 import { getParentStatusBanner } from "@/lib/parent-status";
@@ -83,9 +84,12 @@ export default async function ParentSettingsPage(props: {
                 required
                 type="password"
               />
-              <button className="btn btn-primary sm:w-fit" type="submit">
+              <LoadingSubmitButton
+                className="btn btn-primary sm:w-fit"
+                pendingLabel="Saving..."
+              >
                 Save parent PIN
-              </button>
+              </LoadingSubmitButton>
             </form>
           ) : (
             <div className="mt-6 rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">

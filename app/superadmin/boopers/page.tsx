@@ -5,6 +5,7 @@ import {
   updateInventoryStatusAction,
 } from "@/app/actions";
 import { Banner } from "@/components/banner";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
 import { SuperAdminUidImportForm } from "@/components/superadmin-uid-import-form";
@@ -93,9 +94,9 @@ export default async function SuperAdminBoopersPage(props: {
               name="baseUrl"
               placeholder="Base URL e.g. https://goodkiddo.co.uk/b"
             />
-            <button className="btn btn-primary" type="submit">
+            <LoadingSubmitButton className="btn btn-primary" pendingLabel="Exporting...">
               Export TagWriter CSV
-            </button>
+            </LoadingSubmitButton>
           </form>
         </ShellCard>
 
@@ -182,9 +183,12 @@ export default async function SuperAdminBoopersPage(props: {
                           </option>
                         ))}
                       </select>
-                      <button className="btn btn-primary w-full" type="submit">
+                      <LoadingSubmitButton
+                        className="btn btn-primary w-full"
+                        pendingLabel={item.family_id ? "Reassigning..." : "Assigning..."}
+                      >
                         {item.family_id ? "Reassign booper" : "Assign booper"}
-                      </button>
+                      </LoadingSubmitButton>
                     </form>
 
                     <div className="grid gap-2 sm:grid-cols-3">
@@ -192,17 +196,23 @@ export default async function SuperAdminBoopersPage(props: {
                         <input name="inventoryId" type="hidden" value={item.id} />
                         <input name="returnTo" type="hidden" value="/superadmin/boopers" />
                         <input name="status" type="hidden" value="disabled" />
-                        <button className="btn btn-secondary w-full" type="submit">
+                        <LoadingSubmitButton
+                          className="btn btn-secondary w-full"
+                          pendingLabel="Saving..."
+                        >
                           Disable
-                        </button>
+                        </LoadingSubmitButton>
                       </form>
                       <form action={updateInventoryStatusAction}>
                         <input name="inventoryId" type="hidden" value={item.id} />
                         <input name="returnTo" type="hidden" value="/superadmin/boopers" />
                         <input name="status" type="hidden" value="lost" />
-                        <button className="btn btn-secondary w-full" type="submit">
+                        <LoadingSubmitButton
+                          className="btn btn-secondary w-full"
+                          pendingLabel="Saving..."
+                        >
                           Mark lost
-                        </button>
+                        </LoadingSubmitButton>
                       </form>
                       <form action={updateInventoryStatusAction}>
                         <input name="inventoryId" type="hidden" value={item.id} />
@@ -212,9 +222,12 @@ export default async function SuperAdminBoopersPage(props: {
                           type="hidden"
                           value={item.family_id ? "assigned" : "available"}
                         />
-                        <button className="btn btn-ghost w-full" type="submit">
+                        <LoadingSubmitButton
+                          className="btn btn-ghost w-full"
+                          pendingLabel="Restoring..."
+                        >
                           Restore
-                        </button>
+                        </LoadingSubmitButton>
                       </form>
                     </div>
 
@@ -222,9 +235,12 @@ export default async function SuperAdminBoopersPage(props: {
                       <form action={releaseInventoryFromFamilyAction}>
                         <input name="inventoryId" type="hidden" value={item.id} />
                         <input name="returnTo" type="hidden" value="/superadmin/boopers" />
-                        <button className="btn btn-ghost w-full" type="submit">
+                        <LoadingSubmitButton
+                          className="btn btn-ghost w-full"
+                          pendingLabel="Releasing..."
+                        >
                           Release from family
-                        </button>
+                        </LoadingSubmitButton>
                       </form>
                     ) : null}
                   </div>

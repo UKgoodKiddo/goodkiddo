@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signInAction } from "@/app/actions";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 
 const initialState = {
   status: "idle" as const,
@@ -48,9 +49,13 @@ export function LoginForm() {
         </div>
       ) : null}
 
-      <button className="btn btn-primary w-full" disabled={pending} type="submit">
-        {pending ? "Signing in..." : "Sign in"}
-      </button>
+      <LoadingSubmitButton
+        className="btn btn-primary w-full"
+        pendingLabel="Signing in..."
+        pendingOverride={pending}
+      >
+        Sign in
+      </LoadingSubmitButton>
     </form>
   );
 }

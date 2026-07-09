@@ -7,6 +7,7 @@ import {
   rejectTaskCompletionAction,
 } from "@/app/actions";
 import { ShellCard } from "@/components/shell-card";
+import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { StatusPill } from "@/components/status-pill";
 import { getParentDashboardData } from "@/lib/data";
 import { resolveTaskCardAsset } from "@/lib/task-card-catalog";
@@ -70,15 +71,21 @@ export default async function ParentApprovalsPage() {
                       <div className="mt-4 flex flex-wrap gap-2">
                         <form action={approveTaskCompletionAction}>
                           <input type="hidden" name="completionId" value={completion.id} />
-                          <button className="btn btn-primary px-4 py-2 text-sm" type="submit">
+                          <LoadingSubmitButton
+                            className="btn btn-primary px-4 py-2 text-sm"
+                            pendingLabel="Approving..."
+                          >
                             Approve
-                          </button>
+                          </LoadingSubmitButton>
                         </form>
                         <form action={rejectTaskCompletionAction}>
                           <input type="hidden" name="completionId" value={completion.id} />
-                          <button className="btn btn-ghost px-4 py-2 text-sm" type="submit">
+                          <LoadingSubmitButton
+                            className="btn btn-ghost px-4 py-2 text-sm"
+                            pendingLabel="Rejecting..."
+                          >
                             Reject
-                          </button>
+                          </LoadingSubmitButton>
                         </form>
                       </div>
                     </div>
@@ -116,15 +123,21 @@ export default async function ParentApprovalsPage() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <form action={approveRedemptionAction}>
                       <input type="hidden" name="redemptionId" value={redemption.id} />
-                      <button className="btn btn-primary px-4 py-2 text-sm" type="submit">
+                      <LoadingSubmitButton
+                        className="btn btn-primary px-4 py-2 text-sm"
+                        pendingLabel="Approving..."
+                      >
                         Approve
-                      </button>
+                      </LoadingSubmitButton>
                     </form>
                     <form action={rejectRedemptionAction}>
                       <input type="hidden" name="redemptionId" value={redemption.id} />
-                      <button className="btn btn-ghost px-4 py-2 text-sm" type="submit">
+                      <LoadingSubmitButton
+                        className="btn btn-ghost px-4 py-2 text-sm"
+                        pendingLabel="Rejecting..."
+                      >
                         Reject
-                      </button>
+                      </LoadingSubmitButton>
                     </form>
                   </div>
                 </div>
