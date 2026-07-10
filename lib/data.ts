@@ -91,11 +91,17 @@ export async function getParentDashboardData(): Promise<ParentDashboardData> {
 
   const [subscriptionResult, childrenResult, boopersResult, managedInventoryResult, tasksResult, rewardsResult, transactionsResult, pendingAwardsResult, redemptionsResult, deviceModesResult, taskCompletionsResult] =
     await Promise.all([
-      supabase
-        .from("family_subscriptions")
-        .select("*")
-        .eq("family_id", family.id)
-        .maybeSingle(),
+      admin
+        ? admin
+            .from("family_subscriptions")
+            .select("*")
+            .eq("family_id", family.id)
+            .maybeSingle()
+        : supabase
+            .from("family_subscriptions")
+            .select("*")
+            .eq("family_id", family.id)
+            .maybeSingle(),
       supabase
         .from("child_profiles")
         .select("*")

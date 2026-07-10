@@ -3,6 +3,7 @@
 import { File as NodeFile } from "node:buffer";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import {
   buildChildStatusPath,
@@ -3314,7 +3315,7 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
     revalidateSuperAdminWorkspace();
     redirect(`/superadmin/families?familyId=${parsed.data.familyId}&status=subscription-saved`);
   } catch (error) {
-    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+    if (isRedirectError(error)) {
       throw error;
     }
 
