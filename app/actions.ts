@@ -256,6 +256,14 @@ const viewSuperAdminFamilySchema = z.object({
   familyId: z.uuid(),
 });
 
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
+
+  return value;
+};
+
 const familySubscriptionSchema = z.object({
   familyId: z.uuid(),
   subscriptionPlan: z.string().trim().min(1).max(80),
@@ -270,12 +278,27 @@ const familySubscriptionSchema = z.object({
     "paused",
     "canceled",
   ]),
-  subscriptionCurrentPeriodEnd: z.string().trim().optional(),
-  subscriptionProvider: z.enum(["manual", "stripe"]).optional(),
-  stripeCustomerId: z.string().trim().max(120).optional(),
-  stripeSubscriptionId: z.string().trim().max(120).optional(),
+  subscriptionCurrentPeriodEnd: z.preprocess(
+    emptyStringToUndefined,
+    z.string().trim().optional(),
+  ),
+  subscriptionProvider: z.preprocess(
+    emptyStringToUndefined,
+    z.enum(["manual", "stripe"]).optional(),
+  ),
+  stripeCustomerId: z.preprocess(
+    emptyStringToUndefined,
+    z.string().trim().max(120).optional(),
+  ),
+  stripeSubscriptionId: z.preprocess(
+    emptyStringToUndefined,
+    z.string().trim().max(120).optional(),
+  ),
   booperPackIncluded: z.union([z.literal("true"), z.literal("false")]).optional(),
-  booperPackStatus: z.enum(["pending", "packed", "shipped", "delivered"]).optional(),
+  booperPackStatus: z.preprocess(
+    emptyStringToUndefined,
+    z.enum(["pending", "packed", "shipped", "delivered"]).optional(),
+  ),
 });
 
 const startStripeCheckoutSchema = z.object({
