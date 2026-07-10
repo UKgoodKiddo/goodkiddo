@@ -100,8 +100,21 @@ export function familyHasChosenPlan(subscription: FamilySubscription | null | un
   return Boolean(subscription?.subscription_plan);
 }
 
+export function familyHasActiveSubscription(
+  subscription: FamilySubscription | null | undefined,
+) {
+  if (!subscription?.subscription_plan) {
+    return false;
+  }
+
+  return (
+    subscription.subscription_status === "active" ||
+    subscription.subscription_status === "trialing"
+  );
+}
+
 export function subscriptionNeedsPlanSelection(subscription: FamilySubscription | null | undefined) {
-  return !familyHasChosenPlan(subscription);
+  return !familyHasActiveSubscription(subscription);
 }
 
 export function getDefaultBooperPackStatus(

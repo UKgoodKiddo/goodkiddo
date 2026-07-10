@@ -3,6 +3,7 @@ import { Banner } from "@/components/banner";
 import { ShellCard } from "@/components/shell-card";
 import { getParentDashboardData } from "@/lib/data";
 import { getParentStatusBanner } from "@/lib/parent-status";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 import { formatBoops, formatDateTime } from "@/lib/utils";
 
 export default async function ParentActivityPage(props: {
@@ -15,6 +16,10 @@ export default async function ParentActivityPage(props: {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const bannerCode =

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ParentCollectBoopsClient } from "@/components/parent-collect-boops-client";
 import { ShellCard } from "@/components/shell-card";
 import { getParentDashboardData } from "@/lib/data";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 
 export default async function ParentCollectChildBoopsPage(props: {
   params: Promise<{ childId: string }>;
@@ -15,6 +16,10 @@ export default async function ParentCollectChildBoopsPage(props: {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const child = dashboard.children.find((entry) => entry.id === childId);

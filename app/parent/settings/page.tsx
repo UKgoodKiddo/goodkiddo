@@ -9,6 +9,7 @@ import {
   formatBooperPackStatus,
   formatSubscriptionPlan,
   formatSubscriptionStatusLabel,
+  subscriptionNeedsPlanSelection,
 } from "@/lib/subscriptions";
 import { formatDateTime } from "@/lib/utils";
 
@@ -22,6 +23,10 @@ export default async function ParentSettingsPage(props: {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const bannerCode =

@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/status-pill";
 import { getParentDashboardData } from "@/lib/data";
 import { getRewardIconPath } from "@/lib/goodkiddo-assets";
 import { getParentStatusBanner } from "@/lib/parent-status";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 
 export default async function ParentRewardsPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -18,6 +19,10 @@ export default async function ParentRewardsPage(props: {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const bannerCode =

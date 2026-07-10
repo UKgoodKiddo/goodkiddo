@@ -86,7 +86,7 @@ export default async function ParentPage(props: {
   }
 
   if (subscriptionNeedsPlanSelection(dashboard.subscription)) {
-    redirect("/parent/plan");
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const pendingApprovals =

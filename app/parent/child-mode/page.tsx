@@ -9,6 +9,7 @@ import { ParentChildModeLauncher } from "@/components/parent-child-mode-launcher
 import { ShellCard } from "@/components/shell-card";
 import { getParentDashboardData } from "@/lib/data";
 import { getParentStatusBanner } from "@/lib/parent-status";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 import { formatBoops } from "@/lib/utils";
 
 export default async function ParentChildModePage(props: {
@@ -21,6 +22,10 @@ export default async function ParentChildModePage(props: {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const bannerCode =

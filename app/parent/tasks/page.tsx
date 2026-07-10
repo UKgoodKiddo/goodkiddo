@@ -10,6 +10,7 @@ import {
   getTaskCardCatalog,
   resolveTaskCardAsset,
 } from "@/lib/task-card-catalog";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 import type { TaskWeekday } from "@/lib/types";
 import { formatDateTimeDetailed } from "@/lib/utils";
 
@@ -50,6 +51,10 @@ export default async function ParentTasksPage() {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const childOptions = dashboard.children.map((child) => ({

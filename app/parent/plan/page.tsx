@@ -13,6 +13,11 @@ import {
 
 function getPlanStatusBanner(code?: string) {
   switch (code) {
+    case "subscription-required":
+      return {
+        message: "Your subscription is not active right now. Choose a plan to continue.",
+        tone: "rose" as const,
+      };
     case "checkout-cancelled":
       return {
         message: "Checkout was cancelled before payment was completed.",

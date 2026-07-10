@@ -12,6 +12,7 @@ import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { StatusPill } from "@/components/status-pill";
 import { getParentDashboardData } from "@/lib/data";
 import { resolveTaskCardAsset } from "@/lib/task-card-catalog";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 import { formatDateTimeDetailed } from "@/lib/utils";
 
 export default async function ParentApprovalsPage() {
@@ -19,6 +20,10 @@ export default async function ParentApprovalsPage() {
 
   if (dashboard.requiresAuth) {
     redirect("/auth/login");
+  }
+
+  if (dashboard.family && subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan?status=subscription-required");
   }
 
   const pendingRedemptions = dashboard.redemptions.filter(
