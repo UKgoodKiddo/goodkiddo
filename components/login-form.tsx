@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signInAction } from "@/app/actions";
@@ -31,7 +32,15 @@ export function LoginForm() {
       </label>
 
       <label className="grid gap-2">
-        <span className="text-sm font-bold">Password</span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-bold">Password</span>
+          <Link
+            className="text-sm font-bold text-[color:var(--secondary)]"
+            href="/auth/forgot-password"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <input
           autoComplete="current-password"
           className="field"

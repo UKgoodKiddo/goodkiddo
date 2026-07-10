@@ -18,7 +18,7 @@ import {
 } from "@/lib/supabase/server";
 import type { ActionState, TaskWeekday } from "@/lib/types";
 import { areUidsEqual, normalizeUid } from "@/lib/uid";
-import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
+import { env, isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createStripeCheckoutSession, isStripeConfigured } from "@/lib/stripe";
 import { SUBSCRIPTION_PLAN_OPTIONS } from "@/lib/subscriptions";
 
@@ -26,6 +26,10 @@ const signInSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
   returnTo: z.string().trim().optional(),
+});
+
+const passwordResetRequestSchema = z.object({
+  email: z.email(),
 });
 
 const signUpSchema = z.object({
@@ -661,6 +665,51 @@ export async function signInAction(
   }
 
   redirect(sanitizeReturnToPath(parsed.data.returnTo) ?? "/parent");
+}
+
+export async function requestPasswordResetAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  if (!isSupabaseConfigured()) {
+    return {
+      status: "error",
+      message:
+        "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY first.",
+    };
+  }
+
+  const parsed = passwordResetRequestSchema.safeParse({
+    email: formData.get("email"),
+  });
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Enter a valid parent email address.",
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const siteUrl =
+    env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const redirectTo = `${siteUrl.replace(/\/$/, "")}/auth/reset-password`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo,
+  });
+
+  if (error) {
+    return {
+      status: "error",
+      message: error.message,
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Password reset email sent. Check your inbox to continue.",
+  };
 }
 
 export async function signUpAction(

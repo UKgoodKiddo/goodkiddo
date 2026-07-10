@@ -31,57 +31,59 @@ export default async function ParentLayout({
   const viewer = await getParentViewer();
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6">
-      <header className="parent-hero shell-card relative z-20 mb-6 overflow-hidden rounded-[2rem] px-5 py-6 sm:px-6">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(141,255,217,0.18),transparent_26%),radial-gradient(circle_at_right_center,rgba(20,86,216,0.08),transparent_30%)]"
-        />
+    <div className="flex flex-1 bg-[linear-gradient(180deg,#ffffff_0%,#eef5ff_40%,#1b43b7_100%)]">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6">
+        <header className="parent-hero shell-card relative z-20 mb-6 overflow-hidden rounded-[2rem] px-5 py-6 sm:px-6">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(141,255,217,0.18),transparent_26%),radial-gradient(circle_at_right_center,rgba(20,86,216,0.08),transparent_30%)]"
+          />
 
-        <div className="relative flex items-start justify-between gap-4">
-          <div className="-mt-1 min-w-0 flex-1 pt-0">
-            <Link
-              aria-label="Go to parent dashboard"
-              className="block w-full max-w-[15.1rem] sm:max-w-[18.25rem]"
-              href="/parent"
-            >
-              <Image
-                alt="goodKiddo Make Family Life More Rewarding"
-                className="h-auto w-full"
-                height={584}
-                priority
-                src={GOODKIDDO_ASSETS.headerLogo}
-                width={1039}
-              />
-            </Link>
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="-mt-1 min-w-0 flex-1 pt-0">
+              <Link
+                aria-label="Go to parent dashboard"
+                className="block w-full max-w-[15.1rem] sm:max-w-[18.25rem]"
+                href="/parent"
+              >
+                <Image
+                  alt="goodKiddo Make Family Life More Rewarding"
+                  className="h-auto w-full"
+                  height={584}
+                  priority
+                  src={GOODKIDDO_ASSETS.headerLogo}
+                  width={1039}
+                />
+              </Link>
+            </div>
+
+            <div className="flex shrink-0 flex-col items-center gap-3">
+              <ParentNav viewerEmail={viewer.user?.email ?? null} />
+              <Link
+                aria-label="Open child mode child picker"
+                className="relative z-30 flex h-14 w-14 items-center justify-center rounded-full border border-[rgba(18,39,96,0.08)] bg-white text-[rgba(60,60,60,0.94)] shadow-[0_16px_32px_rgba(20,36,82,0.14)] transition-transform duration-150 hover:scale-[1.02]"
+                href="/parent/child-mode"
+                style={{
+                  WebkitTapHighlightColor: "transparent",
+                  WebkitTouchCallout: "none",
+                  touchAction: "manipulation",
+                }}
+              >
+                <AccountIcon />
+              </Link>
+            </div>
           </div>
 
-          <div className="flex shrink-0 flex-col items-center gap-3">
-            <ParentNav viewerEmail={viewer.user?.email ?? null} />
-            <Link
-              aria-label="Open child mode child picker"
-              className="relative z-30 flex h-14 w-14 items-center justify-center rounded-full border border-[rgba(18,39,96,0.08)] bg-white text-[rgba(60,60,60,0.94)] shadow-[0_16px_32px_rgba(20,36,82,0.14)] transition-transform duration-150 hover:scale-[1.02]"
-              href="/parent/child-mode"
-              style={{
-                WebkitTapHighlightColor: "transparent",
-                WebkitTouchCallout: "none",
-                touchAction: "manipulation",
-              }}
-            >
-              <AccountIcon />
-            </Link>
+          <div className="relative mt-4 flex justify-center text-center">
+            <p className="text-sm font-bold text-[color:var(--ink-soft)] sm:text-base">
+              {viewer.familyName
+                ? `Welcome back ${viewer.familyName}`
+                : "Welcome back"}
+            </p>
           </div>
-        </div>
-
-        <div className="relative mt-4 flex justify-center text-center">
-          <p className="text-sm font-bold text-[color:var(--ink-soft)] sm:text-base">
-            {viewer.familyName
-              ? `Welcome back ${viewer.familyName}`
-              : "Welcome back"}
-          </p>
-        </div>
-      </header>
-      {children}
+        </header>
+        {children}
+      </div>
     </div>
   );
 }

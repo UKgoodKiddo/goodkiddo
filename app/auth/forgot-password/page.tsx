@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { AuthPageShell } from "@/components/auth-page-shell";
-import { SignupForm } from "@/components/signup-form";
+import { ForgotPasswordForm } from "@/components/forgot-password-form";
 import { getParentViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
-export default async function SignupPage() {
+export default async function ForgotPasswordPage() {
   const viewer = await getParentViewer();
 
   if (viewer.user) {
@@ -15,8 +15,8 @@ export default async function SignupPage() {
 
   return (
     <AuthPageShell
-      description="Create the parent account that will manage your family."
-      title="Create account"
+      description="Enter your parent email and we’ll send a reset link."
+      title="Reset password"
     >
       {!supabaseReady ? (
         <div className="rounded-[1.4rem] border border-[color:var(--berry)]/25 bg-[color:var(--berry)]/8 p-4 text-sm leading-6 text-[color:var(--foreground)]">
@@ -25,7 +25,7 @@ export default async function SignupPage() {
         </div>
       ) : null}
 
-      <SignupForm />
+      <ForgotPasswordForm />
     </AuthPageShell>
   );
 }
