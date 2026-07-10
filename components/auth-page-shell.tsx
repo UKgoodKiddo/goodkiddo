@@ -16,7 +16,7 @@ export function AuthPageShell({
   title,
 }: AuthPageShellProps) {
   return (
-    <main className="flex flex-1 bg-[linear-gradient(180deg,#ffffff_0%,#eef5ff_40%,#1b43b7_100%)]">
+    <main className="flex flex-1 bg-[linear-gradient(180deg,#ffffff_0%,#eef5ff_18%,#7fa6ff_34%,#1b43b7_58%,#0d36a8_100%)]">
       <div className="mx-auto flex w-full max-w-3xl flex-1 items-center px-5 py-8 sm:px-8 sm:py-10">
         <div className="grid w-full gap-5">
           <Link

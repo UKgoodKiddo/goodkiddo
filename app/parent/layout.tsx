@@ -31,7 +31,7 @@ export default async function ParentLayout({
   const viewer = await getParentViewer();
 
   return (
-    <div className="flex flex-1 bg-[linear-gradient(180deg,#ffffff_0%,#eef5ff_40%,#1b43b7_100%)]">
+    <div className="flex flex-1 bg-[linear-gradient(180deg,#ffffff_0%,#eef5ff_18%,#7fa6ff_34%,#1b43b7_58%,#0d36a8_100%)]">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6">
         <header className="parent-hero shell-card relative z-20 mb-6 overflow-hidden rounded-[2rem] px-5 py-6 sm:px-6">
           <div
