@@ -204,7 +204,9 @@ export async function getSuperAdminDashboardData(): Promise<SuperAdminDashboardD
     totalAssignedInventory: inventory.filter((item) => item.family_id).length,
     totalFamilies: familySummaries.length,
     totalInventory: inventory.length,
-    totalSubscriptionsActive: subscriptions.filter((item) => item.status === "active").length,
+    totalSubscriptionsActive: subscriptions.filter(
+      (item) => item.subscription_status === "active",
+    ).length,
     viewerEmail: user.email ?? null,
   };
 }

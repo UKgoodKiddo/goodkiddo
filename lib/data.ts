@@ -33,6 +33,7 @@ export async function getParentDashboardData(): Promise<ParentDashboardData> {
   if (!isSupabaseConfigured()) {
     return {
       ...demoParentDashboard,
+      subscription: null,
       usingDemoMode: true,
       childModeReady: isChildModeConfigured(),
     };
@@ -47,6 +48,7 @@ export async function getParentDashboardData(): Promise<ParentDashboardData> {
     return {
       ...demoParentDashboard,
       family: null,
+      subscription: null,
       pendingBoopAwards: [],
       pendingBoopTotal: 0,
       requiresAuth: true,
@@ -69,6 +71,7 @@ export async function getParentDashboardData(): Promise<ParentDashboardData> {
       children: [],
       deviceModes: [],
       family: null,
+      subscription: null,
       pendingBoopAwards: [],
       pendingBoopTotal: 0,
       taskCompletions: [],
@@ -86,8 +89,13 @@ export async function getParentDashboardData(): Promise<ParentDashboardData> {
 
   const admin = isServiceRoleConfigured() ? createSupabaseAdminClient() : null;
 
-  const [childrenResult, boopersResult, managedInventoryResult, tasksResult, rewardsResult, transactionsResult, pendingAwardsResult, redemptionsResult, deviceModesResult, taskCompletionsResult] =
+  const [subscriptionResult, childrenResult, boopersResult, managedInventoryResult, tasksResult, rewardsResult, transactionsResult, pendingAwardsResult, redemptionsResult, deviceModesResult, taskCompletionsResult] =
     await Promise.all([
+      supabase
+        .from("family_subscriptions")
+        .select("*")
+        .eq("family_id", family.id)
+        .maybeSingle(),
       supabase
         .from("child_profiles")
         .select("*")
@@ -181,6 +189,7 @@ export async function getParentDashboardData(): Promise<ParentDashboardData> {
     children,
     deviceModes: deviceModesResult.data ?? [],
     family,
+    subscription: subscriptionResult.data ?? null,
     pendingBoopAwards,
     pendingBoopTotal: pendingBoopAwards.reduce((sum, award) => sum + award.amount, 0),
     pendingTaskCompletions,

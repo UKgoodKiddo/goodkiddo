@@ -170,10 +170,28 @@ export type RedemptionStatus =
   | "completed";
 
 export type SubscriptionStatus =
-  | "trial"
+  | "inactive"
+  | "trialing"
   | "active"
   | "past_due"
-  | "cancelled";
+  | "unpaid"
+  | "incomplete"
+  | "incomplete_expired"
+  | "paused"
+  | "canceled";
+
+export type SubscriptionPlan =
+  | "monthly_family_plus"
+  | "yearly_family_plus"
+  | "beta_1_0";
+
+export type SubscriptionProvider = "manual" | "stripe";
+
+export type BooperPackStatus =
+  | "pending"
+  | "packed"
+  | "shipped"
+  | "delivered";
 
 export type Redemption = {
   id: string;
@@ -189,10 +207,18 @@ export type FamilySubscription = {
   id: string;
   family_id: string;
   plan_code: string;
-  status: SubscriptionStatus;
+  status: "trial" | "active" | "past_due" | "cancelled";
   renewal_date: string | null;
   provider_customer_id: string | null;
   provider_subscription_id: string | null;
+  subscription_status: SubscriptionStatus;
+  subscription_plan: string | null;
+  subscription_provider: SubscriptionProvider | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_current_period_end: string | null;
+  booper_pack_included: boolean;
+  booper_pack_status: BooperPackStatus | null;
   created_at: string;
   updated_at: string;
 };
@@ -246,6 +272,7 @@ export type RedemptionView = Redemption & {
 
 export type ParentDashboardData = {
   family: Family | null;
+  subscription: FamilySubscription | null;
   userEmail: string | null;
   children: ChildProfile[];
   boopers: Booper[];
@@ -514,10 +541,18 @@ export type Database = {
           id?: string;
           family_id: string;
           plan_code: string;
-          status?: SubscriptionStatus;
+          status?: "trial" | "active" | "past_due" | "cancelled";
           renewal_date?: string | null;
           provider_customer_id?: string | null;
           provider_subscription_id?: string | null;
+          subscription_status: SubscriptionStatus;
+          subscription_plan?: string | null;
+          subscription_provider?: SubscriptionProvider | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          subscription_current_period_end?: string | null;
+          booper_pack_included?: boolean;
+          booper_pack_status?: BooperPackStatus | null;
           created_at?: string;
           updated_at?: string;
         };

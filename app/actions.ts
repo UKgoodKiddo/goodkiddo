@@ -18,6 +18,8 @@ import {
 import type { ActionState, TaskWeekday } from "@/lib/types";
 import { areUidsEqual, normalizeUid } from "@/lib/uid";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
+import { createStripeCheckoutSession, isStripeConfigured } from "@/lib/stripe";
+import { SUBSCRIPTION_PLAN_OPTIONS } from "@/lib/subscriptions";
 
 const signInSchema = z.object({
   email: z.email(),
@@ -256,11 +258,33 @@ const viewSuperAdminFamilySchema = z.object({
 
 const familySubscriptionSchema = z.object({
   familyId: z.uuid(),
-  planCode: z.string().trim().min(1).max(80),
-  status: z.enum(["trial", "active", "past_due", "cancelled"]),
-  renewalDate: z.string().trim().optional(),
-  providerCustomerId: z.string().trim().max(120).optional(),
-  providerSubscriptionId: z.string().trim().max(120).optional(),
+  subscriptionPlan: z.string().trim().min(1).max(80),
+  subscriptionStatus: z.enum([
+    "inactive",
+    "trialing",
+    "active",
+    "past_due",
+    "unpaid",
+    "incomplete",
+    "incomplete_expired",
+    "paused",
+    "canceled",
+  ]),
+  subscriptionCurrentPeriodEnd: z.string().trim().optional(),
+  subscriptionProvider: z.enum(["manual", "stripe"]).optional(),
+  stripeCustomerId: z.string().trim().max(120).optional(),
+  stripeSubscriptionId: z.string().trim().max(120).optional(),
+  booperPackIncluded: z.union([z.literal("true"), z.literal("false")]).optional(),
+  booperPackStatus: z.enum(["pending", "packed", "shipped", "delivered"]).optional(),
+});
+
+const startStripeCheckoutSchema = z.object({
+  plan: z.enum(
+    SUBSCRIPTION_PLAN_OPTIONS.map((plan) => plan.id) as [
+      (typeof SUBSCRIPTION_PLAN_OPTIONS)[number]["id"],
+      ...(typeof SUBSCRIPTION_PLAN_OPTIONS)[number]["id"][],
+    ],
+  ),
 });
 
 async function getChildModeHelpers() {
@@ -601,7 +625,47 @@ export async function createFamilyAction(formData: FormData) {
   }
 
   revalidatePath("/parent");
-  redirect("/parent?status=family-created");
+  redirect("/parent/plan");
+}
+
+export async function startStripeCheckoutAction(formData: FormData) {
+  const parsed = startStripeCheckoutSchema.safeParse({
+    plan: formData.get("plan"),
+  });
+
+  if (!parsed.success) {
+    redirect("/parent/plan?status=action-failed");
+  }
+
+  if (!isStripeConfigured()) {
+    redirect("/parent/plan?status=action-failed");
+  }
+
+  const { user, family, supabase } = await getParentContextOrRedirect();
+
+  if (!family) {
+    redirect("/parent");
+  }
+
+  const { data: subscription } = await supabase
+    .from("family_subscriptions")
+    .select("*")
+    .eq("family_id", family.id)
+    .maybeSingle();
+
+  const session = await createStripeCheckoutSession({
+    existingCustomerId: subscription?.stripe_customer_id ?? null,
+    familyId: family.id,
+    familyName: family.family_name,
+    plan: parsed.data.plan,
+    userEmail: user.email ?? null,
+  });
+
+  if (!session.url) {
+    redirect("/parent/plan?status=action-failed");
+  }
+
+  redirect(session.url);
 }
 
 export async function createChildProfileAction(formData: FormData) {
@@ -3092,11 +3156,14 @@ export async function viewSuperAdminFamilyAction(formData: FormData) {
 export async function upsertFamilySubscriptionAction(formData: FormData) {
   const parsed = familySubscriptionSchema.safeParse({
     familyId: formData.get("familyId"),
-    planCode: formData.get("planCode"),
-    providerCustomerId: formData.get("providerCustomerId"),
-    providerSubscriptionId: formData.get("providerSubscriptionId"),
-    renewalDate: formData.get("renewalDate"),
-    status: formData.get("status"),
+    subscriptionPlan: formData.get("subscriptionPlan"),
+    subscriptionStatus: formData.get("subscriptionStatus"),
+    subscriptionCurrentPeriodEnd: formData.get("subscriptionCurrentPeriodEnd"),
+    subscriptionProvider: formData.get("subscriptionProvider"),
+    stripeCustomerId: formData.get("stripeCustomerId"),
+    stripeSubscriptionId: formData.get("stripeSubscriptionId"),
+    booperPackIncluded: formData.get("booperPackIncluded"),
+    booperPackStatus: formData.get("booperPackStatus"),
   });
 
   if (!parsed.success) {
@@ -3106,18 +3173,36 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
   const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
   const { admin, user } = await requireSuperAdmin();
 
-  const renewalDate = parsed.data.renewalDate
-    ? new Date(`${parsed.data.renewalDate}T00:00:00.000Z`).toISOString()
+  const subscriptionCurrentPeriodEnd = parsed.data.subscriptionCurrentPeriodEnd
+    ? new Date(`${parsed.data.subscriptionCurrentPeriodEnd}T00:00:00.000Z`).toISOString()
     : null;
 
   const { error } = await admin.from("family_subscriptions").upsert(
     {
       family_id: parsed.data.familyId,
-      plan_code: parsed.data.planCode,
-      provider_customer_id: parsed.data.providerCustomerId || null,
-      provider_subscription_id: parsed.data.providerSubscriptionId || null,
-      renewal_date: renewalDate,
-      status: parsed.data.status,
+      plan_code: parsed.data.subscriptionPlan,
+      provider_customer_id: parsed.data.stripeCustomerId || null,
+      provider_subscription_id: parsed.data.stripeSubscriptionId || null,
+      renewal_date: subscriptionCurrentPeriodEnd,
+      status:
+        parsed.data.subscriptionStatus === "trialing"
+          ? "trial"
+          : parsed.data.subscriptionStatus === "active"
+            ? "active"
+            : parsed.data.subscriptionStatus === "past_due" ||
+                parsed.data.subscriptionStatus === "unpaid" ||
+                parsed.data.subscriptionStatus === "incomplete" ||
+                parsed.data.subscriptionStatus === "paused"
+              ? "past_due"
+              : "cancelled",
+      subscription_current_period_end: subscriptionCurrentPeriodEnd,
+      subscription_plan: parsed.data.subscriptionPlan,
+      subscription_provider: parsed.data.subscriptionProvider ?? "manual",
+      subscription_status: parsed.data.subscriptionStatus,
+      stripe_customer_id: parsed.data.stripeCustomerId || null,
+      stripe_subscription_id: parsed.data.stripeSubscriptionId || null,
+      booper_pack_included: parsed.data.booperPackIncluded === "true",
+      booper_pack_status: parsed.data.booperPackStatus ?? null,
     },
     { onConflict: "family_id" },
   );
@@ -3127,13 +3212,16 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
   }
 
   await writeSuperAdminAuditLog({
-    action: "subscription_changed_placeholder",
+    action: "subscription_changed",
     actorUserId: user.id,
     metadata: {
+      booperPackIncluded: parsed.data.booperPackIncluded === "true",
+      booperPackStatus: parsed.data.booperPackStatus ?? null,
       familyId: parsed.data.familyId,
-      planCode: parsed.data.planCode,
-      renewalDate,
-      status: parsed.data.status,
+      planCode: parsed.data.subscriptionPlan,
+      provider: parsed.data.subscriptionProvider ?? "manual",
+      renewalDate: subscriptionCurrentPeriodEnd,
+      status: parsed.data.subscriptionStatus,
     },
     targetId: parsed.data.familyId,
     targetType: "family_subscriptions",

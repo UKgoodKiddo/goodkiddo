@@ -15,6 +15,7 @@ import { buildChildTaskView, isTaskScheduledForDate } from "@/lib/tasks";
 import { getParentStatusBanner } from "@/lib/parent-status";
 import { getParentDashboardData } from "@/lib/data";
 import { getServerLocalDateString } from "@/lib/daily-bonus";
+import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 import { formatBoops, formatDateTime } from "@/lib/utils";
 
 export default async function ParentPage(props: {
@@ -82,6 +83,10 @@ export default async function ParentPage(props: {
         </ShellCard>
       </main>
     );
+  }
+
+  if (subscriptionNeedsPlanSelection(dashboard.subscription)) {
+    redirect("/parent/plan");
   }
 
   const pendingApprovals =

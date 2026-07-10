@@ -5,6 +5,11 @@ import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ShellCard } from "@/components/shell-card";
 import { getParentDashboardData } from "@/lib/data";
 import { getParentStatusBanner } from "@/lib/parent-status";
+import {
+  formatBooperPackStatus,
+  formatSubscriptionPlan,
+  formatSubscriptionStatusLabel,
+} from "@/lib/subscriptions";
 import { formatDateTime } from "@/lib/utils";
 
 export default async function ParentSettingsPage(props: {
@@ -51,6 +56,56 @@ export default async function ParentSettingsPage(props: {
           ) : (
             <div className="mt-6 rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
               Create a family first to use parent settings.
+            </div>
+          )}
+        </ShellCard>
+
+        <ShellCard className="rounded-[1.8rem] p-6">
+          <h2 className="text-3xl font-extrabold">Subscription</h2>
+          <p className="mt-3 text-sm leading-6 text-[color:var(--ink-soft)]">
+            Your Family+ plan, Stripe status, and Booper pack progress live here.
+          </p>
+
+          {dashboard.subscription ? (
+            <div className="mt-6 grid gap-3">
+              <div className="rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
+                <p className="text-sm font-bold text-[color:var(--ink-soft)]">Plan</p>
+                <p className="mt-2 text-xl font-extrabold">
+                  {formatSubscriptionPlan(dashboard.subscription.subscription_plan)}
+                </p>
+              </div>
+              <div className="rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
+                <p className="text-sm font-bold text-[color:var(--ink-soft)]">Status</p>
+                <p className="mt-2 text-xl font-extrabold">
+                  {formatSubscriptionStatusLabel(
+                    dashboard.subscription.subscription_status,
+                  )}
+                </p>
+              </div>
+              <div className="rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
+                <p className="text-sm font-bold text-[color:var(--ink-soft)]">Renews</p>
+                <p className="mt-2 text-xl font-extrabold">
+                  {dashboard.subscription.subscription_current_period_end
+                    ? formatDateTime(
+                        dashboard.subscription.subscription_current_period_end,
+                      )
+                    : "Not set"}
+                </p>
+              </div>
+              <div className="rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
+                <p className="text-sm font-bold text-[color:var(--ink-soft)]">Booper pack</p>
+                <p className="mt-2 text-xl font-extrabold">
+                  {dashboard.subscription.booper_pack_included
+                    ? formatBooperPackStatus(
+                        dashboard.subscription.booper_pack_status,
+                      )
+                    : "Not included"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
+              Choose a plan first to start the Stripe subscription flow.
             </div>
           )}
         </ShellCard>

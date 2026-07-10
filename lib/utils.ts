@@ -36,11 +36,28 @@ export function formatRecurringType(value: "none" | "daily" | "weekly") {
 }
 
 export function formatSubscriptionStatus(
-  value: "trial" | "active" | "past_due" | "cancelled",
+  value:
+    | "inactive"
+    | "trialing"
+    | "active"
+    | "past_due"
+    | "unpaid"
+    | "incomplete"
+    | "incomplete_expired"
+    | "paused"
+    | "canceled",
 ) {
   switch (value) {
+    case "trialing":
+      return "Trialing";
     case "past_due":
       return "Past due";
+    case "incomplete_expired":
+      return "Incomplete expired";
+    case "inactive":
+      return "Inactive";
+    case "canceled":
+      return "Canceled";
     default:
       return value.charAt(0).toUpperCase() + value.slice(1);
   }

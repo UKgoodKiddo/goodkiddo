@@ -10,7 +10,7 @@ export default async function SuperAdminAuditPage() {
       <ShellCard className="rounded-[2rem] p-6">
         <h2 className="text-3xl font-extrabold">Audit log</h2>
         <p className="mt-3 text-sm leading-7 text-[color:var(--ink-soft)]">
-          Every secure super-admin action is logged here, including UID import, booper disable/lost/reassign flows, family views, and subscription placeholder changes.
+          Every secure super-admin action is logged here, including UID import, booper disable/lost/reassign flows, family views, and subscription changes.
         </p>
       </ShellCard>
 

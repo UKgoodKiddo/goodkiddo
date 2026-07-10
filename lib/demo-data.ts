@@ -52,6 +52,7 @@ export const demoParentDashboard: ParentDashboardData = {
     parent_user_id: "00000000-0000-0000-0000-000000000001",
     parent_pin: "0000",
   },
+  subscription: null,
   pendingBoopAwards: [
     {
       amount: 4,

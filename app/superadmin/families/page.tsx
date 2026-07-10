@@ -11,7 +11,15 @@ import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
 import { getSuperAdminStatusBanner } from "@/lib/super-admin-status";
 import { getSuperAdminDashboardData } from "@/lib/super-admin";
-import { formatDateTime, formatInventoryStatus, formatSubscriptionStatus } from "@/lib/utils";
+import {
+  BOOPER_PACK_STATUS_OPTIONS,
+  SUBSCRIPTION_PROVIDER_OPTIONS,
+  SUBSCRIPTION_STATUS_OPTIONS,
+  formatBooperPackStatus,
+  formatSubscriptionPlan,
+  formatSubscriptionStatusLabel,
+} from "@/lib/subscriptions";
+import { formatDateTime, formatInventoryStatus } from "@/lib/utils";
 
 export default async function SuperAdminFamiliesPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -43,7 +51,8 @@ export default async function SuperAdminFamiliesPage(props: {
         <ShellCard className="rounded-[2rem] p-6">
           <h2 className="text-3xl font-extrabold">Families</h2>
           <p className="mt-3 text-sm leading-7 text-[color:var(--ink-soft)]">
-            Open a family to view assigned boopers and the subscription placeholder without reading child-profile data.
+            Open a family to view assigned boopers and manage the live subscription
+            record without reading child-profile data.
           </p>
 
           <div className="mt-6 space-y-3">
@@ -90,9 +99,19 @@ export default async function SuperAdminFamiliesPage(props: {
                     Started {formatDateTime(selectedFamily.createdAt)}
                   </p>
                 </div>
-                <StatusPill tone={selectedFamily.subscription?.status === "active" ? "mint" : "sun"}>
+                <StatusPill
+                  tone={
+                    selectedFamily.subscription?.subscription_status === "active"
+                      ? "mint"
+                      : "sun"
+                  }
+                >
                   {selectedFamily.subscription
-                    ? `${formatSubscriptionStatus(selectedFamily.subscription.status)} · ${selectedFamily.subscription.plan_code}`
+                    ? `${formatSubscriptionStatusLabel(
+                        selectedFamily.subscription.subscription_status,
+                      )} · ${formatSubscriptionPlan(
+                        selectedFamily.subscription.subscription_plan,
+                      )}`
                     : "No subscription"}
                 </StatusPill>
               </div>
@@ -149,7 +168,10 @@ export default async function SuperAdminFamiliesPage(props: {
                           </div>
 
                           {otherFamilies.length ? (
-                            <form action={assignInventoryToFamilyAction} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                            <form
+                              action={assignInventoryToFamilyAction}
+                              className="grid gap-2 sm:grid-cols-[1fr_auto]"
+                            >
                               <input name="inventoryId" type="hidden" value={item.id} />
                               <input name="returnTo" type="hidden" value="/superadmin/families" />
                               <select className="field" defaultValue="" name="familyId" required>
@@ -179,49 +201,97 @@ export default async function SuperAdminFamiliesPage(props: {
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-extrabold">Subscription placeholder</h3>
+                  <h3 className="text-xl font-extrabold">Subscription</h3>
                   <form action={upsertFamilySubscriptionAction} className="mt-4 grid gap-3">
                     <input name="familyId" type="hidden" value={selectedFamily.familyId} />
-                    <input
-                      className="field"
-                      defaultValue={selectedFamily.subscription?.plan_code ?? "starter"}
-                      name="planCode"
-                      placeholder="Plan code"
-                      required
-                    />
                     <select
                       className="field"
-                      defaultValue={selectedFamily.subscription?.status ?? "trial"}
-                      name="status"
+                      defaultValue={
+                        selectedFamily.subscription?.subscription_plan ?? "beta_1_0"
+                      }
+                      name="subscriptionPlan"
                     >
-                      <option value="trial">Trial</option>
-                      <option value="active">Active</option>
-                      <option value="past_due">Past due</option>
-                      <option value="cancelled">Cancelled</option>
+                      <option value="monthly_family_plus">Monthly Family+</option>
+                      <option value="yearly_family_plus">Yearly Family+</option>
+                      <option value="beta_1_0">Beta 1.0</option>
+                    </select>
+                    <select
+                      className="field"
+                      defaultValue={
+                        selectedFamily.subscription?.subscription_status ?? "inactive"
+                      }
+                      name="subscriptionStatus"
+                    >
+                      {SUBSCRIPTION_STATUS_OPTIONS.map((status) => (
+                        <option key={status} value={status}>
+                          {formatSubscriptionStatusLabel(status)}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="field"
+                      defaultValue={
+                        selectedFamily.subscription?.subscription_provider ?? "manual"
+                      }
+                      name="subscriptionProvider"
+                    >
+                      {SUBSCRIPTION_PROVIDER_OPTIONS.map((provider) => (
+                        <option key={provider} value={provider}>
+                          {provider === "stripe" ? "Stripe" : "Manual"}
+                        </option>
+                      ))}
                     </select>
                     <input
                       className="field"
-                      defaultValue={selectedFamily.subscription?.renewal_date?.slice(0, 10) ?? ""}
-                      name="renewalDate"
+                      defaultValue={
+                        selectedFamily.subscription?.subscription_current_period_end?.slice(
+                          0,
+                          10,
+                        ) ?? ""
+                      }
+                      name="subscriptionCurrentPeriodEnd"
                       type="date"
                     />
                     <input
                       className="field"
-                      defaultValue={selectedFamily.subscription?.provider_customer_id ?? ""}
-                      name="providerCustomerId"
-                      placeholder="Provider customer ID"
+                      defaultValue={selectedFamily.subscription?.stripe_customer_id ?? ""}
+                      name="stripeCustomerId"
+                      placeholder="Stripe customer ID"
                     />
                     <input
                       className="field"
-                      defaultValue={selectedFamily.subscription?.provider_subscription_id ?? ""}
-                      name="providerSubscriptionId"
-                      placeholder="Provider subscription ID"
+                      defaultValue={selectedFamily.subscription?.stripe_subscription_id ?? ""}
+                      name="stripeSubscriptionId"
+                      placeholder="Stripe subscription ID"
                     />
+                    <label className="inline-flex items-center gap-3 rounded-[1.2rem] bg-[#f8fbff] px-4 py-4 text-sm font-bold text-[color:var(--foreground)]">
+                      <input
+                        defaultChecked={
+                          selectedFamily.subscription?.booper_pack_included ?? false
+                        }
+                        name="booperPackIncluded"
+                        type="checkbox"
+                        value="true"
+                      />
+                      Starter Booper pack included
+                    </label>
+                    <select
+                      className="field"
+                      defaultValue={selectedFamily.subscription?.booper_pack_status ?? ""}
+                      name="booperPackStatus"
+                    >
+                      <option value="">No pack status</option>
+                      {BOOPER_PACK_STATUS_OPTIONS.map((status) => (
+                        <option key={status} value={status}>
+                          {formatBooperPackStatus(status)}
+                        </option>
+                      ))}
+                    </select>
                     <LoadingSubmitButton
                       className="btn btn-primary"
                       pendingLabel="Saving..."
                     >
-                      Save subscription placeholder
+                      Save subscription
                     </LoadingSubmitButton>
                   </form>
                 </div>
@@ -229,7 +299,8 @@ export default async function SuperAdminFamiliesPage(props: {
             </>
           ) : (
             <div className="flex h-full min-h-80 items-center justify-center rounded-[1.6rem] border border-dashed border-[color:var(--line-strong)] p-6 text-center text-sm leading-7 text-[color:var(--ink-soft)]">
-              Choose a family on the left to log a family-view event, inspect assigned boopers, and update the subscription placeholder.
+              Choose a family on the left to log a family-view event, inspect assigned
+              boopers, and update the subscription record.
             </div>
           )}
         </ShellCard>

@@ -4,7 +4,11 @@ import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
 import { getSuperAdminStatusBanner } from "@/lib/super-admin-status";
 import { getSuperAdminDashboardData } from "@/lib/super-admin";
-import { formatDateTime, formatSubscriptionStatus } from "@/lib/utils";
+import {
+  formatSubscriptionPlan,
+  formatSubscriptionStatusLabel,
+} from "@/lib/subscriptions";
+import { formatDateTime } from "@/lib/utils";
 
 export default async function SuperAdminPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -27,13 +31,17 @@ export default async function SuperAdminPage(props: {
           <div className="max-w-2xl">
             <h2 className="text-4xl font-extrabold tracking-tight">System overview</h2>
             <p className="mt-3 text-sm leading-7 text-[color:var(--ink-soft)]">
-              Manage booper inventory, family controls, super-admin users, and audit history from one secure workspace. Child profiles stay private to parents and are not exposed here.
+              Manage booper inventory, family controls, super-admin users, and audit
+              history from one secure workspace. Child profiles stay private to parents
+              and are not exposed here.
             </p>
           </div>
 
           <div className="rounded-[1.5rem] bg-[linear-gradient(135deg,#fff1e8,#ffffff)] px-5 py-4 text-right">
             <p className="text-sm font-bold text-[color:var(--ink-soft)]">Viewer</p>
-            <p className="mt-2 text-lg font-extrabold">{dashboard.viewerEmail ?? "super admin"}</p>
+            <p className="mt-2 text-lg font-extrabold">
+              {dashboard.viewerEmail ?? "super admin"}
+            </p>
           </div>
         </div>
 
@@ -65,7 +73,8 @@ export default async function SuperAdminPage(props: {
             <div>
               <h2 className="text-2xl font-extrabold">Add task asset</h2>
               <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
-                Upload matching parent and child PNGs so new tasks appear automatically in the task wizard and child UI.
+                Upload matching parent and child PNGs so new tasks appear automatically
+                in the task wizard and child UI.
               </p>
             </div>
             <Link className="text-sm font-black text-[color:var(--primary)]" href="/superadmin/tasks">
@@ -107,7 +116,11 @@ export default async function SuperAdminPage(props: {
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill tone={family.subscription?.status === "active" ? "mint" : "sun"}>
                       {family.subscription
-                        ? `${formatSubscriptionStatus(family.subscription.status)} · ${family.subscription.plan_code}`
+                        ? `${formatSubscriptionStatusLabel(
+                            family.subscription.subscription_status,
+                          )} · ${formatSubscriptionPlan(
+                            family.subscription.subscription_plan,
+                          )}`
                         : "No subscription"}
                     </StatusPill>
                     <StatusPill tone="sky">
@@ -130,7 +143,7 @@ export default async function SuperAdminPage(props: {
             <div>
               <h2 className="text-2xl font-extrabold">Recent audit</h2>
               <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
-                Import, reassignment, family view, and subscription placeholder events.
+                Import, reassignment, family view, and subscription update events.
               </p>
             </div>
             <Link className="text-sm font-black text-[color:var(--primary)]" href="/superadmin/audit">
