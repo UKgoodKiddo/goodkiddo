@@ -273,6 +273,7 @@ export default async function SuperAdminFamiliesPage(props: {
                         type="checkbox"
                         value="true"
                       />
+                      <input name="booperPackIncluded" type="hidden" value="false" />
                       Starter Booper pack included
                     </label>
                     <select

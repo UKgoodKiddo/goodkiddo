@@ -265,12 +265,53 @@ const emptyStringToUndefined = (value: unknown) => {
   return value;
 };
 
+const normalizeCheckboxString = (value: unknown) => {
+  if (value === true || value === "true" || value === "on" || value === 1 || value === "1") {
+    return "true";
+  }
+
+  if (
+    value === false ||
+    value === "false" ||
+    value === 0 ||
+    value === "0" ||
+    value == null ||
+    value === ""
+  ) {
+    return "false";
+  }
+
+  return value;
+};
+
 function encodeRedirectDetails(message: string) {
   return encodeURIComponent(message.trim().slice(0, 240));
 }
 
 function buildSuperAdminFamiliesFailurePath(details: string) {
   return `/superadmin/families?status=subscription-save-failed&details=${encodeRedirectDetails(details)}`;
+}
+
+function formatSupabaseActionError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return "Unknown subscription save failure";
+  }
+
+  const maybeError = error as {
+    code?: string;
+    details?: string;
+    hint?: string;
+    message?: string;
+  };
+
+  return [
+    maybeError.message,
+    maybeError.details,
+    maybeError.hint,
+    maybeError.code ? `code=${maybeError.code}` : null,
+  ]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join(" | ");
 }
 
 function parseSubscriptionDateInput(value: string | undefined) {
@@ -348,7 +389,10 @@ const familySubscriptionSchema = z.object({
     emptyStringToUndefined,
     z.string().trim().max(120).optional(),
   ),
-  booperPackIncluded: z.union([z.literal("true"), z.literal("false")]).optional(),
+  booperPackIncluded: z.preprocess(
+    normalizeCheckboxString,
+    z.union([z.literal("true"), z.literal("false")]),
+  ),
   booperPackStatus: z.preprocess(
     emptyStringToUndefined,
     z.enum(["pending", "packed", "shipped", "delivered"]).optional(),
@@ -3261,39 +3305,46 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
     const subscriptionCurrentPeriodEnd = parseSubscriptionDateInput(
       parsed.data.subscriptionCurrentPeriodEnd,
     );
+    const normalizedSubscriptionStatus: "trial" | "active" | "past_due" | "cancelled" =
+      parsed.data.subscriptionStatus === "trialing"
+        ? "trial"
+        : parsed.data.subscriptionStatus === "active"
+          ? "active"
+          : parsed.data.subscriptionStatus === "past_due" ||
+              parsed.data.subscriptionStatus === "unpaid" ||
+              parsed.data.subscriptionStatus === "incomplete" ||
+              parsed.data.subscriptionStatus === "paused"
+            ? "past_due"
+            : "cancelled";
 
-    const { error } = await admin.from("family_subscriptions").upsert(
-      {
-        family_id: parsed.data.familyId,
-        plan_code: parsed.data.subscriptionPlan,
-        provider_customer_id: parsed.data.stripeCustomerId || null,
-        provider_subscription_id: parsed.data.stripeSubscriptionId || null,
-        renewal_date: subscriptionCurrentPeriodEnd,
-        status:
-          parsed.data.subscriptionStatus === "trialing"
-            ? "trial"
-            : parsed.data.subscriptionStatus === "active"
-              ? "active"
-              : parsed.data.subscriptionStatus === "past_due" ||
-                  parsed.data.subscriptionStatus === "unpaid" ||
-                  parsed.data.subscriptionStatus === "incomplete" ||
-                  parsed.data.subscriptionStatus === "paused"
-                ? "past_due"
-                : "cancelled",
-        subscription_current_period_end: subscriptionCurrentPeriodEnd,
-        subscription_plan: parsed.data.subscriptionPlan,
-        subscription_provider: parsed.data.subscriptionProvider ?? "manual",
-        subscription_status: parsed.data.subscriptionStatus,
-        stripe_customer_id: parsed.data.stripeCustomerId || null,
-        stripe_subscription_id: parsed.data.stripeSubscriptionId || null,
-        booper_pack_included: parsed.data.booperPackIncluded === "true",
-        booper_pack_status: parsed.data.booperPackStatus ?? null,
-      },
-      { onConflict: "family_id" },
-    );
+    const subscriptionPatch = {
+      family_id: parsed.data.familyId,
+      plan_code: parsed.data.subscriptionPlan,
+      provider_customer_id: parsed.data.stripeCustomerId || null,
+      provider_subscription_id: parsed.data.stripeSubscriptionId || null,
+      renewal_date: subscriptionCurrentPeriodEnd,
+      status: normalizedSubscriptionStatus,
+      subscription_current_period_end: subscriptionCurrentPeriodEnd,
+      subscription_plan: parsed.data.subscriptionPlan,
+      subscription_provider: parsed.data.subscriptionProvider ?? "manual",
+      subscription_status: parsed.data.subscriptionStatus,
+      stripe_customer_id: parsed.data.stripeCustomerId || null,
+      stripe_subscription_id: parsed.data.stripeSubscriptionId || null,
+      booper_pack_included: parsed.data.booperPackIncluded === "true",
+      booper_pack_status: parsed.data.booperPackStatus ?? null,
+    };
+
+    const { error } = await admin
+      .from("family_subscriptions")
+      .upsert(subscriptionPatch, { onConflict: "family_id" });
 
     if (error) {
-      redirect(buildSuperAdminFamiliesFailurePath(error.message));
+      console.error("Superadmin subscription save failed", {
+        error,
+        familyId: parsed.data.familyId,
+        patch: subscriptionPatch,
+      });
+      redirect(buildSuperAdminFamiliesFailurePath(formatSupabaseActionError(error)));
     }
 
     await writeSuperAdminAuditLog({
@@ -3319,6 +3370,11 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
       throw error;
     }
 
+    console.error("Superadmin subscription save threw", {
+      error,
+      familyId: parsed.data.familyId,
+      submitted: parsed.data,
+    });
     const message = error instanceof Error ? error.message : "Unknown subscription save failure";
     redirect(buildSuperAdminFamiliesFailurePath(message));
   }
