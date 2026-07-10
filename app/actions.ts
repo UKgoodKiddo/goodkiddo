@@ -264,6 +264,59 @@ const emptyStringToUndefined = (value: unknown) => {
   return value;
 };
 
+function encodeRedirectDetails(message: string) {
+  return encodeURIComponent(message.trim().slice(0, 240));
+}
+
+function buildSuperAdminFamiliesFailurePath(details: string) {
+  return `/superadmin/families?status=subscription-save-failed&details=${encodeRedirectDetails(details)}`;
+}
+
+function parseSubscriptionDateInput(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const isoDate = new Date(`${trimmed}T00:00:00.000Z`);
+
+    if (Number.isNaN(isoDate.getTime())) {
+      throw new Error(`Unsupported renewal date "${trimmed}"`);
+    }
+
+    return isoDate.toISOString();
+  }
+
+  const dayMonthYearMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (dayMonthYearMatch) {
+    const [, dayText, monthText, yearText] = dayMonthYearMatch;
+    const day = Number(dayText);
+    const month = Number(monthText);
+    const year = Number(yearText);
+    const normalized = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+      Number.isNaN(normalized.getTime()) ||
+      normalized.getUTCFullYear() !== year ||
+      normalized.getUTCMonth() !== month - 1 ||
+      normalized.getUTCDate() !== day
+    ) {
+      throw new Error(`Unsupported renewal date "${trimmed}"`);
+    }
+
+    return normalized.toISOString();
+  }
+
+  throw new Error(`Unsupported renewal date "${trimmed}"`);
+}
+
 const familySubscriptionSchema = z.object({
   familyId: z.uuid(),
   subscriptionPlan: z.string().trim().min(1).max(80),
@@ -3190,66 +3243,82 @@ export async function upsertFamilySubscriptionAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect("/superadmin/families?status=action-failed");
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const firstError = Object.values(fieldErrors)
+      .flat()
+      .find((message): message is string => Boolean(message));
+
+    redirect(
+      buildSuperAdminFamiliesFailurePath(firstError ?? "The submitted subscription details were invalid."),
+    );
   }
 
-  const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
-  const { admin, user } = await requireSuperAdmin();
+  try {
+    const { requireSuperAdmin, writeSuperAdminAuditLog } = await getSuperAdminHelpers();
+    const { admin, user } = await requireSuperAdmin();
 
-  const subscriptionCurrentPeriodEnd = parsed.data.subscriptionCurrentPeriodEnd
-    ? new Date(`${parsed.data.subscriptionCurrentPeriodEnd}T00:00:00.000Z`).toISOString()
-    : null;
+    const subscriptionCurrentPeriodEnd = parseSubscriptionDateInput(
+      parsed.data.subscriptionCurrentPeriodEnd,
+    );
 
-  const { error } = await admin.from("family_subscriptions").upsert(
-    {
-      family_id: parsed.data.familyId,
-      plan_code: parsed.data.subscriptionPlan,
-      provider_customer_id: parsed.data.stripeCustomerId || null,
-      provider_subscription_id: parsed.data.stripeSubscriptionId || null,
-      renewal_date: subscriptionCurrentPeriodEnd,
-      status:
-        parsed.data.subscriptionStatus === "trialing"
-          ? "trial"
-          : parsed.data.subscriptionStatus === "active"
-            ? "active"
-            : parsed.data.subscriptionStatus === "past_due" ||
-                parsed.data.subscriptionStatus === "unpaid" ||
-                parsed.data.subscriptionStatus === "incomplete" ||
-                parsed.data.subscriptionStatus === "paused"
-              ? "past_due"
-              : "cancelled",
-      subscription_current_period_end: subscriptionCurrentPeriodEnd,
-      subscription_plan: parsed.data.subscriptionPlan,
-      subscription_provider: parsed.data.subscriptionProvider ?? "manual",
-      subscription_status: parsed.data.subscriptionStatus,
-      stripe_customer_id: parsed.data.stripeCustomerId || null,
-      stripe_subscription_id: parsed.data.stripeSubscriptionId || null,
-      booper_pack_included: parsed.data.booperPackIncluded === "true",
-      booper_pack_status: parsed.data.booperPackStatus ?? null,
-    },
-    { onConflict: "family_id" },
-  );
+    const { error } = await admin.from("family_subscriptions").upsert(
+      {
+        family_id: parsed.data.familyId,
+        plan_code: parsed.data.subscriptionPlan,
+        provider_customer_id: parsed.data.stripeCustomerId || null,
+        provider_subscription_id: parsed.data.stripeSubscriptionId || null,
+        renewal_date: subscriptionCurrentPeriodEnd,
+        status:
+          parsed.data.subscriptionStatus === "trialing"
+            ? "trial"
+            : parsed.data.subscriptionStatus === "active"
+              ? "active"
+              : parsed.data.subscriptionStatus === "past_due" ||
+                  parsed.data.subscriptionStatus === "unpaid" ||
+                  parsed.data.subscriptionStatus === "incomplete" ||
+                  parsed.data.subscriptionStatus === "paused"
+                ? "past_due"
+                : "cancelled",
+        subscription_current_period_end: subscriptionCurrentPeriodEnd,
+        subscription_plan: parsed.data.subscriptionPlan,
+        subscription_provider: parsed.data.subscriptionProvider ?? "manual",
+        subscription_status: parsed.data.subscriptionStatus,
+        stripe_customer_id: parsed.data.stripeCustomerId || null,
+        stripe_subscription_id: parsed.data.stripeSubscriptionId || null,
+        booper_pack_included: parsed.data.booperPackIncluded === "true",
+        booper_pack_status: parsed.data.booperPackStatus ?? null,
+      },
+      { onConflict: "family_id" },
+    );
 
-  if (error) {
-    redirect("/superadmin/families?status=action-failed");
+    if (error) {
+      redirect(buildSuperAdminFamiliesFailurePath(error.message));
+    }
+
+    await writeSuperAdminAuditLog({
+      action: "subscription_changed",
+      actorUserId: user.id,
+      metadata: {
+        booperPackIncluded: parsed.data.booperPackIncluded === "true",
+        booperPackStatus: parsed.data.booperPackStatus ?? null,
+        familyId: parsed.data.familyId,
+        planCode: parsed.data.subscriptionPlan,
+        provider: parsed.data.subscriptionProvider ?? "manual",
+        renewalDate: subscriptionCurrentPeriodEnd,
+        status: parsed.data.subscriptionStatus,
+      },
+      targetId: parsed.data.familyId,
+      targetType: "family_subscriptions",
+    });
+
+    revalidateSuperAdminWorkspace();
+    redirect(`/superadmin/families?familyId=${parsed.data.familyId}&status=subscription-saved`);
+  } catch (error) {
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown subscription save failure";
+    redirect(buildSuperAdminFamiliesFailurePath(message));
   }
-
-  await writeSuperAdminAuditLog({
-    action: "subscription_changed",
-    actorUserId: user.id,
-    metadata: {
-      booperPackIncluded: parsed.data.booperPackIncluded === "true",
-      booperPackStatus: parsed.data.booperPackStatus ?? null,
-      familyId: parsed.data.familyId,
-      planCode: parsed.data.subscriptionPlan,
-      provider: parsed.data.subscriptionProvider ?? "manual",
-      renewalDate: subscriptionCurrentPeriodEnd,
-      status: parsed.data.subscriptionStatus,
-    },
-    targetId: parsed.data.familyId,
-    targetType: "family_subscriptions",
-  });
-
-  revalidateSuperAdminWorkspace();
-  redirect(`/superadmin/families?familyId=${parsed.data.familyId}&status=subscription-saved`);
 }

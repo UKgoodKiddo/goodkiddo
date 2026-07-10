@@ -50,6 +50,17 @@ export function getSuperAdminStatusBanner(
         message: "Subscription saved.",
         tone: "mint" as const,
       };
+    case "subscription-save-failed": {
+      const details =
+        typeof searchParams?.details === "string" ? decodeURIComponent(searchParams.details) : "";
+
+      return {
+        message: details
+          ? `The subscription could not be saved: ${details}.`
+          : "The subscription could not be saved.",
+        tone: "rose" as const,
+      };
+    }
     case "uid-import-failed":
       return {
         message: "The UID CSV could not be imported. Check the batch number, CSV data, and UID format.",
