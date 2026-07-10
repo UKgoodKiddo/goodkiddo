@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { LoadingSubmitButton } from "@/components/loading-submit-button";
+import { getBooperBaseUrl } from "@/lib/site-url";
 
 type SuperAdminUidImportFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -10,6 +11,7 @@ type SuperAdminUidImportFormProps = {
 export function SuperAdminUidImportForm({
   action,
 }: SuperAdminUidImportFormProps) {
+  const booperBaseUrl = getBooperBaseUrl();
   const [csvText, setCsvText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileStatus, setFileStatus] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function SuperAdminUidImportForm({
       <input
         className="field"
         name="ndefUrlTemplate"
-        placeholder="Optional NDEF URL template e.g. https://goodkiddo.co.uk/b/{uid}"
+        placeholder={`Optional NDEF URL template e.g. ${booperBaseUrl}/{uid}`}
       />
       <input
         className="field"
@@ -67,7 +69,7 @@ export function SuperAdminUidImportForm({
         name="csvText"
         onChange={(event) => setCsvText(event.currentTarget.value)}
         placeholder={
-          "Paste CSV here if you do not want to upload a file.\nuid,ndef_url,ndef_text\n04A224FF9911,https://goodkiddo.co.uk/b/04A224FF9911,goodKiddo Booper 04A224FF9911"
+          `Paste CSV here if you do not want to upload a file.\nuid,ndef_url,ndef_text\n04A224FF9911,${booperBaseUrl}/04A224FF9911,goodKiddo Booper 04A224FF9911`
         }
         value={csvText}
       />

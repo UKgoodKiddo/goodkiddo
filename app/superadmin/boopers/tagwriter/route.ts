@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getBooperBaseUrl } from "@/lib/site-url";
 import { buildTagWriterLinkCsv, normalizeTagWriterBaseUrl } from "@/lib/tagwriter-export";
 import { requireSuperAdmin, writeSuperAdminAuditLog } from "@/lib/super-admin";
 import type { BooperInventory } from "@/lib/types";
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
   const { admin, user } = await requireSuperAdmin();
   const { searchParams } = new URL(request.url);
   const batchNumber = searchParams.get("batchNumber")?.trim() || "";
-  const baseUrlInput = searchParams.get("baseUrl")?.trim() || "https://goodkiddo.co.uk/b";
+  const baseUrlInput = searchParams.get("baseUrl")?.trim() || getBooperBaseUrl();
 
   let baseUrl = "";
 

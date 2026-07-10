@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { PwaBoot } from "@/components/pwa-boot";
+import { getSiteUrl } from "@/lib/site-url";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -16,6 +17,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "goodKiddo",
     template: "%s | goodKiddo",

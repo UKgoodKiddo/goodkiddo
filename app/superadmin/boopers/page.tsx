@@ -9,6 +9,7 @@ import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
 import { SuperAdminUidImportForm } from "@/components/superadmin-uid-import-form";
+import { getBooperBaseUrl } from "@/lib/site-url";
 import { getSuperAdminStatusBanner } from "@/lib/super-admin-status";
 import { getSuperAdminDashboardData } from "@/lib/super-admin";
 import { formatDateTime, formatInventoryStatus } from "@/lib/utils";
@@ -34,6 +35,7 @@ export default async function SuperAdminBoopersPage(props: {
         .filter((value): value is string => Boolean(value)),
     ),
   ).sort((left, right) => left.localeCompare(right));
+  const booperBaseUrl = getBooperBaseUrl();
 
   return (
     <main className="flex flex-1 flex-col gap-6">
@@ -90,9 +92,9 @@ export default async function SuperAdminBoopersPage(props: {
             </select>
             <input
               className="field"
-              defaultValue="https://goodkiddo.co.uk/b"
+              defaultValue={booperBaseUrl}
               name="baseUrl"
-              placeholder="Base URL e.g. https://goodkiddo.co.uk/b"
+              placeholder={`Base URL e.g. ${booperBaseUrl}`}
             />
             <LoadingSubmitButton className="btn btn-primary" pendingLabel="Exporting...">
               Export TagWriter CSV
@@ -104,7 +106,7 @@ export default async function SuperAdminBoopersPage(props: {
           <h2 className="text-3xl font-extrabold">What gets encoded</h2>
           <div className="mt-5 space-y-3 text-sm leading-7 text-[color:var(--ink-soft)]">
             <p>
-              Format: `LINK_RECORD`,`https://goodkiddo.co.uk/b/[uid]`,`URL`,`description`
+              Format: <code>{`LINK_RECORD,${booperBaseUrl}/[uid],URL,description`}</code>
             </p>
             <p>
               Best practice is still a plain HTTPS link only. The tag should not store boops,
