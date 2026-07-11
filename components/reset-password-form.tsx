@@ -39,12 +39,7 @@ export function ResetPasswordForm() {
         const refreshToken = hashParams.get("refresh_token");
         const hashType = hashParams.get("type");
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            throw error;
-          }
-        } else if (tokenHash && type === "recovery") {
+        if (tokenHash && type === "recovery") {
           const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: "recovery",
@@ -61,6 +56,17 @@ export function ResetPasswordForm() {
             throw error;
           }
           window.history.replaceState({}, document.title, "/auth/reset-password");
+        } else if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            if (/code verifier/i.test(error.message)) {
+              throw new Error(
+                "This reset link came from an older same-browser flow. Request a fresh reset email and open the newest link.",
+              );
+            }
+
+            throw error;
+          }
         }
 
         const { data, error } = await supabase.auth.getSession();
