@@ -16,9 +16,10 @@ import {
   createSupabaseAdminClient,
   createSupabaseServerClient,
 } from "@/lib/supabase/server";
+import { getSiteUrl } from "@/lib/site-url";
 import type { ActionState, TaskWeekday } from "@/lib/types";
 import { areUidsEqual, normalizeUid } from "@/lib/uid";
-import { env, isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
+import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createStripeCheckoutSession, isStripeConfigured } from "@/lib/stripe";
 import { SUBSCRIPTION_PLAN_OPTIONS } from "@/lib/subscriptions";
 
@@ -618,6 +619,10 @@ function sanitizeReturnToPath(value: string | null | undefined) {
   return trimmed;
 }
 
+function buildAbsoluteSitePath(path: string) {
+  return `${getSiteUrl().replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 function revalidateSuperAdminWorkspace() {
   revalidatePath("/superadmin");
   revalidatePath("/superadmin/boopers");
@@ -691,9 +696,7 @@ export async function requestPasswordResetAction(
   }
 
   const supabase = await createSupabaseServerClient();
-  const siteUrl =
-    env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
-  const redirectTo = `${siteUrl.replace(/\/$/, "")}/auth/reset-password`;
+  const redirectTo = buildAbsoluteSitePath("/auth/reset-password");
 
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo,
@@ -738,7 +741,13 @@ export async function signUpAction(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signUp(parsed.data);
+  const { data, error } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: {
+      emailRedirectTo: buildAbsoluteSitePath("/auth/login?status=account-confirmed"),
+    },
+  });
 
   if (error) {
     return {
