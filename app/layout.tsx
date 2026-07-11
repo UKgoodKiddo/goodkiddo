@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { InstallPromptBanner } from "@/components/install-prompt-banner";
 import { PwaBoot } from "@/components/pwa-boot";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <PwaBoot />
+        <InstallPromptBanner />
         {children}
       </body>
     </html>
