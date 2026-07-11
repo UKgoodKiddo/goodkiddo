@@ -20,7 +20,12 @@ import { getSiteUrl } from "@/lib/site-url";
 import type { ActionState, TaskWeekday } from "@/lib/types";
 import { areUidsEqual, normalizeUid } from "@/lib/uid";
 import { isChildModeConfigured, isSupabaseConfigured } from "@/lib/env";
-import { createStripeCheckoutSession, isStripeConfigured } from "@/lib/stripe";
+import {
+  createStripeBillingPortalSession,
+  createStripeCheckoutSession,
+  isStripeConfigured,
+  updateStripeSubscriptionCancelAtPeriodEnd,
+} from "@/lib/stripe";
 import { SUBSCRIPTION_PLAN_OPTIONS } from "@/lib/subscriptions";
 
 const signInSchema = z.object({
@@ -845,6 +850,78 @@ export async function startStripeCheckoutAction(formData: FormData) {
   }
 
   redirect(session.url);
+}
+
+export async function openStripeBillingPortalAction() {
+  if (!isStripeConfigured()) {
+    redirect("/parent/settings?status=billing-portal-unavailable");
+  }
+
+  const { family, supabase } = await getParentContextOrRedirect();
+
+  if (!family) {
+    redirect("/parent");
+  }
+
+  const { data: subscription } = await supabase
+    .from("family_subscriptions")
+    .select("*")
+    .eq("family_id", family.id)
+    .maybeSingle();
+
+  if (
+    !subscription ||
+    subscription.subscription_provider !== "stripe" ||
+    !subscription.stripe_customer_id
+  ) {
+    redirect("/parent/settings?status=billing-portal-unavailable");
+  }
+
+  const session = await createStripeBillingPortalSession({
+    stripeCustomerId: subscription.stripe_customer_id,
+  });
+
+  redirect(session.url);
+}
+
+export async function toggleParentSubscriptionCancellationAction(formData: FormData) {
+  if (!isStripeConfigured()) {
+    redirect("/parent/settings?status=subscription-manage-failed");
+  }
+
+  const shouldCancel = formData.get("mode") === "cancel";
+  const { family, supabase } = await getParentContextOrRedirect();
+
+  if (!family) {
+    redirect("/parent");
+  }
+
+  const { data: subscription } = await supabase
+    .from("family_subscriptions")
+    .select("*")
+    .eq("family_id", family.id)
+    .maybeSingle();
+
+  if (
+    !subscription ||
+    subscription.subscription_provider !== "stripe" ||
+    !subscription.stripe_subscription_id
+  ) {
+    redirect("/parent/settings?status=subscription-manage-failed");
+  }
+
+  await updateStripeSubscriptionCancelAtPeriodEnd({
+    cancelAtPeriodEnd: shouldCancel,
+    stripeSubscriptionId: subscription.stripe_subscription_id,
+  });
+
+  revalidatePath("/parent/settings");
+  revalidatePath("/parent");
+  redirect(
+    shouldCancel
+      ? "/parent/settings?status=subscription-cancel-pending"
+      : "/parent/settings?status=subscription-cancel-removed",
+  );
 }
 
 export async function createChildProfileAction(formData: FormData) {

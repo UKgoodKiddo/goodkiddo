@@ -18,7 +18,8 @@ export function ForgotPasswordForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const rawEmail = formData.get("email");
     const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
 
@@ -52,7 +53,7 @@ export function ForgotPasswordForm() {
         status: "success",
         message: "Password reset email sent. Check your inbox to continue.",
       });
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) {
       setState({
         status: "error",

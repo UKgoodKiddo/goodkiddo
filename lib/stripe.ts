@@ -53,6 +53,58 @@ export function buildCheckoutCancelUrl() {
   return `${getSiteUrl()}/parent/plan?status=checkout-cancelled`;
 }
 
+export function buildStripeBillingPortalReturnUrl() {
+  return `${getSiteUrl()}/parent/settings`;
+}
+
+async function getOrCreateGoodKiddoPortalConfigurationId() {
+  const stripe = getStripeServerClient();
+
+  const existingConfigurations = await stripe.billingPortal.configurations.list({
+    active: true,
+    limit: 100,
+  });
+
+  const existing = existingConfigurations.data.find(
+    (configuration) =>
+      configuration.metadata?.goodkiddo_portal_type === "parent-settings",
+  );
+
+  if (existing) {
+    return existing.id;
+  }
+
+  const configuration = await stripe.billingPortal.configurations.create({
+    business_profile: {
+      headline: "Manage your goodKiddo Family+ billing details.",
+    },
+    default_return_url: buildStripeBillingPortalReturnUrl(),
+    features: {
+      customer_update: {
+        enabled: false,
+      },
+      invoice_history: {
+        enabled: true,
+      },
+      payment_method_update: {
+        enabled: true,
+      },
+      subscription_cancel: {
+        enabled: false,
+      },
+      subscription_update: {
+        enabled: false,
+      },
+    },
+    metadata: {
+      goodkiddo_portal_type: "parent-settings",
+    },
+    name: "goodKiddo Parent Billing Portal",
+  });
+
+  return configuration.id;
+}
+
 export function buildPlanLineItems(plan: Exclude<SubscriptionPlan, "beta_1_0">): Stripe.Checkout.SessionCreateParams.LineItem[] {
   if (plan === "monthly_family_plus") {
     return [
@@ -136,6 +188,40 @@ export async function createStripeCheckoutSession(input: {
   });
 
   return session;
+}
+
+export async function createStripeBillingPortalSession(input: {
+  stripeCustomerId: string;
+}) {
+  const stripe = getStripeServerClient();
+  const configuration = await getOrCreateGoodKiddoPortalConfigurationId();
+
+  const session = await stripe.billingPortal.sessions.create({
+    configuration,
+    customer: input.stripeCustomerId,
+    locale: "en-GB",
+    return_url: buildStripeBillingPortalReturnUrl(),
+  });
+
+  return session;
+}
+
+export async function updateStripeSubscriptionCancelAtPeriodEnd(input: {
+  cancelAtPeriodEnd: boolean;
+  stripeSubscriptionId: string;
+}) {
+  const stripe = getStripeServerClient();
+
+  const subscription = await stripe.subscriptions.update(
+    input.stripeSubscriptionId,
+    {
+      cancel_at_period_end: input.cancelAtPeriodEnd,
+    },
+  );
+
+  await syncStripeSubscription({ subscription });
+
+  return subscription;
 }
 
 function mapStripeStatusToLegacyStatus(status: SubscriptionStatus) {
@@ -322,6 +408,7 @@ export async function syncStripeSubscription(input: {
     subscription_status: status,
     stripe_customer_id: customerId,
     stripe_subscription_id: input.subscription.id,
+    subscription_cancel_at_period_end: input.subscription.cancel_at_period_end,
     booper_pack_included: resolvedPlan !== "beta_1_0",
     booper_pack_status: resolvedPlan === "beta_1_0" ? null : packStatus,
   });

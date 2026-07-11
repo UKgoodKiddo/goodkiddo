@@ -217,6 +217,7 @@ export type FamilySubscription = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   subscription_current_period_end: string | null;
+  subscription_cancel_at_period_end: boolean;
   booper_pack_included: boolean;
   booper_pack_status: BooperPackStatus | null;
   created_at: string;
@@ -551,6 +552,7 @@ export type Database = {
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           subscription_current_period_end?: string | null;
+          subscription_cancel_at_period_end?: boolean;
           booper_pack_included?: boolean;
           booper_pack_status?: BooperPackStatus | null;
           created_at?: string;
