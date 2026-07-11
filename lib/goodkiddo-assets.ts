@@ -24,7 +24,7 @@ export const GOODKIDDO_ASSETS = {
   greenCheckIcon: "/goodkiddo/green-check-icon.png",
   haveBathTaskIcon: "/goodkiddo/task-icons/have-a-bath.png",
   heartIcon: "/goodkiddo/heart-icon.png",
-  headerLogo: "/goodkiddo/Finalheaderlogo.png",
+  headerLogo: "/goodkiddo/finalfinalheaderlogo.png",
   installAppIcon: "/goodkiddo/goodKiddoappicon.png",
   homeworkTaskIcon: "/goodkiddo/task-icons/homework.png",
   mainLogo: "/goodkiddo/main-logo.webp",
