@@ -74,7 +74,7 @@ export default async function ParentChildModePage(props: {
                     {formatBoops(child.boop_balance)}
                   </p>
                 </div>
-                <div className="w-full text-xs font-black uppercase tracking-[0.18em] text-[color:var(--ink-soft)]">
+                <div className="w-full text-[0.7rem] font-black uppercase leading-tight tracking-[0.16em] text-[color:var(--ink-soft)]">
                   Launch child mode
                 </div>
                 <ParentChildModeLauncher

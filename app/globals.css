@@ -303,7 +303,7 @@ textarea {
   overflow: hidden;
   border-radius: 1.15rem;
   border: 1px solid rgba(23, 86, 207, 0.14);
-  background: linear-gradient(180deg, #f9fbff, #f3f8ff);
+  background: #ffffff;
   padding: 0.35rem 0.55rem;
 }
 

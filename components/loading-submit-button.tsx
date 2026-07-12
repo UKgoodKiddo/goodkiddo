@@ -10,6 +10,7 @@ type LoadingSubmitButtonProps = Omit<
   children: ReactNode;
   pendingLabel?: ReactNode;
   pendingOverride?: boolean;
+  spinnerOnly?: boolean;
 };
 
 export function LoadingSubmitButton({
@@ -18,6 +19,7 @@ export function LoadingSubmitButton({
   onClick,
   pendingLabel,
   pendingOverride = false,
+  spinnerOnly = false,
   ...props
 }: LoadingSubmitButtonProps) {
   const { pending: formPending } = useFormStatus();
@@ -36,7 +38,7 @@ export function LoadingSubmitButton({
       {isLoading ? (
         <>
           <span aria-hidden="true" className="btn-spinner" />
-          <span>{pendingLabel ?? children}</span>
+          {spinnerOnly ? null : <span>{pendingLabel ?? children}</span>}
         </>
       ) : (
         children

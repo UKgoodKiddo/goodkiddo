@@ -1,5 +1,6 @@
 import { ChildDailyCheckIn } from "@/components/child-daily-check-in";
 import { ChildBottomNav } from "@/components/child-bottom-nav";
+import { ChildModeSplashOverlay } from "@/components/child-mode-splash-overlay";
 import { ChildSelectionGuard } from "@/components/child-selection-guard";
 import { ExitChildModeButton } from "@/components/exit-child-mode-button";
 import { getChildModeData } from "@/lib/data";
@@ -18,6 +19,7 @@ export default async function ChildLayout({
           childProfileId={childMode.child?.id ?? null}
           familyId={childMode.child?.family_id ?? null}
         >
+          <ChildModeSplashOverlay childProfileId={childMode.child?.id ?? null} />
           <header className="mb-3 flex justify-end">
             <div className="flex items-center justify-end">
               <ExitChildModeButton />
