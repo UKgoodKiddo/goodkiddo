@@ -20,6 +20,18 @@ type FamilySubscriptionInsert =
 const MONTHLY_PRICE_PENCE = 399;
 const MONTHLY_STARTER_PACK_PENCE = 999;
 const YEARLY_PRICE_PENCE = 3999;
+const STRIPE_CURRENCY = "gbp";
+
+type StripeCatalogProductConfig = {
+  amountPence: number;
+  description: string;
+  name: string;
+  recurringInterval?: "month" | "year";
+  slug:
+    | "monthly_family_plus"
+    | "monthly_family_plus_starter_pack"
+    | "yearly_family_plus";
+};
 
 export function isStripeConfigured() {
   return Boolean(env.STRIPE_SECRET_KEY);
@@ -55,6 +67,125 @@ export function buildCheckoutCancelUrl() {
 
 export function buildStripeBillingPortalReturnUrl() {
   return `${getSiteUrl()}/parent/settings`;
+}
+
+const STRIPE_CATALOG_PRODUCTS: Record<
+  StripeCatalogProductConfig["slug"],
+  StripeCatalogProductConfig
+> = {
+  monthly_family_plus: {
+    amountPence: MONTHLY_PRICE_PENCE,
+    description: "Monthly Family+ access for one family account.",
+    name: "Monthly Family+",
+    recurringInterval: "month",
+    slug: "monthly_family_plus",
+  },
+  monthly_family_plus_starter_pack: {
+    amountPence: MONTHLY_STARTER_PACK_PENCE,
+    description: "Starter pack with 4 Boopers for your first family setup.",
+    name: "Booper Starter Pack",
+    slug: "monthly_family_plus_starter_pack",
+  },
+  yearly_family_plus: {
+    amountPence: YEARLY_PRICE_PENCE,
+    description: "Yearly Family+ access and 4 included Boopers.",
+    name: "Yearly Family+",
+    recurringInterval: "year",
+    slug: "yearly_family_plus",
+  },
+};
+
+async function getOrCreateGoodKiddoProduct(
+  config: StripeCatalogProductConfig,
+) {
+  const stripe = getStripeServerClient();
+  const existingProducts = await stripe.products.list({
+    limit: 100,
+  });
+
+  const existing = existingProducts.data.find(
+    (product) => product.metadata?.goodkiddo_catalog_slug === config.slug,
+  );
+
+  if (existing) {
+    const needsUpdate =
+      !existing.active ||
+      existing.name !== config.name ||
+      existing.description !== config.description;
+
+    if (!needsUpdate) {
+      return existing;
+    }
+
+    return stripe.products.update(existing.id, {
+      active: true,
+      description: config.description,
+      metadata: {
+        ...existing.metadata,
+        goodkiddo_catalog_slug: config.slug,
+      },
+      name: config.name,
+    });
+  }
+
+  return stripe.products.create({
+    active: true,
+    description: config.description,
+    metadata: {
+      goodkiddo_catalog_slug: config.slug,
+    },
+    name: config.name,
+  });
+}
+
+function doesPriceMatchCatalogConfig(
+  price: Stripe.Price,
+  config: StripeCatalogProductConfig,
+) {
+  const recurringInterval = price.recurring?.interval ?? null;
+  const expectedInterval = config.recurringInterval ?? null;
+
+  return (
+    price.active &&
+    price.currency === STRIPE_CURRENCY &&
+    price.type === (expectedInterval ? "recurring" : "one_time") &&
+    price.unit_amount === config.amountPence &&
+    recurringInterval === expectedInterval
+  );
+}
+
+async function getOrCreateGoodKiddoPrice(
+  config: StripeCatalogProductConfig,
+) {
+  const stripe = getStripeServerClient();
+  const product = await getOrCreateGoodKiddoProduct(config);
+  const existingPrices = await stripe.prices.list({
+    active: true,
+    limit: 100,
+    product: product.id,
+  });
+
+  const existing = existingPrices.data.find((price) =>
+    doesPriceMatchCatalogConfig(price, config),
+  );
+
+  if (existing) {
+    return existing;
+  }
+
+  return stripe.prices.create({
+    currency: STRIPE_CURRENCY,
+    metadata: {
+      goodkiddo_catalog_slug: config.slug,
+    },
+    product: product.id,
+    recurring: config.recurringInterval
+      ? {
+          interval: config.recurringInterval,
+        }
+      : undefined,
+    unit_amount: config.amountPence,
+  });
 }
 
 async function getOrCreateGoodKiddoPortalConfigurationId() {
@@ -105,50 +236,36 @@ async function getOrCreateGoodKiddoPortalConfigurationId() {
   return configuration.id;
 }
 
-export function buildPlanLineItems(plan: Exclude<SubscriptionPlan, "beta_1_0">): Stripe.Checkout.SessionCreateParams.LineItem[] {
+export async function buildPlanLineItems(
+  plan: Exclude<SubscriptionPlan, "beta_1_0">,
+): Promise<Stripe.Checkout.SessionCreateParams.LineItem[]> {
   if (plan === "monthly_family_plus") {
+    const monthlyPrice = await getOrCreateGoodKiddoPrice(
+      STRIPE_CATALOG_PRODUCTS.monthly_family_plus,
+    );
+    const starterPackPrice = await getOrCreateGoodKiddoPrice(
+      STRIPE_CATALOG_PRODUCTS.monthly_family_plus_starter_pack,
+    );
+
     return [
       {
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            description: "Monthly Family+ access for one family account.",
-            name: "Monthly Family+",
-          },
-          recurring: {
-            interval: "month",
-          },
-          unit_amount: MONTHLY_PRICE_PENCE,
-        },
+        price: monthlyPrice.id,
         quantity: 1,
       },
       {
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            description: "Starter pack with 4 Boopers for your first family setup.",
-            name: "Booper Starter Pack",
-          },
-          unit_amount: MONTHLY_STARTER_PACK_PENCE,
-        },
+        price: starterPackPrice.id,
         quantity: 1,
       },
     ];
   }
 
+  const yearlyPrice = await getOrCreateGoodKiddoPrice(
+    STRIPE_CATALOG_PRODUCTS.yearly_family_plus,
+  );
+
   return [
     {
-      price_data: {
-        currency: "gbp",
-        product_data: {
-          description: "Yearly Family+ access and 4 included Boopers.",
-          name: "Yearly Family+",
-        },
-        recurring: {
-          interval: "year",
-        },
-        unit_amount: YEARLY_PRICE_PENCE,
-      },
+      price: yearlyPrice.id,
       quantity: 1,
     },
   ];
@@ -162,6 +279,7 @@ export async function createStripeCheckoutSession(input: {
   userEmail?: string | null;
 }) {
   const stripe = getStripeServerClient();
+  const lineItems = await buildPlanLineItems(input.plan);
 
   const session = await stripe.checkout.sessions.create({
     billing_address_collection: "auto",
@@ -169,7 +287,7 @@ export async function createStripeCheckoutSession(input: {
     client_reference_id: input.familyId,
     customer: input.existingCustomerId || undefined,
     customer_email: input.existingCustomerId ? undefined : input.userEmail ?? undefined,
-    line_items: buildPlanLineItems(input.plan),
+    line_items: lineItems,
     locale: "en-GB",
     metadata: {
       booper_pack_included: "true",
