@@ -45,7 +45,6 @@ export function ParentChildModeLauncher({
       <input type="hidden" name="deviceLabel" value={deviceLabel} />
       <LoadingSubmitButton
         className="btn btn-secondary min-h-[3.85rem] w-full max-w-full justify-center gap-2 px-3 text-center text-[0.88rem] leading-tight whitespace-normal"
-        pendingLabel="Launching..."
         spinnerOnly
       >
         Launch child mode

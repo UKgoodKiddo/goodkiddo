@@ -160,11 +160,11 @@ export function ChildVisualTaskCard({
 
   return (
     <div
-      className="child-task-row child-visual-task-card relative rounded-[1.55rem] px-4 py-4 pr-[5.9rem] text-[color:var(--foreground)]"
+      className="child-task-row child-visual-task-card relative overflow-hidden rounded-[1.55rem] bg-white px-4 py-4 pr-[5.9rem] text-[color:var(--foreground)]"
       data-completed={isCompletedVisual ? "true" : "false"}
     >
       <div className="flex min-h-[7.25rem] items-center">
-        <div className="child-visual-task-image-wrap min-w-0 flex-1">
+        <div className="child-visual-task-image-wrap min-w-0 flex-1 bg-white">
           <KiddoRouteImage
             alt={task.title}
             className="child-visual-task-image h-auto w-full object-contain"
