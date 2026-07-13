@@ -189,24 +189,29 @@ export function ParentChildWizardLauncher({
 
                       <div className="w-full max-w-md">
                         <NfcUidCapture
+                          autoStart
                           buttonClassName="w-full justify-center"
-                          buttonLabel="Tap here to scan"
-                          helperText=""
+                          buttonLabel="Scan your NFC Booper!"
+                          helperText="If scanning does not start by itself, press the button to activate NFC on this device."
                           inputName="booperUid"
                           onUidChange={setBooperUid}
                           scanningLabel="Scanning..."
                           showInput={false}
-                          successMessage="Booper ready."
+                          successMessage="Booper assigned and ready."
                         />
                       </div>
                     </div>
 
                     <div className="mt-6 flex justify-between gap-3">
-                      <button className="btn btn-ghost min-w-[10rem]" onClick={goBack} type="button">
+                      <button
+                        className="btn btn-ghost min-w-[6.5rem] px-5"
+                        onClick={goBack}
+                        type="button"
+                      >
                         Back
                       </button>
                       <button
-                        className="btn btn-primary min-w-[12rem]"
+                        className="btn btn-primary min-w-[7.5rem] px-5"
                         onClick={() => setStep(4)}
                         type="button"
                       >

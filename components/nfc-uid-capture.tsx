@@ -19,6 +19,7 @@ type WebNfcWindow = Window & {
 };
 
 export function NfcUidCapture({
+  autoStart = false,
   autoSubmit = false,
   buttonLabel,
   buttonChildren,
@@ -34,6 +35,7 @@ export function NfcUidCapture({
   showMessage = true,
   successMessage,
 }: {
+  autoStart?: boolean;
   autoSubmit?: boolean;
   buttonLabel: string;
   buttonChildren?: ReactNode;
@@ -56,12 +58,23 @@ export function NfcUidCapture({
   const [message, setMessage] = useState(helperText);
   const [tone, setTone] = useState<ScanTone>("neutral");
   const [uid, setUid] = useState(defaultValue);
+  const hasAutoStartedRef = useRef(false);
+  const startScanRef = useRef<(source?: "auto" | "manual") => Promise<void>>(async () => {});
 
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    if (!autoStart || hasAutoStartedRef.current) {
+      return;
+    }
+
+    hasAutoStartedRef.current = true;
+    void startScanRef.current("auto");
+  }, [autoStart]);
 
   function updateUid(nextUid: string) {
     setUid(nextUid);
@@ -73,14 +86,20 @@ export function NfcUidCapture({
     setMessage(nextMessage);
   }
 
-  async function startScan() {
+  async function startScan(source: "auto" | "manual" = "manual") {
+    if (isScanning) {
+      return;
+    }
+
     const nfcWindow = window as WebNfcWindow;
     const Reader = nfcWindow.NDEFReader;
 
     if (!Reader) {
       setFeedback(
         "error",
-        "This browser or device does not support Web NFC. Chrome/Edge on Android works best. You can still type the supplier UID manually.",
+        source === "auto"
+          ? "This device does not support Web NFC. Tap the button below if you want to try again on another device."
+          : "This browser or device does not support Web NFC. Chrome on Android works best.",
       );
       return;
     }
@@ -145,7 +164,9 @@ export function NfcUidCapture({
       if (error instanceof DOMException && error.name === "NotAllowedError") {
         setFeedback(
           "error",
-          "NFC permission was denied. Allow NFC access in the browser prompt, then try again.",
+          source === "auto"
+            ? "Tap “Scan your NFC Booper!” to activate NFC on this device."
+            : "NFC permission was denied. Allow NFC access in the browser prompt, then try again.",
         );
         return;
       }
@@ -168,17 +189,23 @@ export function NfcUidCapture({
 
       setFeedback(
         "error",
-        "NFC scanning could not start on this device. You can still type the supplier UID manually.",
+        source === "auto"
+          ? "Tap “Scan your NFC Booper!” to try again on this device."
+          : "NFC scanning could not start on this device. Try again in Chrome on Android.",
       );
     }
   }
+
+  useEffect(() => {
+    startScanRef.current = startScan;
+  });
 
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap gap-2">
         <button
           className={cn("btn btn-secondary", buttonClassName)}
-          onClick={() => void startScan()}
+          onClick={() => void startScan("manual")}
           type="button"
         >
           {isScanning ? scanningLabel : buttonChildren ?? buttonLabel}
