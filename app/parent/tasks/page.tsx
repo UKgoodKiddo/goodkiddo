@@ -43,9 +43,12 @@ function formatTaskSchedule(
   return `Weekly · ${weeklyDays.map((day) => WEEKDAY_LABELS[day]).join(" ")}`;
 }
 
-export default async function ParentTasksPage() {
-  const [dashboard, taskCatalog] = await Promise.all([
+export default async function ParentTasksPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [dashboard, searchParams, taskCatalog] = await Promise.all([
     getParentDashboardData(),
+    props.searchParams,
     getTaskCardCatalog(),
   ]);
 
@@ -63,6 +66,14 @@ export default async function ParentTasksPage() {
     name: child.display_name,
   }));
 
+  const defaultChildProfileId =
+    typeof searchParams.childId === "string" &&
+    childOptions.some((child) => child.id === searchParams.childId)
+      ? searchParams.childId
+      : undefined;
+
+  const openCreateTaskWizard = searchParams.open === "create-task";
+
   return (
     <main className="flex flex-1 flex-col gap-6">
       <section className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
@@ -76,6 +87,8 @@ export default async function ParentTasksPage() {
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <ParentTaskWizardLauncher
                 childOptions={childOptions}
+                defaultChildProfileId={defaultChildProfileId}
+                defaultOpen={openCreateTaskWizard}
                 returnTo="/parent"
                 taskCatalog={taskCatalog.categories}
                 triggerLabel="Create task"
@@ -175,6 +188,9 @@ export default async function ParentTasksPage() {
                 {await Promise.all(
                   dashboard.tasks.map(async (task) => {
                     const taskAsset = await resolveTaskCardAsset(task.title);
+                    const assignedChild =
+                      dashboard.children.find((child) => child.id === task.child_profile_id)
+                        ?.display_name ?? "All children";
 
                     return (
                       <ShellCard key={task.id} className="rounded-[1.8rem] p-6">
@@ -195,6 +211,7 @@ export default async function ParentTasksPage() {
                                 </span>
                               )}
                             </div>
+
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-3">
                                 <h3 className="text-2xl font-extrabold">{task.title}</h3>
@@ -205,10 +222,11 @@ export default async function ParentTasksPage() {
                                   {formatTaskSchedule(task.recurring_type, task.weekly_days)}
                                 </StatusPill>
                               </div>
+
                               <p className="mt-3 text-sm font-bold text-[color:var(--ink-soft)]">
-                                {dashboard.children.find((child) => child.id === task.child_profile_id)
-                                  ?.display_name ?? "All children"} · {task.boop_reward} boops
+                                {assignedChild} · {task.boop_reward} boops
                               </p>
+
                               {taskAsset?.category ? (
                                 <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
                                   Category · {taskAsset.category}

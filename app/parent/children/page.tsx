@@ -2,7 +2,6 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
   assignBooperToChildAction,
-  createChildProfileAction,
   deleteChildProfileAction,
   updateBooperStatusAction,
   updateChildProfileAction,
@@ -10,6 +9,7 @@ import {
 import { Banner } from "@/components/banner";
 import { LoadingSubmitButton } from "@/components/loading-submit-button";
 import { NfcUidCapture } from "@/components/nfc-uid-capture";
+import { ParentChildWizardLauncher } from "@/components/parent-child-wizard-launcher";
 import { ShellCard } from "@/components/shell-card";
 import { StatusPill } from "@/components/status-pill";
 import { getParentDashboardData } from "@/lib/data";
@@ -107,45 +107,13 @@ export default async function ParentChildrenPage(props: {
             </summary>
 
             <div className="mt-6">
-              <p className="text-sm leading-6 text-[color:var(--ink-soft)]">
-                Children do not get email or password accounts. They only exist inside
-                the family account.
-              </p>
-
               {dashboard.family ? (
-                <form
-                  action={createChildProfileAction}
-                  className="mt-6 grid gap-3"
-                >
-                  <input type="hidden" name="familyId" value={dashboard.family.id} />
-                  <input type="hidden" name="returnTo" value="/parent/children" />
-                  <input
-                    className="field"
-                    name="displayName"
-                    placeholder="Child nickname"
-                    required
+                <div className="flex flex-wrap items-center gap-4">
+                  <ParentChildWizardLauncher
+                    familyId={dashboard.family.id}
+                    triggerLabel="Create child"
                   />
-                  <label className="grid gap-2">
-                    <span className="text-sm font-bold text-[color:var(--ink-soft)]">
-                      Avatar upload (optional, max 5MB)
-                    </span>
-                    <input
-                      accept="image/*"
-                      className="field file:mr-3 file:rounded-full file:border-0 file:bg-[color:var(--primary)] file:px-4 file:py-2 file:font-bold file:text-white"
-                      name="avatarFile"
-                      type="file"
-                    />
-                  </label>
-                  <NfcUidCapture
-                    buttonLabel="Scan and reserve a Booper (optional)"
-                    helperText="If this UID is already imported and available, it will be assigned to the child as soon as the profile is created."
-                    inputLabel="Optional Booper UID"
-                    inputName="booperUid"
-                  />
-                  <LoadingSubmitButton className="btn btn-primary" pendingLabel="Adding...">
-                    Add child profile
-                  </LoadingSubmitButton>
-                </form>
+                </div>
               ) : (
                 <div className="mt-6 rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
                   Create the family first on the dashboard before adding children.

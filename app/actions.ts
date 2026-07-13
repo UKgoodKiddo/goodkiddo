@@ -51,8 +51,12 @@ const createFamilySchema = z.object({
 const createChildSchema = z.object({
   familyId: z.uuid(),
   displayName: z.string().trim().min(1).max(60),
+  avatarUrl: z.preprocess(
+    emptyStringToUndefined,
+    z.enum(CHILD_AVATAR_PRESET_URLS).optional(),
+  ),
   booperUid: z.string().trim().max(120).optional(),
-  returnTo: z.enum(["/parent", "/parent/children"]).optional(),
+  returnTo: z.enum(["/parent", "/parent/children", "/parent/tasks"]).optional(),
 });
 
 const updateChildSchema = z.object({
@@ -267,13 +271,13 @@ const viewSuperAdminFamilySchema = z.object({
   familyId: z.uuid(),
 });
 
-const emptyStringToUndefined = (value: unknown) => {
+function emptyStringToUndefined(value: unknown) {
   if (typeof value === "string" && value.trim() === "") {
     return undefined;
   }
 
   return value;
-};
+}
 
 const normalizeCheckboxString = (value: unknown) => {
   if (value === true || value === "true" || value === "on" || value === 1 || value === "1") {
@@ -928,6 +932,7 @@ export async function createChildProfileAction(formData: FormData) {
   const parsed = createChildSchema.safeParse({
     familyId: formData.get("familyId"),
     displayName: formData.get("displayName"),
+    avatarUrl: formData.get("avatarUrl"),
     booperUid: formData.get("booperUid"),
     returnTo: formData.get("returnTo"),
   });
@@ -948,6 +953,7 @@ export async function createChildProfileAction(formData: FormData) {
     .from("child_profiles")
     .insert({
       family_id: parsed.data.familyId,
+      avatar_url: parsed.data.avatarUrl ?? null,
       display_name: parsed.data.displayName,
     })
     .select("id")
@@ -998,15 +1004,31 @@ export async function createChildProfileAction(formData: FormData) {
     if (assignmentResult.status === "success") {
       revalidateParentWorkspace();
       revalidateSuperAdminWorkspace();
+      if (returnTo === "/parent/tasks") {
+        redirect(
+          `/parent/tasks?open=create-task&childId=${childProfile.id}&status=child-created-booper-assigned`,
+        );
+      }
+
       redirect(`${returnTo}?status=child-created-booper-assigned`);
     }
 
     revalidateParentWorkspace();
     revalidateSuperAdminWorkspace();
+    if (returnTo === "/parent/tasks") {
+      redirect(
+        `/parent/tasks?open=create-task&childId=${childProfile.id}&status=child-created-booper-failed`,
+      );
+    }
+
     redirect(`${returnTo}?status=child-created-booper-failed`);
   }
 
   revalidateParentWorkspace();
+  if (returnTo === "/parent/tasks") {
+    redirect(`/parent/tasks?open=create-task&childId=${childProfile.id}&status=child-created`);
+  }
+
   redirect(`${returnTo}?status=child-created`);
 }
 

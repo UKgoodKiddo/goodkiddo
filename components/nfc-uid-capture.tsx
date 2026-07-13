@@ -27,9 +27,12 @@ export function NfcUidCapture({
   helperText = "Scan with a compatible device, or type the supplier UID manually.",
   inputLabel = "Booper UID",
   inputName,
+  onUidChange,
   required = false,
+  scanningLabel = "Waiting for wristband...",
   showInput = true,
   showMessage = true,
+  successMessage,
 }: {
   autoSubmit?: boolean;
   buttonLabel: string;
@@ -39,9 +42,12 @@ export function NfcUidCapture({
   helperText?: string;
   inputLabel?: string;
   inputName: string;
+  onUidChange?: (uid: string) => void;
   required?: boolean;
+  scanningLabel?: string;
   showInput?: boolean;
   showMessage?: boolean;
+  successMessage?: string;
 }) {
   const fieldId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -59,6 +65,7 @@ export function NfcUidCapture({
 
   function updateUid(nextUid: string) {
     setUid(nextUid);
+    onUidChange?.(nextUid);
   }
 
   function setFeedback(nextTone: ScanTone, nextMessage: string) {
@@ -100,12 +107,18 @@ export function NfcUidCapture({
         setIsScanning(false);
 
         if (autoSubmit) {
-          setFeedback("success", "Booper detected. Assigning it now...");
+          setFeedback(
+            "success",
+            successMessage ?? "Booper detected. Assigning it now...",
+          );
           requestAnimationFrame(() => {
             inputRef.current?.form?.requestSubmit();
           });
         } else {
-          setFeedback("success", "Booper detected. Submit the form to continue.");
+          setFeedback(
+            "success",
+            successMessage ?? "Booper detected. Submit the form to continue.",
+          );
         }
 
         abortController.abort();
@@ -168,9 +181,7 @@ export function NfcUidCapture({
           onClick={() => void startScan()}
           type="button"
         >
-          {isScanning
-            ? "Waiting for wristband..."
-            : buttonChildren ?? buttonLabel}
+          {isScanning ? scanningLabel : buttonChildren ?? buttonLabel}
         </button>
       </div>
 

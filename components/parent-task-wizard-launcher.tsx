@@ -67,6 +67,7 @@ function resolveTaskFromCatalog(
 
 function buildInitialWizardState(
   initialTask: InitialTask | null | undefined,
+  defaultChildProfileId: string | undefined,
   taskCatalog: TaskAssetCategory[],
 ) {
   const resolvedTask = initialTask ? resolveTaskFromCatalog(initialTask.title, taskCatalog) : null;
@@ -74,7 +75,7 @@ function buildInitialWizardState(
   return {
     active: initialTask?.active ?? true,
     boopReward: initialTask?.boopReward ?? 5,
-    childProfileId: initialTask?.childProfileId ?? "",
+    childProfileId: initialTask?.childProfileId ?? defaultChildProfileId ?? "",
     description: initialTask?.description ?? "",
     recurringType: initialTask?.recurringType ?? "daily",
     selectedCategory:
@@ -159,26 +160,32 @@ function TaskArtPreview({
   if (asset?.parentAssetSrc) {
     return (
       <div className="parent-task-art-card">
-        <Image
-          alt={asset.title}
-          className="h-auto w-full object-contain"
-          height={420}
-          src={asset.parentAssetSrc}
-          width={420}
-        />
+        <div className="task-icon-frame h-40 w-40">
+          <Image
+            alt={asset.title}
+            className="task-icon-art"
+            height={160}
+            src={asset.parentAssetSrc}
+            width={160}
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="parent-task-art-card flex min-h-[10rem] items-center justify-center px-4 text-center">
-      <p className="text-lg font-black text-[color:var(--foreground)]">{title}</p>
+    <div className="parent-task-art-card">
+      <div className="task-icon-frame flex h-40 w-40 items-center justify-center px-4 text-center">
+        <p className="text-lg font-black text-[color:var(--foreground)]">{title}</p>
+      </div>
     </div>
   );
 }
 
 export function ParentTaskWizardLauncher({
   childOptions,
+  defaultChildProfileId,
+  defaultOpen = false,
   initialTask = null,
   returnTo = "/parent",
   taskCatalog,
@@ -186,15 +193,17 @@ export function ParentTaskWizardLauncher({
   triggerTone = "primary",
 }: {
   childOptions: ChildOption[];
+  defaultChildProfileId?: string;
+  defaultOpen?: boolean;
   initialTask?: InitialTask | null;
   returnTo?: "/parent" | "/parent/tasks";
   taskCatalog: TaskAssetCategory[];
   triggerLabel: string;
   triggerTone?: "ghost" | "primary" | "secondary";
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [wizardState, setWizardState] = useState(() =>
-    buildInitialWizardState(initialTask, taskCatalog),
+    buildInitialWizardState(initialTask, defaultChildProfileId, taskCatalog),
   );
 
   const taskOptionsForCategory =
@@ -216,7 +225,9 @@ export function ParentTaskWizardLauncher({
   }, [isOpen]);
 
   function openWizard() {
-    setWizardState(buildInitialWizardState(initialTask, taskCatalog));
+    setWizardState(
+      buildInitialWizardState(initialTask, defaultChildProfileId, taskCatalog),
+    );
     setIsOpen(true);
   }
 
@@ -349,7 +360,7 @@ export function ParentTaskWizardLauncher({
                   <div className="parent-task-wizard-category-art">
                     <Image
                       alt={category.name}
-                      className="h-auto w-full object-contain"
+                      className="task-icon-art"
                       height={160}
                       src={category.tasks[0].parentAssetSrc}
                       width={160}
@@ -375,7 +386,23 @@ export function ParentTaskWizardLauncher({
                 onClick={() => pickTask(task)}
                 type="button"
               >
-                <TaskArtPreview asset={task} title={task.title} />
+                {task.parentAssetSrc ? (
+                  <div className="task-icon-frame h-28 w-28">
+                    <Image
+                      alt={task.title}
+                      className="task-icon-art"
+                      height={104}
+                      src={task.parentAssetSrc}
+                      width={104}
+                    />
+                  </div>
+                ) : (
+                  <div className="task-icon-frame flex h-28 w-28 items-center justify-center px-3 text-center">
+                    <span className="text-base font-black text-[color:var(--foreground)]">
+                      {task.title}
+                    </span>
+                  </div>
+                )}
                 <span className="mt-3 block text-center text-lg font-black text-[color:var(--foreground)]">
                   {task.title}
                 </span>
