@@ -202,16 +202,16 @@ export function ParentChildWizardLauncher({
                       </div>
                     </div>
 
-                    <div className="mt-6 flex justify-between gap-3">
+                    <div className="mt-6 flex items-center justify-center gap-3">
                       <button
-                        className="btn btn-ghost min-w-[6.5rem] px-5"
+                        className="btn btn-ghost min-w-[5.25rem] px-4"
                         onClick={goBack}
                         type="button"
                       >
                         Back
                       </button>
                       <button
-                        className="btn btn-primary min-w-[7.5rem] px-5"
+                        className="btn btn-primary min-w-[5.75rem] px-4"
                         onClick={() => setStep(4)}
                         type="button"
                       >

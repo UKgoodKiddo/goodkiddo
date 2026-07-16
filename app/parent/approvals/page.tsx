@@ -15,22 +15,10 @@ import { resolveTaskCardAsset } from "@/lib/task-card-catalog";
 import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
 import { formatDateTimeDetailed } from "@/lib/utils";
 
-function CollapseIcon() {
+function CollapseIcon({ count }: { count: number }) {
   return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
-      <svg
-        aria-hidden="true"
-        className="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.5"
-        viewBox="0 0 24 24"
-      >
-        <path d="M12 5v14" />
-        <path d="M5 12h14" />
-      </svg>
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-base font-black text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)]">
+      {count}
     </span>
   );
 }
@@ -63,9 +51,9 @@ export default async function ParentApprovalsPage() {
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div className="min-w-0">
-                <h2 className="text-3xl font-extrabold">Pending completions</h2>
+                <h2 className="text-3xl font-extrabold">Task approvals</h2>
               </div>
-              <CollapseIcon />
+              <CollapseIcon count={dashboard.pendingTaskCompletions.length} />
             </summary>
 
             <div className="mt-6">
@@ -143,9 +131,9 @@ export default async function ParentApprovalsPage() {
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div className="min-w-0">
-                <h2 className="text-3xl font-extrabold">Pending redemptions</h2>
+                <h2 className="text-3xl font-extrabold">Reward requests</h2>
               </div>
-              <CollapseIcon />
+              <CollapseIcon count={pendingRedemptions.length} />
             </summary>
 
             <div className="mt-6">
@@ -201,9 +189,9 @@ export default async function ParentApprovalsPage() {
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
             <div className="min-w-0">
-              <h2 className="text-3xl font-extrabold">Waiting to complete</h2>
+              <h2 className="text-3xl font-extrabold">Rewards waiting</h2>
             </div>
-            <CollapseIcon />
+            <CollapseIcon count={waitingToCompleteRedemptions.length} />
           </summary>
 
           <div className="mt-6">

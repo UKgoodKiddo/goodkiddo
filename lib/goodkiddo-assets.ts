@@ -53,6 +53,8 @@ export const GOODKIDDO_ASSETS = {
   starIcon: "/goodkiddo/star-icon.png",
   childRewardsButton: "/goodkiddo/child ui buttons/Rewards button.png",
   childChangingRoomButton: "/goodkiddo/child ui buttons/Changing room icon.png",
+  childCreativeCoveButton: "/goodkiddo/child ui buttons/creative cove button.png",
+  childKiddoExplorersButton: "/goodkiddo/child ui buttons/kiddoexplorersbutton.png",
   childTasksButton: "/goodkiddo/child ui buttons/Tasks button.png",
   sweepFloorTaskIcon: "/goodkiddo/task-icons/sweep-floor.png",
   taskCardBrushHair: "/goodkiddo/task-cards/brush-your-hair-card.png",

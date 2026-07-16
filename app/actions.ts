@@ -603,11 +603,9 @@ function revalidateParentWorkspace() {
 }
 
 function revalidateChildWorkspace() {
-  revalidatePath("/child");
-  revalidatePath("/child/collect");
-  revalidatePath("/child/rewards");
-  revalidatePath("/child/activity");
-  revalidatePath("/child/profile");
+  for (const childRoute of CHILD_PAGE_ROUTES) {
+    revalidatePath(childRoute);
+  }
 }
 
 function getFamilyParentPin(parentPin: string | null | undefined) {

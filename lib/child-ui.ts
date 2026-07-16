@@ -3,9 +3,12 @@ import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 export const CHILD_PAGE_ROUTES = [
   "/child",
   "/child/collect",
+  "/child/activity",
   "/child/tasks",
   "/child/rewards",
   "/child/profile",
+  "/child/kiddo_explorers",
+  "/child/kiddo_explorers/creative_cove",
 ] as const;
 
 export type ChildPageRoute = (typeof CHILD_PAGE_ROUTES)[number];

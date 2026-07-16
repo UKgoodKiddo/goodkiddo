@@ -138,6 +138,20 @@ export function ChildSectionLaunchButtons() {
           width={512}
         />
       </Link>
+      <Link
+        aria-label="Open Kiddo Explorers"
+        className="child-panel col-span-2 flex items-center justify-center rounded-[2rem] p-4 transition-transform duration-200 hover:-translate-y-1"
+        href="/child/kiddo_explorers"
+      >
+        <Image
+          alt="Kiddo Explorers"
+          className="h-auto w-full max-w-[16rem] object-contain"
+          height={512}
+          priority
+          src={GOODKIDDO_ASSETS.childKiddoExplorersButton}
+          width={512}
+        />
+      </Link>
     </div>
   );
 }
