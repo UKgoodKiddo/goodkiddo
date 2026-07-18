@@ -56,7 +56,13 @@ type PointerDebugEntry = {
   phase: "capture" | "bubble";
   pointerType: string;
   target: string;
-  type: "pointerdown" | "pointermove" | "pointerup";
+  type: "pointercancel" | "pointerdown" | "pointermove" | "pointerup";
+};
+
+type EditorDebugEntry = {
+  detail: string;
+  event: string;
+  tool: string;
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
@@ -262,13 +268,24 @@ export function CreativeCoveCanvas() {
   const [activeSize, setActiveSize] = useState<TLDefaultSizeStyle>("m");
   const [activeTool, setActiveTool] = useState<CreativeToolId>("draw");
   const [isSaving, setIsSaving] = useState(false);
+  const [editorDebugLog, setEditorDebugLog] = useState<EditorDebugEntry[]>([]);
   const [pointerDebugLog, setPointerDebugLog] = useState<PointerDebugEntry[]>([]);
   const sceneRef = useRef<HTMLElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const activeColorRef = useRef(activeColor);
+  const activeSizeRef = useRef(activeSize);
+  const activeToolRef = useRef(activeTool);
+
+  useEffect(() => {
+    activeColorRef.current = activeColor;
+    activeSizeRef.current = activeSize;
+    activeToolRef.current = activeTool;
+  }, [activeColor, activeSize, activeTool]);
 
   useEffect(() => {
     const sceneElement = sceneRef.current;
     const stageElement = stageRef.current;
+    const currentEditor = editor;
 
     if (!sceneElement || !stageElement) {
       return;
@@ -340,7 +357,7 @@ export function CreativeCoveCanvas() {
       const captureHandler = handler("capture");
       const bubbleHandler = handler("bubble");
 
-      for (const eventName of ["pointerdown", "pointermove", "pointerup"] as const) {
+      for (const eventName of ["pointercancel", "pointerdown", "pointermove", "pointerup"] as const) {
         element.addEventListener(eventName, captureHandler, { capture: true, passive: true });
         element.addEventListener(eventName, bubbleHandler, { passive: true });
         listeners.push(() => element.removeEventListener(eventName, captureHandler, true));
@@ -348,9 +365,30 @@ export function CreativeCoveCanvas() {
       }
     }
 
+    function completeOnPointerCancel(event: PointerEvent) {
+      if (!currentEditor || event.pointerType !== "touch" || !currentEditor.inputs.getIsDragging()) {
+        return;
+      }
+
+      setEditorDebugLog((current) => [
+        {
+          detail: "Forced complete after DOM pointercancel",
+          event: "pointercancel->complete",
+          tool: currentEditor.getCurrentToolId(),
+        },
+        ...current,
+      ].slice(0, 18));
+
+      currentEditor.complete();
+    }
+
     const cleanupCallbacks: Array<() => void> = [];
     attachPointerDebugListeners(sceneElement, "scene", cleanupCallbacks);
     attachPointerDebugListeners(stageElement, "stage", cleanupCallbacks);
+    stageElement.addEventListener("pointercancel", completeOnPointerCancel, { passive: true });
+    cleanupCallbacks.push(() =>
+      stageElement.removeEventListener("pointercancel", completeOnPointerCancel),
+    );
 
     const tlRoot =
       stageElement.querySelector(".tl-container") ??
@@ -385,6 +423,32 @@ export function CreativeCoveCanvas() {
       attachPointerDebugListeners(tlHtmlLayer, "tldraw-html-layer", cleanupCallbacks);
     }
 
+    const handleVisibilityChange = () => {
+      if (
+        !currentEditor ||
+        document.visibilityState !== "hidden" ||
+        !currentEditor.inputs.getIsDragging()
+      ) {
+        return;
+      }
+
+      setEditorDebugLog((current) => [
+        {
+          detail: "Forced complete on page hide",
+          event: "visibilitychange->complete",
+          tool: currentEditor.getCurrentToolId(),
+        },
+        ...current,
+      ].slice(0, 18));
+
+      currentEditor.complete();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    cleanupCallbacks.push(() =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange),
+    );
+
     return () => {
       cleanupCallbacks.forEach((cleanup) => cleanup());
     };
@@ -396,12 +460,135 @@ export function CreativeCoveCanvas() {
     }
 
     editor.setCurrentTool(activeTool);
-    editor.updateInstanceState({
-      isToolLocked: activeTool === "draw" || activeTool === "eraser",
-    });
     editor.setStyleForNextShapes(DefaultColorStyle, activeColor);
     editor.setStyleForNextShapes(DefaultSizeStyle, activeSize);
   }, [activeColor, activeSize, activeTool, editor]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const currentEditor = editor;
+    const maxEntries = 18;
+
+    function appendEditorDebugEntry(entry: EditorDebugEntry) {
+      setEditorDebugLog((current) => [entry, ...current].slice(0, maxEntries));
+    }
+
+    function restoreActiveTool(reason: string) {
+      const desiredTool = activeToolRef.current;
+
+      window.setTimeout(() => {
+        if (desiredTool !== "draw" && desiredTool !== "eraser") {
+          return;
+        }
+
+        const currentTool = currentEditor.getCurrentToolId();
+
+        if (currentTool === desiredTool) {
+          return;
+        }
+
+        currentEditor.setCurrentTool(desiredTool);
+        currentEditor.setStyleForNextShapes(DefaultColorStyle, activeColorRef.current);
+        currentEditor.setStyleForNextShapes(DefaultSizeStyle, activeSizeRef.current);
+
+        appendEditorDebugEntry({
+          detail: reason,
+          event: "tool-restore",
+          tool: `${currentTool}->${desiredTool}`,
+        });
+      }, 0);
+    }
+
+    const handleEditorEvent = (info: any) => {
+      if (info.type === "pointer") {
+        appendEditorDebugEntry({
+          detail: info.target ?? "unknown",
+          event: info.name,
+          tool: currentEditor.getCurrentToolId(),
+        });
+
+        if (info.name === "pointer_up") {
+          restoreActiveTool("pointer_up");
+        }
+
+        return;
+      }
+
+      if (info.type === "misc" && ["cancel", "complete", "interrupt"].includes(info.name)) {
+        appendEditorDebugEntry({
+          detail: "editor lifecycle",
+          event: info.name,
+          tool: currentEditor.getCurrentToolId(),
+        });
+        restoreActiveTool(info.name);
+        return;
+      }
+
+      if (info.type === "click" && info.name === "double_click") {
+        appendEditorDebugEntry({
+          detail: "click sequence",
+          event: info.name,
+          tool: currentEditor.getCurrentToolId(),
+        });
+      }
+    };
+
+    const handleCreatedShapes = (records: Array<{ id: string; type?: string; typeName?: string }>) => {
+      const shapes = records.filter((record) => record.typeName === "shape");
+
+      if (!shapes.length) {
+        return;
+      }
+
+      appendEditorDebugEntry({
+        detail: shapes.map((shape) => shape.type ?? shape.id).join(", "),
+        event: "created-shapes",
+        tool: currentEditor.getCurrentToolId(),
+      });
+    };
+
+    const handleDeletedShapes = (shapeIds: string[]) => {
+      appendEditorDebugEntry({
+        detail: `${shapeIds.length} removed`,
+        event: "deleted-shapes",
+        tool: currentEditor.getCurrentToolId(),
+      });
+    };
+
+    const handleChange = (entry: {
+      changes: { removed: Record<string, { id: string; typeName?: string }> };
+      source: string;
+    }) => {
+      const removedShapes = Object.values(entry.changes.removed).filter(
+        (record) => record.typeName === "shape",
+      );
+
+      if (!removedShapes.length) {
+        return;
+      }
+
+      appendEditorDebugEntry({
+        detail: `${removedShapes.length} removed via ${entry.source}`,
+        event: "change",
+        tool: currentEditor.getCurrentToolId(),
+      });
+    };
+
+    currentEditor.on("event", handleEditorEvent);
+    currentEditor.on("created-shapes", handleCreatedShapes);
+    currentEditor.on("deleted-shapes", handleDeletedShapes);
+    currentEditor.on("change", handleChange);
+
+    return () => {
+      currentEditor.off("event", handleEditorEvent);
+      currentEditor.off("created-shapes", handleCreatedShapes);
+      currentEditor.off("deleted-shapes", handleDeletedShapes);
+      currentEditor.off("change", handleChange);
+    };
+  }, [editor]);
 
   function handleToolChange(toolId: CreativeToolId) {
     setActiveTool(toolId);
@@ -632,8 +819,8 @@ export function CreativeCoveCanvas() {
           <p className="creative-cove-debug-panel__title">Pointer debug</p>
           <p className="creative-cove-debug-panel__summary">
             {pointerDebugLog.length
-              ? "Newest events shown first"
-              : "Touch the drawing area to log pointerdown, pointermove, and pointerup."}
+              ? "DOM events first, editor events below."
+              : "Touch the drawing area to log canvas and editor pointer events."}
           </p>
           <div className="creative-cove-debug-panel__log">
             {pointerDebugLog.map((entry, index) => (
@@ -644,6 +831,16 @@ export function CreativeCoveCanvas() {
                 <span>{entry.pointerType}</span>
                 <span>{entry.defaultPrevented ? "prevented" : "open"}</span>
                 <span>{entry.target}</span>
+              </div>
+            ))}
+          </div>
+          <p className="creative-cove-debug-panel__summary">Editor event stream</p>
+          <div className="creative-cove-debug-panel__log">
+            {editorDebugLog.map((entry, index) => (
+              <div className="creative-cove-debug-panel__entry" key={`${entry.event}-${entry.tool}-${index}`}>
+                <span>{entry.event}</span>
+                <span>{entry.tool}</span>
+                <span>{entry.detail}</span>
               </div>
             ))}
           </div>
