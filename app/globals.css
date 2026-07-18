@@ -1642,6 +1642,7 @@ textarea {
   bottom: 14.6%;
   left: 14.8%;
   overflow: hidden;
+  touch-action: none;
   border-radius: 1.45rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.98));
@@ -1652,8 +1653,11 @@ textarea {
 
 .creative-cove-drawing-stage .tl-container,
 .creative-cove-drawing-stage .tl-theme__light,
-.creative-cove-drawing-stage .tl-canvas {
+.creative-cove-drawing-stage .tl-canvas,
+.creative-cove-drawing-stage .tl-background__wrapper,
+.creative-cove-drawing-stage .tl-background {
   background: transparent !important;
+  touch-action: none !important;
 }
 
 .creative-cove-drawing-stage .tl-background {
