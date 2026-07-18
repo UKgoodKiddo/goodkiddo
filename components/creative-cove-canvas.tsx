@@ -811,22 +811,13 @@ export function CreativeCoveCanvas() {
     }
 
     const currentEditor = editor;
-    const tlCanvas = stageRef.current.querySelector(".tl-canvas");
-
-    if (!(tlCanvas instanceof HTMLElement)) {
-      appendEditorDebugEntry({
-        detail: `No tl-canvas found for native touch fallback | ${getEditorRelationshipSummary(currentEditor)}`,
-        event: "native-touch-missing",
-        tool: currentEditor.getPath(),
-      });
-      return;
-    }
+    const stageElement = stageRef.current;
 
     const ownerDocument = currentEditor.getContainerDocument();
     let activePointerId: number | null = null;
 
     appendEditorDebugEntry({
-      detail: `Attached native touch fallback | ${getEditorRelationshipSummary(currentEditor)}`,
+      detail: `Attached native touch fallback on drawing stage | ${getEditorRelationshipSummary(currentEditor)}`,
       event: "native-touch-attach",
       tool: currentEditor.getPath(),
     });
@@ -847,8 +838,7 @@ export function CreativeCoveCanvas() {
       }
 
       activePointerId = event.pointerId;
-      currentEditor.markEventAsHandled(event as any);
-      setPointerCapture(tlCanvas, event);
+      setPointerCapture(stageElement, event);
       currentEditor.dispatch({
         type: "pointer",
         target: "canvas",
@@ -863,7 +853,6 @@ export function CreativeCoveCanvas() {
         return;
       }
 
-      currentEditor.markEventAsHandled(event as any);
       currentEditor.dispatch({
         type: "pointer",
         target: "canvas",
@@ -877,8 +866,7 @@ export function CreativeCoveCanvas() {
         return;
       }
 
-      currentEditor.markEventAsHandled(event as any);
-      releasePointerCapture(tlCanvas, event);
+      releasePointerCapture(stageElement, event);
 
       if (reason === "pointer_up") {
         currentEditor.dispatch({
@@ -907,22 +895,22 @@ export function CreativeCoveCanvas() {
       finishPointer(event, "pointercancel");
     }
 
-    tlCanvas.addEventListener("touchstart", handleTouchStart, { capture: true, passive: false });
-    tlCanvas.addEventListener("touchend", handleTouchEnd, { capture: true, passive: false });
-    tlCanvas.addEventListener("pointerdown", handlePointerDown, { capture: true, passive: false });
+    stageElement.addEventListener("touchstart", handleTouchStart, { capture: true, passive: false });
+    stageElement.addEventListener("touchend", handleTouchEnd, { capture: true, passive: false });
+    stageElement.addEventListener("pointerdown", handlePointerDown, { capture: true, passive: false });
     ownerDocument.body.addEventListener("pointermove", handlePointerMove, { passive: false });
     ownerDocument.body.addEventListener("pointerup", handlePointerUp, { passive: false });
     ownerDocument.body.addEventListener("pointercancel", handlePointerCancel, { passive: false });
 
     return () => {
-      tlCanvas.removeEventListener("touchstart", handleTouchStart, true);
-      tlCanvas.removeEventListener("touchend", handleTouchEnd, true);
-      tlCanvas.removeEventListener("pointerdown", handlePointerDown, true);
+      stageElement.removeEventListener("touchstart", handleTouchStart, true);
+      stageElement.removeEventListener("touchend", handleTouchEnd, true);
+      stageElement.removeEventListener("pointerdown", handlePointerDown, true);
       ownerDocument.body.removeEventListener("pointermove", handlePointerMove);
       ownerDocument.body.removeEventListener("pointerup", handlePointerUp);
       ownerDocument.body.removeEventListener("pointercancel", handlePointerCancel);
       appendEditorDebugEntry({
-        detail: `Detached native touch fallback | ${getEditorRelationshipSummary(currentEditor)}`,
+        detail: `Detached native touch fallback from drawing stage | ${getEditorRelationshipSummary(currentEditor)}`,
         event: "native-touch-detach",
         tool: currentEditor.getPath(),
       });
