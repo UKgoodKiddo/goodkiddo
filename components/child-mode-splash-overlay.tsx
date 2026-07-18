@@ -145,7 +145,8 @@ export function ChildModeSplashOverlay({
           playsInline
           preload="auto"
         >
-          <source src="/goodkiddo/goodkiddo_splash_portrait.mp4" type="video/mp4" />
+          <source src={GOODKIDDO_ASSETS.splashVideoPrimary} type="video/webm" />
+          <source src={GOODKIDDO_ASSETS.splashVideoFallbackMp4} type="video/mp4" />
         </video>
       )}
     </div>

@@ -50,6 +50,8 @@ export const GOODKIDDO_ASSETS = {
   rewardTripToTheParkIcon: "/goodkiddo/reward-icons/trip to the park.webp",
   screenTimeOverTaskIcon: "/goodkiddo/task-icons/screen-time-over.png",
   setTableTaskIcon: "/goodkiddo/task-icons/set-the-table.png",
+  splashVideoFallbackMp4: "/goodkiddo/goodkiddo_splash_portrait.mp4",
+  splashVideoPrimary: "/goodkiddo/splash_screen.webm",
   starIcon: "/goodkiddo/star-icon.png",
   childRewardsButton: "/goodkiddo/child ui buttons/Rewards button.png",
   childChangingRoomButton: "/goodkiddo/child ui buttons/Changing room icon.png",
