@@ -172,7 +172,7 @@ export function KiddoExplorersMap() {
             className="kiddo-explorers-home-button__image"
             height={166}
             priority
-            sizes="88px"
+            sizes="52px"
             src={KIDDO_EXPLORERS_ASSETS.homeButton}
             width={177}
           />
