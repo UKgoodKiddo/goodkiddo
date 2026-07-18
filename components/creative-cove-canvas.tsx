@@ -106,7 +106,7 @@ type DebugCounters = {
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
-const ENABLE_BARE_CANVAS_ISOLATION = true;
+const ENABLE_BARE_CANVAS_ISOLATION = false;
 const ENABLE_CREATIVE_COVE_PERSISTENCE = false;
 const ENABLE_SIMPLE_CREATIVE_COVE_CANVAS = true;
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
