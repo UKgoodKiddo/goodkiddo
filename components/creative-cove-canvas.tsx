@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { CreativeCoveSimpleCanvas } from "@/components/creative-cove-simple-canvas";
+import {
+  CreativeCoveSimpleCanvas,
+  type CreativeCoveSimpleCanvasHandle,
+} from "@/components/creative-cove-simple-canvas";
 import {
   DefaultColorStyle,
   DefaultSizeStyle,
@@ -362,6 +365,7 @@ export function CreativeCoveCanvas() {
   const editorRef = useRef<Editor | null>(null);
   const visibleEditorRef = useRef<Editor | null>(null);
   const sceneRef = useRef<HTMLElement | null>(null);
+  const simpleCanvasRef = useRef<CreativeCoveSimpleCanvasHandle | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const touchOverlayRef = useRef<HTMLDivElement | null>(null);
   const activeColorRef = useRef(activeColor);
@@ -1082,7 +1086,9 @@ export function CreativeCoveCanvas() {
   }, [editor]);
 
   function handleToolChange(toolId: CreativeToolId) {
-    logToolbarCommand("tool", editor, `nextTool:${toolId}`);
+    if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+      logToolbarCommand("tool", editor, `nextTool:${toolId}`);
+    }
     setActiveTool(toolId);
   }
 
@@ -1113,9 +1119,11 @@ export function CreativeCoveCanvas() {
   }
 
   function handleColorChange(color: TLDefaultColorStyle) {
-    logToolbarCommand("color", editor, `nextColor:${color}`);
+    if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+      logToolbarCommand("color", editor, `nextColor:${color}`);
+    }
 
-    if (editor) {
+    if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS && editor) {
       editor.setStyleForSelectedShapes(DefaultColorStyle, color);
     }
 
@@ -1124,9 +1132,11 @@ export function CreativeCoveCanvas() {
   }
 
   function handleSizeChange(size: TLDefaultSizeStyle) {
-    logToolbarCommand("size", editor, `nextSize:${size}`);
+    if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+      logToolbarCommand("size", editor, `nextSize:${size}`);
+    }
 
-    if (editor) {
+    if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS && editor) {
       editor.setStyleForSelectedShapes(DefaultSizeStyle, size);
     }
 
@@ -1135,6 +1145,12 @@ export function CreativeCoveCanvas() {
   }
 
   function handleUndo() {
+    if (ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+      simpleCanvasRef.current?.undo();
+      setActiveTool("draw");
+      return;
+    }
+
     if (!editor) {
       logToolbarCommand("undo", editor, "blocked:no-editor");
       return;
@@ -1145,6 +1161,20 @@ export function CreativeCoveCanvas() {
   }
 
   function handleClear() {
+    if (ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+      if (!simpleCanvasRef.current?.hasStrokes()) {
+        return;
+      }
+
+      if (!window.confirm("Clear this drawing?")) {
+        return;
+      }
+
+      simpleCanvasRef.current.clear();
+      setActiveTool("draw");
+      return;
+    }
+
     if (!editor) {
       logToolbarCommand("clear", editor, "blocked:no-editor");
       return;
@@ -1169,6 +1199,22 @@ export function CreativeCoveCanvas() {
   }
 
   async function handleSave() {
+    if (ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+      if (!simpleCanvasRef.current?.hasStrokes() || isSaving) {
+        return;
+      }
+
+      setIsSaving(true);
+
+      try {
+        simpleCanvasRef.current.save();
+      } finally {
+        setIsSaving(false);
+      }
+
+      return;
+    }
+
     if (!editor || isSaving) {
       logToolbarCommand("save", editor, isSaving ? "blocked:isSaving" : "blocked:no-editor");
       return;
@@ -1192,38 +1238,6 @@ export function CreativeCoveCanvas() {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  if (ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
-    return (
-      <div className="creative-cove-shell creative-cove-shell--isolation">
-        <section className="creative-cove-scene creative-cove-scene--isolation" ref={sceneRef}>
-          <div className="creative-cove-ui creative-cove-ui--isolation">
-            <div className="creative-cove-drawing-stage creative-cove-drawing-stage--isolation">
-              <CreativeCoveSimpleCanvas
-                className="creative-cove-simple-canvas"
-                color={SIMPLE_CANVAS_COLOR_MAP[activeColor]}
-                size={SIMPLE_CANVAS_SIZE_MAP[activeSize]}
-                tool={activeTool}
-              />
-            </div>
-          </div>
-
-          <aside
-            className="creative-cove-debug-panel creative-cove-debug-panel--isolation"
-            aria-live="polite"
-          >
-            <p className="creative-cove-debug-panel__title">Creative Cove</p>
-            <p className="creative-cove-debug-panel__summary">
-              Simple canvas fallback is active for Android reliability testing.
-            </p>
-            <p className="creative-cove-debug-panel__summary">
-              {`tool:${activeTool} | color:${activeColor} | size:${activeSize}`}
-            </p>
-          </aside>
-        </section>
-      </div>
-    );
   }
 
   if (ENABLE_BARE_CANVAS_ISOLATION) {
@@ -1387,14 +1401,24 @@ export function CreativeCoveCanvas() {
         <div className="creative-cove-ui">
           <div className="creative-cove-canvas-shell">
             <div className="creative-cove-drawing-stage" ref={stageRef}>
-              <Tldraw
-                autoFocus
-                hideUi
-                onMount={handleEditorMount}
-                persistenceKey={
-                  ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : undefined
-                }
-              />
+              {ENABLE_SIMPLE_CREATIVE_COVE_CANVAS ? (
+                <CreativeCoveSimpleCanvas
+                  className="creative-cove-simple-canvas"
+                  color={SIMPLE_CANVAS_COLOR_MAP[activeColor]}
+                  ref={simpleCanvasRef}
+                  size={SIMPLE_CANVAS_SIZE_MAP[activeSize]}
+                  tool={activeTool}
+                />
+              ) : (
+                <Tldraw
+                  autoFocus
+                  hideUi
+                  onMount={handleEditorMount}
+                  persistenceKey={
+                    ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : undefined
+                  }
+                />
+              )}
             </div>
           </div>
 
@@ -1408,7 +1432,11 @@ export function CreativeCoveCanvas() {
                 return (
                   <CreativeCoveToolbarButton
                     key={button.id}
-                    disabled={!editor || (button.action === "save" && isSaving)}
+                    disabled={
+                      ENABLE_SIMPLE_CREATIVE_COVE_CANVAS
+                        ? button.action === "save" && isSaving
+                        : !editor || (button.action === "save" && isSaving)
+                    }
                     iconSrc={button.iconSrc}
                     isActive={isActive}
                     label={button.label}
@@ -1464,48 +1492,50 @@ export function CreativeCoveCanvas() {
           </div>
         </div>
 
-        <aside className="creative-cove-debug-panel" aria-live="polite">
-          <p className="creative-cove-debug-panel__title">Pointer debug</p>
-          <p className="creative-cove-debug-panel__summary">
-            {pointerDebugLog.length
-              ? "DOM events first, editor events below."
-              : "Touch the drawing area to log canvas and editor pointer events."}
-          </p>
-          <p className="creative-cove-debug-panel__summary">
-            {`status: ${canvasStatus.toolPath} | ${canvasStatus.editorInstance} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
-          </p>
-          <p className="creative-cove-debug-panel__summary">
-            {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
-          </p>
-          <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--pointer">
-            {pointerDebugLog.map((entry, index) => (
-              <div className="creative-cove-debug-panel__entry" key={`${entry.layer}-${entry.phase}-${entry.type}-${index}`}>
-                <span>{entry.type}</span>
-                <span>{entry.layer}</span>
-                <span>{entry.phase}</span>
-                <span>{entry.pointerType}</span>
-                <span>{entry.defaultPrevented ? "prevented" : "open"}</span>
-                <span>{entry.target}</span>
-              </div>
-            ))}
-          </div>
-          <p className="creative-cove-debug-panel__summary">Editor event stream</p>
-          <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--editor">
-            {editorDebugLog.length ? (
-              editorDebugLog.map((entry, index) => (
-                <div className="creative-cove-debug-panel__entry" key={`${entry.event}-${entry.tool}-${index}`}>
-                  <span>{entry.event}</span>
-                  <span>{entry.tool}</span>
-                  <span>{entry.detail}</span>
+        {!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS ? (
+          <aside className="creative-cove-debug-panel" aria-live="polite">
+            <p className="creative-cove-debug-panel__title">Pointer debug</p>
+            <p className="creative-cove-debug-panel__summary">
+              {pointerDebugLog.length
+                ? "DOM events first, editor events below."
+                : "Touch the drawing area to log canvas and editor pointer events."}
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`status: ${canvasStatus.toolPath} | ${canvasStatus.editorInstance} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
+            </p>
+            <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--pointer">
+              {pointerDebugLog.map((entry, index) => (
+                <div className="creative-cove-debug-panel__entry" key={`${entry.layer}-${entry.phase}-${entry.type}-${index}`}>
+                  <span>{entry.type}</span>
+                  <span>{entry.layer}</span>
+                  <span>{entry.phase}</span>
+                  <span>{entry.pointerType}</span>
+                  <span>{entry.defaultPrevented ? "prevented" : "open"}</span>
+                  <span>{entry.target}</span>
                 </div>
-              ))
-            ) : (
-              <div className="creative-cove-debug-panel__entry">
-                <span>No editor events logged yet.</span>
-              </div>
-            )}
-          </div>
-        </aside>
+              ))}
+            </div>
+            <p className="creative-cove-debug-panel__summary">Editor event stream</p>
+            <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--editor">
+              {editorDebugLog.length ? (
+                editorDebugLog.map((entry, index) => (
+                  <div className="creative-cove-debug-panel__entry" key={`${entry.event}-${entry.tool}-${index}`}>
+                    <span>{entry.event}</span>
+                    <span>{entry.tool}</span>
+                    <span>{entry.detail}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="creative-cove-debug-panel__entry">
+                  <span>No editor events logged yet.</span>
+                </div>
+              )}
+            </div>
+          </aside>
+        ) : null}
       </section>
     </div>
   );
