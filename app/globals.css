@@ -1652,16 +1652,8 @@ textarea {
 }
 
 .creative-cove-drawing-stage .tl-container,
-.creative-cove-drawing-stage .tl-theme__light,
-.creative-cove-drawing-stage .tl-canvas,
-.creative-cove-drawing-stage .tl-background__wrapper,
-.creative-cove-drawing-stage .tl-background {
-  background: transparent !important;
+.creative-cove-drawing-stage .tl-canvas {
   touch-action: none !important;
-}
-
-.creative-cove-drawing-stage .tl-background {
-  background-color: rgba(255, 255, 255, 0.96) !important;
 }
 
 .creative-cove-controls {

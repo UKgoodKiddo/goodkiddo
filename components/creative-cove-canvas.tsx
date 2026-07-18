@@ -73,6 +73,14 @@ type DrawShapeLike = {
   type: string;
 };
 
+type CanvasStatus = {
+  activeColor: string;
+  drawShapeCount: number;
+  mountCount: number;
+  pageShapeCount: number;
+  toolPath: string;
+};
+
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
 
@@ -276,6 +284,13 @@ export function CreativeCoveCanvas() {
   const [activeColor, setActiveColor] = useState<TLDefaultColorStyle>("blue");
   const [activeSize, setActiveSize] = useState<TLDefaultSizeStyle>("m");
   const [activeTool, setActiveTool] = useState<CreativeToolId>("draw");
+  const [canvasStatus, setCanvasStatus] = useState<CanvasStatus>({
+    activeColor: "blue",
+    drawShapeCount: 0,
+    mountCount: 0,
+    pageShapeCount: 0,
+    toolPath: "loading",
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [editorDebugLog, setEditorDebugLog] = useState<EditorDebugEntry[]>([]);
   const [pointerDebugLog, setPointerDebugLog] = useState<PointerDebugEntry[]>([]);
@@ -490,6 +505,25 @@ export function CreativeCoveCanvas() {
       return currentEditor.getPath();
     }
 
+    function refreshCanvasStatus(reason: string) {
+      const pageShapes = currentEditor.getCurrentPageShapes();
+      const drawShapes = pageShapes.filter((shape) => shape.type === "draw");
+
+      setCanvasStatus({
+        activeColor: activeColorRef.current,
+        drawShapeCount: drawShapes.length,
+        mountCount: mountCountRef.current,
+        pageShapeCount: pageShapes.length,
+        toolPath: getToolPath(),
+      });
+
+      appendEditorDebugEntry({
+        detail: `${reason} | page:${pageShapes.length} draw:${drawShapes.length} color:${activeColorRef.current}`,
+        event: "status",
+        tool: getToolPath(),
+      });
+    }
+
     function finalizeIncompleteDrawShapes(reason: string) {
       const incompleteDrawShapes = Array.from(currentEditor.getCurrentPageShapeIds())
         .map((shapeId) => currentEditor.getShape(shapeId) as DrawShapeLike | undefined)
@@ -544,6 +578,7 @@ export function CreativeCoveCanvas() {
           event: "tool-restore",
           tool: `${getToolPath()} ${currentTool}->${desiredTool}`,
         });
+        refreshCanvasStatus(`restore:${reason}`);
       }, 0);
     }
 
@@ -558,6 +593,7 @@ export function CreativeCoveCanvas() {
         if (info.name === "pointer_up") {
           window.setTimeout(() => finalizeIncompleteDrawShapes("pointer_up:0ms"), 0);
           window.setTimeout(() => finalizeIncompleteDrawShapes("pointer_up:250ms"), 250);
+          window.setTimeout(() => refreshCanvasStatus("pointer_up"), 80);
           restoreActiveTool("pointer_up");
         }
 
@@ -575,6 +611,7 @@ export function CreativeCoveCanvas() {
           window.setTimeout(() => finalizeIncompleteDrawShapes("complete"), 0);
         }
 
+        window.setTimeout(() => refreshCanvasStatus(info.name), 0);
         restoreActiveTool(info.name);
         return;
       }
@@ -600,6 +637,7 @@ export function CreativeCoveCanvas() {
         event: "created-shapes",
         tool: getToolPath(),
       });
+      refreshCanvasStatus("created-shapes");
     };
 
     const handleDeletedShapes = (shapeIds: string[]) => {
@@ -608,6 +646,7 @@ export function CreativeCoveCanvas() {
         event: "deleted-shapes",
         tool: getToolPath(),
       });
+      refreshCanvasStatus("deleted-shapes");
     };
 
     const handleChange = (entry: {
@@ -627,12 +666,14 @@ export function CreativeCoveCanvas() {
         event: "change",
         tool: getToolPath(),
       });
+      refreshCanvasStatus(`change:${entry.source}`);
     };
 
     currentEditor.on("event", handleEditorEvent);
     currentEditor.on("created-shapes", handleCreatedShapes);
     currentEditor.on("deleted-shapes", handleDeletedShapes);
     currentEditor.on("change", handleChange);
+    refreshCanvasStatus("effect-start");
 
     return () => {
       currentEditor.off("event", handleEditorEvent);
@@ -649,6 +690,13 @@ export function CreativeCoveCanvas() {
   function handleEditorMount(editorInstance: Editor) {
     mountCountRef.current += 1;
     setEditor(editorInstance);
+    setCanvasStatus({
+      activeColor: activeColorRef.current,
+      drawShapeCount: 0,
+      mountCount: mountCountRef.current,
+      pageShapeCount: 0,
+      toolPath: editorInstance.getPath(),
+    });
     setEditorDebugLog((current) => [
       {
         detail: `mount #${mountCountRef.current}`,
@@ -891,6 +939,9 @@ export function CreativeCoveCanvas() {
             {pointerDebugLog.length
               ? "DOM events first, editor events below."
               : "Touch the drawing area to log canvas and editor pointer events."}
+          </p>
+          <p className="creative-cove-debug-panel__summary">
+            {`status: ${canvasStatus.toolPath} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
           </p>
           <div className="creative-cove-debug-panel__log">
             {pointerDebugLog.map((entry, index) => (
