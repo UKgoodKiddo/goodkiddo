@@ -82,6 +82,15 @@ type CanvasStatus = {
   toolPath: string;
 };
 
+type DebugCounters = {
+  domPointerDown: number;
+  domPointerMove: number;
+  domPointerUp: number;
+  editorPointerDown: number;
+  editorPointerMove: number;
+  editorPointerUp: number;
+};
+
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
 const ENABLE_CREATIVE_COVE_PERSISTENCE = false;
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
@@ -298,6 +307,14 @@ export function CreativeCoveCanvas() {
   const [isSaving, setIsSaving] = useState(false);
   const [editorDebugLog, setEditorDebugLog] = useState<EditorDebugEntry[]>([]);
   const [pointerDebugLog, setPointerDebugLog] = useState<PointerDebugEntry[]>([]);
+  const [debugCounters, setDebugCounters] = useState<DebugCounters>({
+    domPointerDown: 0,
+    domPointerMove: 0,
+    domPointerUp: 0,
+    editorPointerDown: 0,
+    editorPointerMove: 0,
+    editorPointerUp: 0,
+  });
   const editorRef = useRef<Editor | null>(null);
   const visibleEditorRef = useRef<Editor | null>(null);
   const sceneRef = useRef<HTMLElement | null>(null);
@@ -310,6 +327,15 @@ export function CreativeCoveCanvas() {
   const nextObjectIdRef = useRef(1);
 
   function appendEditorDebugEntry(entry: EditorDebugEntry) {
+    if (entry.event === "pointer_down" || entry.event === "pointer_move" || entry.event === "pointer_up") {
+      setDebugCounters((current) => ({
+        ...current,
+        editorPointerDown: current.editorPointerDown + (entry.event === "pointer_down" ? 1 : 0),
+        editorPointerMove: current.editorPointerMove + (entry.event === "pointer_move" ? 1 : 0),
+        editorPointerUp: current.editorPointerUp + (entry.event === "pointer_up" ? 1 : 0),
+      }));
+    }
+
     setEditorDebugLog((current) => [entry, ...current].slice(0, MAX_DEBUG_ENTRIES));
   }
 
@@ -435,6 +461,13 @@ export function CreativeCoveCanvas() {
 
         return [nextEntry, ...current].slice(0, maxEntries);
       });
+
+      setDebugCounters((current) => ({
+        ...current,
+        domPointerDown: current.domPointerDown + (event.type === "pointerdown" ? 1 : 0),
+        domPointerMove: current.domPointerMove + (event.type === "pointermove" ? 1 : 0),
+        domPointerUp: current.domPointerUp + (event.type === "pointerup" ? 1 : 0),
+      }));
     }
 
     function attachPointerDebugListeners(
@@ -475,49 +508,6 @@ export function CreativeCoveCanvas() {
       currentEditor.complete();
     }
 
-    function stabilizeTouchPointer(event: PointerEvent) {
-      if (event.pointerType !== "touch") {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (currentEditor) {
-        currentEditor.focus({ focusContainer: false });
-      }
-
-      if (event.type === "pointerdown") {
-        try {
-          stableStageElement.setPointerCapture(event.pointerId);
-        } catch {
-          // Some Android browsers can throw if capture is unavailable for the event target.
-        }
-
-        appendEditorDebugEntry({
-          detail: `Stage captured touch pointer ${event.pointerId} | ${getEditorRelationshipSummary(currentEditor)}`,
-          event: "touch-guard:pointerdown",
-          tool: currentEditor?.getPath() ?? "no-editor",
-        });
-        return;
-      }
-
-      if (event.type === "pointerup" || event.type === "pointercancel") {
-        if (stableStageElement.hasPointerCapture(event.pointerId)) {
-          stableStageElement.releasePointerCapture(event.pointerId);
-        }
-
-        appendEditorDebugEntry({
-          detail: `Stage released touch pointer ${event.pointerId} on ${event.type} | ${getEditorRelationshipSummary(currentEditor)}`,
-          event: `touch-guard:${event.type}`,
-          tool: currentEditor?.getPath() ?? "no-editor",
-        });
-      }
-    }
-
-    function blockNativeTouchScroll(event: TouchEvent) {
-      event.preventDefault();
-    }
-
     const cleanupCallbacks: Array<() => void> = [];
     attachPointerDebugListeners(sceneElement, "scene", cleanupCallbacks);
     attachPointerDebugListeners(stableStageElement, "stage", cleanupCallbacks);
@@ -525,24 +515,6 @@ export function CreativeCoveCanvas() {
     cleanupCallbacks.push(() =>
       stableStageElement.removeEventListener("pointercancel", completeOnPointerCancel),
     );
-    for (const eventName of ["pointerdown", "pointermove", "pointerup", "pointercancel"] as const) {
-      stableStageElement.addEventListener(eventName, stabilizeTouchPointer, {
-        capture: true,
-        passive: false,
-      });
-      cleanupCallbacks.push(() =>
-        stableStageElement.removeEventListener(eventName, stabilizeTouchPointer, true),
-      );
-    }
-    for (const eventName of ["touchstart", "touchmove", "touchend", "touchcancel"] as const) {
-      stableStageElement.addEventListener(eventName, blockNativeTouchScroll, {
-        capture: true,
-        passive: false,
-      });
-      cleanupCallbacks.push(() =>
-        stableStageElement.removeEventListener(eventName, blockNativeTouchScroll, true),
-      );
-    }
 
     const tlRoot =
       stableStageElement.querySelector(".tl-container") ??
@@ -1103,6 +1075,9 @@ export function CreativeCoveCanvas() {
           </p>
           <p className="creative-cove-debug-panel__summary">
             {`status: ${canvasStatus.toolPath} | ${canvasStatus.editorInstance} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
+          </p>
+          <p className="creative-cove-debug-panel__summary">
+            {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
           </p>
           <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--pointer">
             {pointerDebugLog.map((entry, index) => (
