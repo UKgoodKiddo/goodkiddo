@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import {
   CreativeCoveSimpleCanvas,
   type CreativeCoveSimpleCanvasHandle,
@@ -53,6 +54,10 @@ type BubbleSpec = {
   opacity: number;
   size: string;
   start: string;
+};
+
+type TapBubbleSpec = BubbleSpec & {
+  id: number;
 };
 
 type DecorativeAsset = {
@@ -279,7 +284,7 @@ function CreativeCoveToolbarButton({
   iconSrc: string;
   isActive?: boolean;
   label: string;
-  onClick: () => void;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
@@ -307,7 +312,7 @@ function CreativeCoveColorButton({
   imageSrc: string;
   isActive: boolean;
   label: string;
-  onClick: () => void;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
@@ -332,7 +337,7 @@ function CreativeCoveThicknessButton({
   iconSrc: string;
   isActive: boolean;
   label: string;
-  onClick: () => void;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
@@ -371,6 +376,7 @@ export function CreativeCoveCanvas() {
   const [isSaving, setIsSaving] = useState(false);
   const [editorDebugLog, setEditorDebugLog] = useState<EditorDebugEntry[]>([]);
   const [pointerDebugLog, setPointerDebugLog] = useState<PointerDebugEntry[]>([]);
+  const [tapBubbles, setTapBubbles] = useState<TapBubbleSpec[]>([]);
   const [debugCounters, setDebugCounters] = useState<DebugCounters>({
     bridgePointerDown: 0,
     bridgePointerMove: 0,
@@ -394,7 +400,17 @@ export function CreativeCoveCanvas() {
   const mountCountRef = useRef(0);
   const objectIdsRef = useRef(new WeakMap<object, number>());
   const nextObjectIdRef = useRef(1);
+  const nextTapBubbleIdRef = useRef(1);
+  const tapBubbleTimeoutsRef = useRef<number[]>([]);
   const activeSwatch = COLOR_SWATCHES.find((swatch) => swatch.id === activeSwatchId) ?? COLOR_SWATCHES[0];
+
+  useEffect(() => {
+    return () => {
+      for (const timeoutId of tapBubbleTimeoutsRef.current) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
 
   function appendEditorDebugEntry(entry: EditorDebugEntry) {
     if (entry.event === "pointer_down" || entry.event === "pointer_move" || entry.event === "pointer_up") {
@@ -1118,6 +1134,45 @@ export function CreativeCoveCanvas() {
     setActiveTool("draw");
   }
 
+  function spawnTapBubble(event: ReactMouseEvent<HTMLButtonElement>) {
+    const sceneElement = sceneRef.current;
+
+    if (!sceneElement) {
+      return;
+    }
+
+    const rect = sceneElement.getBoundingClientRect();
+
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    const leftPercent = ((event.clientX - rect.left) / rect.width) * 100;
+    const startPercent = ((event.clientY - rect.top) / rect.height) * 100;
+    const bubbleId = nextTapBubbleIdRef.current;
+    nextTapBubbleIdRef.current += 1;
+
+    const bubble: TapBubbleSpec = {
+      delay: "0s",
+      drift: `${Math.round((Math.random() - 0.5) * 18)}px`,
+      duration: `${(8.8 + Math.random() * 2.4).toFixed(2)}s`,
+      id: bubbleId,
+      left: `${Math.min(Math.max(leftPercent, 6), 94).toFixed(2)}%`,
+      opacity: 0.78,
+      size: `${(1 + Math.random() * 0.7).toFixed(2)}rem`,
+      start: `${Math.min(Math.max(startPercent, 12), 94).toFixed(2)}%`,
+    };
+
+    setTapBubbles((current) => [...current, bubble]);
+
+    const timeoutId = window.setTimeout(() => {
+      setTapBubbles((current) => current.filter((entry) => entry.id !== bubbleId));
+      tapBubbleTimeoutsRef.current = tapBubbleTimeoutsRef.current.filter((entry) => entry !== timeoutId);
+    }, 13000);
+
+    tapBubbleTimeoutsRef.current.push(timeoutId);
+  }
+
   function handleEditorMount(editorInstance: Editor) {
     mountCountRef.current += 1;
     editorRef.current = editorInstance;
@@ -1469,7 +1524,9 @@ export function CreativeCoveCanvas() {
                     iconSrc={button.iconSrc}
                     isActive={isActive}
                     label={button.label}
-                    onClick={() => {
+                    onClick={(event) => {
+                      spawnTapBubble(event);
+
                       switch (button.action) {
                         case "tool":
                           if (button.id === "draw" || button.id === "eraser") {
@@ -1509,7 +1566,10 @@ export function CreativeCoveCanvas() {
                       imageSrc={swatch.imageSrc}
                       isActive={activeSwatchId === swatch.id}
                       label={swatch.id}
-                      onClick={() => handleColorChange(swatch)}
+                      onClick={(event) => {
+                        spawnTapBubble(event);
+                        handleColorChange(swatch);
+                      }}
                     />
                   ))}
                 </div>
@@ -1521,13 +1581,39 @@ export function CreativeCoveCanvas() {
                       iconSrc={sizeButton.iconSrc}
                       isActive={activeSize === sizeButton.tldrawSize}
                       label={sizeButton.label}
-                      onClick={() => handleSizeChange(sizeButton.tldrawSize)}
+                      onClick={(event) => {
+                        spawnTapBubble(event);
+                        handleSizeChange(sizeButton.tldrawSize);
+                      }}
                     />
                   ))}
                 </div>
               )}
             </div>
           </div>
+        </div>
+
+        <div className="creative-cove-bubble-layer creative-cove-bubble-layer--tap" aria-hidden="true">
+          {tapBubbles.map((bubble) => (
+            <img
+              key={bubble.id}
+              alt=""
+              className="creative-cove-bubble creative-cove-bubble--tap"
+              loading="lazy"
+              src={BACKGROUND_ASSETS.bubble}
+              style={
+                {
+                  "--bubble-delay": bubble.delay,
+                  "--bubble-drift": bubble.drift,
+                  "--bubble-duration": bubble.duration,
+                  "--bubble-left": bubble.left,
+                  "--bubble-opacity": bubble.opacity,
+                  "--bubble-size": bubble.size,
+                  "--bubble-start": bubble.start,
+                } as CSSProperties
+              }
+            />
+          ))}
         </div>
 
         {!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS ? (

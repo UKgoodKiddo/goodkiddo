@@ -1422,6 +1422,10 @@ textarea {
   z-index: 18;
 }
 
+.creative-cove-bubble-layer--tap {
+  z-index: 38;
+}
+
 .creative-cove-bubble {
   position: absolute;
   left: var(--bubble-left);
@@ -1431,6 +1435,10 @@ textarea {
   will-change: transform, opacity;
   animation: creative-cove-bubble-rise var(--bubble-duration) ease-in infinite;
   animation-delay: var(--bubble-delay);
+}
+
+.creative-cove-bubble--tap {
+  animation-iteration-count: 1;
 }
 
 @keyframes creative-cove-bubble-rise {
