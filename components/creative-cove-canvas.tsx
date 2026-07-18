@@ -396,6 +396,9 @@ export function CreativeCoveCanvas() {
     }
 
     editor.setCurrentTool(activeTool);
+    editor.updateInstanceState({
+      isToolLocked: activeTool === "draw" || activeTool === "eraser",
+    });
     editor.setStyleForNextShapes(DefaultColorStyle, activeColor);
     editor.setStyleForNextShapes(DefaultSizeStyle, activeSize);
   }, [activeColor, activeSize, activeTool, editor]);
