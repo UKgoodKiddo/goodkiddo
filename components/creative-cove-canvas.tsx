@@ -93,6 +93,9 @@ type DebugCounters = {
   editorPointerDown: number;
   editorPointerMove: number;
   editorPointerUp: number;
+  bridgePointerDown: number;
+  bridgePointerMove: number;
+  bridgePointerUp: number;
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
@@ -313,6 +316,9 @@ export function CreativeCoveCanvas() {
   const [editorDebugLog, setEditorDebugLog] = useState<EditorDebugEntry[]>([]);
   const [pointerDebugLog, setPointerDebugLog] = useState<PointerDebugEntry[]>([]);
   const [debugCounters, setDebugCounters] = useState<DebugCounters>({
+    bridgePointerDown: 0,
+    bridgePointerMove: 0,
+    bridgePointerUp: 0,
     domPointerDown: 0,
     domPointerMove: 0,
     domPointerUp: 0,
@@ -324,6 +330,7 @@ export function CreativeCoveCanvas() {
   const visibleEditorRef = useRef<Editor | null>(null);
   const sceneRef = useRef<HTMLElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const touchOverlayRef = useRef<HTMLDivElement | null>(null);
   const activeColorRef = useRef(activeColor);
   const activeSizeRef = useRef(activeSize);
   const activeToolRef = useRef(activeTool);
@@ -813,24 +820,36 @@ export function CreativeCoveCanvas() {
 
     const currentEditor = editor;
     const stageElement = stageRef.current;
-
-    const ownerDocument = stageElement.ownerDocument;
+    const bridgeElement = touchOverlayRef.current ?? stageElement;
+    const ownerDocument = bridgeElement.ownerDocument;
     let activePointerId: number | null = null;
 
     appendEditorDebugEntry({
-      detail: `Attached native touch fallback on drawing stage | ${getEditorRelationshipSummary(currentEditor)}`,
+      detail: `Attached native touch fallback on ${
+        touchOverlayRef.current ? "touch overlay" : "drawing stage"
+      } | ${getEditorRelationshipSummary(currentEditor)}`,
       event: "native-touch-attach",
       tool: currentEditor.getPath(),
     });
 
-    function handleTouchStart(event: TouchEvent) {
-      currentEditor.markEventAsHandled(event as any);
-      preventDefault(event as any);
+    function bumpBridgeCounter(eventName: "pointer_down" | "pointer_move" | "pointer_up") {
+      setDebugCounters((current) => ({
+        ...current,
+        bridgePointerDown: current.bridgePointerDown + (eventName === "pointer_down" ? 1 : 0),
+        bridgePointerMove: current.bridgePointerMove + (eventName === "pointer_move" ? 1 : 0),
+        bridgePointerUp: current.bridgePointerUp + (eventName === "pointer_up" ? 1 : 0),
+      }));
     }
 
-    function handleTouchEnd(event: TouchEvent) {
-      currentEditor.markEventAsHandled(event as any);
-      preventDefault(event as any);
+    function getEventTargetLabel(target: EventTarget | null) {
+      if (!(target instanceof Element)) {
+        return "unknown";
+      }
+
+      const className =
+        typeof target.className === "string" ? target.className.trim().replace(/\s+/g, ".") : "";
+
+      return `${target.tagName.toLowerCase()}${className ? `.${className}` : ""}`;
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -839,14 +858,34 @@ export function CreativeCoveCanvas() {
       }
 
       activePointerId = event.pointerId;
-      setPointerCapture(stageElement, event);
-      currentEditor.dispatch({
-        type: "pointer",
-        target: "canvas",
-        name: "pointer_down",
-        ...getPointerInfo(currentEditor, event),
-        isPenDirect: false,
+      currentEditor.markEventAsHandled(event as any);
+      preventDefault(event as any);
+      setPointerCapture(bridgeElement, event);
+      bumpBridgeCounter("pointer_down");
+
+      appendEditorDebugEntry({
+        detail: `Bridge pointerdown id:${event.pointerId} target:${getEventTargetLabel(event.target)} | ${getEditorRelationshipSummary(
+          currentEditor,
+        )}`,
+        event: "touch-bridge:pointer_down",
+        tool: currentEditor.getPath(),
       });
+
+      try {
+        currentEditor.dispatch({
+          type: "pointer",
+          target: "canvas",
+          name: "pointer_down",
+          ...getPointerInfo(currentEditor, event),
+          isPenDirect: false,
+        });
+      } catch (error) {
+        appendEditorDebugEntry({
+          detail: `Bridge pointerdown dispatch failed: ${String(error)} | ${getEditorRelationshipSummary(currentEditor)}`,
+          event: "touch-bridge:error",
+          tool: currentEditor.getPath(),
+        });
+      }
     }
 
     function handlePointerMove(event: PointerEvent) {
@@ -854,12 +893,24 @@ export function CreativeCoveCanvas() {
         return;
       }
 
-      currentEditor.dispatch({
-        type: "pointer",
-        target: "canvas",
-        name: "pointer_move",
-        ...getPointerInfo(currentEditor, event),
-      });
+      currentEditor.markEventAsHandled(event as any);
+      preventDefault(event as any);
+      bumpBridgeCounter("pointer_move");
+
+      try {
+        currentEditor.dispatch({
+          type: "pointer",
+          target: "canvas",
+          name: "pointer_move",
+          ...getPointerInfo(currentEditor, event),
+        });
+      } catch (error) {
+        appendEditorDebugEntry({
+          detail: `Bridge pointermove dispatch failed: ${String(error)} | ${getEditorRelationshipSummary(currentEditor)}`,
+          event: "touch-bridge:error",
+          tool: currentEditor.getPath(),
+        });
+      }
     }
 
     function finishPointer(event: PointerEvent, reason: "pointer_up" | "pointercancel") {
@@ -867,15 +918,35 @@ export function CreativeCoveCanvas() {
         return;
       }
 
-      releasePointerCapture(stageElement, event);
+      currentEditor.markEventAsHandled(event as any);
+      preventDefault(event as any);
+      releasePointerCapture(bridgeElement, event);
 
       if (reason === "pointer_up") {
-        currentEditor.dispatch({
-          type: "pointer",
-          target: "canvas",
-          name: "pointer_up",
-          ...getPointerInfo(currentEditor, event),
+        bumpBridgeCounter("pointer_up");
+
+        appendEditorDebugEntry({
+          detail: `Bridge pointerup id:${event.pointerId} target:${getEventTargetLabel(event.target)} | ${getEditorRelationshipSummary(
+            currentEditor,
+          )}`,
+          event: "touch-bridge:pointer_up",
+          tool: currentEditor.getPath(),
         });
+
+        try {
+          currentEditor.dispatch({
+            type: "pointer",
+            target: "canvas",
+            name: "pointer_up",
+            ...getPointerInfo(currentEditor, event),
+          });
+        } catch (error) {
+          appendEditorDebugEntry({
+            detail: `Bridge pointerup dispatch failed: ${String(error)} | ${getEditorRelationshipSummary(currentEditor)}`,
+            event: "touch-bridge:error",
+            tool: currentEditor.getPath(),
+          });
+        }
       } else {
         currentEditor.complete();
         appendEditorDebugEntry({
@@ -896,17 +967,13 @@ export function CreativeCoveCanvas() {
       finishPointer(event, "pointercancel");
     }
 
-    stageElement.addEventListener("touchstart", handleTouchStart, { capture: true, passive: false });
-    stageElement.addEventListener("touchend", handleTouchEnd, { capture: true, passive: false });
-    stageElement.addEventListener("pointerdown", handlePointerDown, { capture: true, passive: false });
+    bridgeElement.addEventListener("pointerdown", handlePointerDown, { passive: false });
     ownerDocument.body.addEventListener("pointermove", handlePointerMove, { passive: false });
     ownerDocument.body.addEventListener("pointerup", handlePointerUp, { passive: false });
     ownerDocument.body.addEventListener("pointercancel", handlePointerCancel, { passive: false });
 
     return () => {
-      stageElement.removeEventListener("touchstart", handleTouchStart, true);
-      stageElement.removeEventListener("touchend", handleTouchEnd, true);
-      stageElement.removeEventListener("pointerdown", handlePointerDown, true);
+      bridgeElement.removeEventListener("pointerdown", handlePointerDown);
       ownerDocument.body.removeEventListener("pointermove", handlePointerMove);
       ownerDocument.body.removeEventListener("pointerup", handlePointerUp);
       ownerDocument.body.removeEventListener("pointercancel", handlePointerCancel);
@@ -1038,6 +1105,7 @@ export function CreativeCoveCanvas() {
                   ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : undefined
                 }
               />
+              <div className="creative-cove-touch-overlay" ref={touchOverlayRef} aria-hidden="true" />
             </div>
           </div>
 
@@ -1056,6 +1124,9 @@ export function CreativeCoveCanvas() {
             </p>
             <p className="creative-cove-debug-panel__summary">
               {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`bridge d:${debugCounters.bridgePointerDown} m:${debugCounters.bridgePointerMove} u:${debugCounters.bridgePointerUp}`}
             </p>
             <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--pointer">
               {pointerDebugLog.map((entry, index) => (

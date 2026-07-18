@@ -1698,6 +1698,15 @@ textarea {
     0 12px 24px rgba(5, 26, 96, 0.1);
 }
 
+.creative-cove-touch-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  touch-action: none;
+  background: transparent;
+}
+
 .creative-cove-controls {
   position: absolute;
   top: 68.2%;
@@ -1945,6 +1954,12 @@ textarea {
   .creative-cove-action-button__label,
   .creative-cove-thickness-button__label {
     font-size: 0.76rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .creative-cove-touch-overlay {
+    pointer-events: auto;
   }
 }
 
