@@ -83,6 +83,7 @@ type CanvasStatus = {
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
+const ENABLE_CREATIVE_COVE_PERSISTENCE = false;
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
 const MAX_DEBUG_ENTRIES = 24;
 
@@ -784,7 +785,7 @@ export function CreativeCoveCanvas() {
       toolPath: editorInstance.getPath(),
     });
     appendEditorDebugEntry({
-      detail: `mount #${mountCountRef.current} | ${getEditorRelationshipSummary(editorInstance)}`,
+      detail: `mount #${mountCountRef.current} | persistence:${ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : "disabled"} | ${getEditorRelationshipSummary(editorInstance)}`,
       event: "editor-mount",
       tool: editorInstance.getPath(),
     });
@@ -958,7 +959,9 @@ export function CreativeCoveCanvas() {
                 autoFocus
                 hideUi
                 onMount={handleEditorMount}
-                persistenceKey={CREATIVE_COVE_PERSISTENCE_KEY}
+                persistenceKey={
+                  ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : undefined
+                }
               />
             </div>
           </div>
