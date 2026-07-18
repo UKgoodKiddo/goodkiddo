@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   DefaultColorStyle,
   DefaultSizeStyle,
@@ -48,6 +48,15 @@ type DecorativeAsset = {
   className: string;
   loading?: "eager" | "lazy";
   src: string;
+};
+
+type PointerDebugEntry = {
+  defaultPrevented: boolean;
+  layer: string;
+  phase: "capture" | "bubble";
+  pointerType: string;
+  target: string;
+  type: "pointerdown" | "pointermove" | "pointerup";
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
@@ -253,6 +262,133 @@ export function CreativeCoveCanvas() {
   const [activeSize, setActiveSize] = useState<TLDefaultSizeStyle>("m");
   const [activeTool, setActiveTool] = useState<CreativeToolId>("draw");
   const [isSaving, setIsSaving] = useState(false);
+  const [pointerDebugLog, setPointerDebugLog] = useState<PointerDebugEntry[]>([]);
+  const sceneRef = useRef<HTMLElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const sceneElement = sceneRef.current;
+    const stageElement = stageRef.current;
+
+    if (!sceneElement || !stageElement) {
+      return;
+    }
+
+    const loggedEvents = new Set<string>();
+    const maxEntries = 18;
+
+    function describeTarget(target: EventTarget | null) {
+      if (!(target instanceof Element)) {
+        return "unknown";
+      }
+
+      const className =
+        typeof target.className === "string"
+          ? target.className.trim().replace(/\s+/g, ".")
+          : "";
+
+      return className ? `${target.tagName.toLowerCase()}.${className}` : target.tagName.toLowerCase();
+    }
+
+    function appendDebugEntry(layer: string, phase: "capture" | "bubble", event: PointerEvent) {
+      const roundedX = Math.round(event.clientX);
+      const roundedY = Math.round(event.clientY);
+      const key = [
+        layer,
+        phase,
+        event.type,
+        event.pointerType || "unknown",
+        event.pointerId,
+        roundedX,
+        roundedY,
+        event.buttons,
+      ].join("|");
+
+      if (loggedEvents.has(key)) {
+        return;
+      }
+
+      loggedEvents.add(key);
+
+      setPointerDebugLog((current) => {
+        const nextEntry: PointerDebugEntry = {
+          defaultPrevented: event.defaultPrevented,
+          layer,
+          phase,
+          pointerType: event.pointerType || "unknown",
+          target: describeTarget(event.target),
+          type: event.type as PointerDebugEntry["type"],
+        };
+
+        return [nextEntry, ...current].slice(0, maxEntries);
+      });
+    }
+
+    function attachPointerDebugListeners(
+      element: Element,
+      layer: string,
+      listeners: Array<() => void>,
+    ) {
+      const handler = (phase: "capture" | "bubble"): EventListener => (event) => {
+        if (!(event instanceof PointerEvent)) {
+          return;
+        }
+
+        appendDebugEntry(layer, phase, event);
+      };
+
+      const captureHandler = handler("capture");
+      const bubbleHandler = handler("bubble");
+
+      for (const eventName of ["pointerdown", "pointermove", "pointerup"] as const) {
+        element.addEventListener(eventName, captureHandler, { capture: true, passive: true });
+        element.addEventListener(eventName, bubbleHandler, { passive: true });
+        listeners.push(() => element.removeEventListener(eventName, captureHandler, true));
+        listeners.push(() => element.removeEventListener(eventName, bubbleHandler));
+      }
+    }
+
+    const cleanupCallbacks: Array<() => void> = [];
+    attachPointerDebugListeners(sceneElement, "scene", cleanupCallbacks);
+    attachPointerDebugListeners(stageElement, "stage", cleanupCallbacks);
+
+    const tlRoot =
+      stageElement.querySelector(".tl-container") ??
+      stageElement.querySelector(".tl-canvas") ??
+      stageElement.querySelector("[data-tldraw]");
+
+    if (tlRoot) {
+      attachPointerDebugListeners(tlRoot, "tldraw-root", cleanupCallbacks);
+    }
+
+    const tlCanvas = stageElement.querySelector(".tl-canvas");
+    if (tlCanvas) {
+      attachPointerDebugListeners(tlCanvas, "tldraw-canvas", cleanupCallbacks);
+    }
+
+    const tlBackgroundWrapper = stageElement.querySelector(".tl-background__wrapper");
+    if (tlBackgroundWrapper) {
+      attachPointerDebugListeners(
+        tlBackgroundWrapper,
+        "tldraw-background-wrapper",
+        cleanupCallbacks,
+      );
+    }
+
+    const tlBackground = stageElement.querySelector(".tl-background");
+    if (tlBackground) {
+      attachPointerDebugListeners(tlBackground, "tldraw-background", cleanupCallbacks);
+    }
+
+    const tlHtmlLayer = stageElement.querySelector(".tl-html-layer");
+    if (tlHtmlLayer) {
+      attachPointerDebugListeners(tlHtmlLayer, "tldraw-html-layer", cleanupCallbacks);
+    }
+
+    return () => {
+      cleanupCallbacks.forEach((cleanup) => cleanup());
+    };
+  }, [editor]);
 
   useEffect(() => {
     if (!editor) {
@@ -339,7 +475,7 @@ export function CreativeCoveCanvas() {
 
   return (
     <div className="creative-cove-shell">
-      <section className="creative-cove-scene">
+      <section className="creative-cove-scene" ref={sceneRef}>
         <img
           alt=""
           aria-hidden="true"
@@ -418,7 +554,7 @@ export function CreativeCoveCanvas() {
 
         <div className="creative-cove-ui">
           <div className="creative-cove-canvas-shell">
-            <div className="creative-cove-drawing-stage">
+            <div className="creative-cove-drawing-stage" ref={stageRef}>
               <Tldraw autoFocus hideUi onMount={setEditor} />
             </div>
           </div>
@@ -488,6 +624,27 @@ export function CreativeCoveCanvas() {
             </div>
           </div>
         </div>
+
+        <aside className="creative-cove-debug-panel" aria-live="polite">
+          <p className="creative-cove-debug-panel__title">Pointer debug</p>
+          <p className="creative-cove-debug-panel__summary">
+            {pointerDebugLog.length
+              ? "Newest events shown first"
+              : "Touch the drawing area to log pointerdown, pointermove, and pointerup."}
+          </p>
+          <div className="creative-cove-debug-panel__log">
+            {pointerDebugLog.map((entry, index) => (
+              <div className="creative-cove-debug-panel__entry" key={`${entry.layer}-${entry.phase}-${entry.type}-${index}`}>
+                <span>{entry.type}</span>
+                <span>{entry.layer}</span>
+                <span>{entry.phase}</span>
+                <span>{entry.pointerType}</span>
+                <span>{entry.defaultPrevented ? "prevented" : "open"}</span>
+                <span>{entry.target}</span>
+              </div>
+            ))}
+          </div>
+        </aside>
       </section>
     </div>
   );
