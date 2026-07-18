@@ -65,6 +65,14 @@ type EditorDebugEntry = {
   tool: string;
 };
 
+type DrawShapeLike = {
+  id: unknown;
+  props?: {
+    isComplete?: boolean;
+  };
+  type: string;
+};
+
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
 
 const BACKGROUND_ASSETS = {
@@ -476,6 +484,41 @@ export function CreativeCoveCanvas() {
       setEditorDebugLog((current) => [entry, ...current].slice(0, maxEntries));
     }
 
+    function getToolPath() {
+      return currentEditor.getPath();
+    }
+
+    function finalizeIncompleteDrawShapes(reason: string) {
+      const incompleteDrawShapes = Array.from(currentEditor.getCurrentPageShapeIds())
+        .map((shapeId) => currentEditor.getShape(shapeId) as DrawShapeLike | undefined)
+        .filter((shape): shape is DrawShapeLike => {
+          return !!shape && shape.type === "draw" && shape.props?.isComplete !== true;
+        });
+
+      if (!incompleteDrawShapes.length) {
+        appendEditorDebugEntry({
+          detail: `0 incomplete on ${reason}`,
+          event: "draw-complete-scan",
+          tool: getToolPath(),
+        });
+        return;
+      }
+
+      currentEditor.updateShapes(
+        incompleteDrawShapes.map((shape) => ({
+          id: shape.id,
+          props: { isComplete: true },
+          type: "draw" as const,
+        })) as any,
+      );
+
+      appendEditorDebugEntry({
+        detail: `${incompleteDrawShapes.length} forced complete on ${reason}`,
+        event: "draw-complete-fix",
+        tool: getToolPath(),
+      });
+    }
+
     function restoreActiveTool(reason: string) {
       const desiredTool = activeToolRef.current;
 
@@ -497,7 +540,7 @@ export function CreativeCoveCanvas() {
         appendEditorDebugEntry({
           detail: reason,
           event: "tool-restore",
-          tool: `${currentTool}->${desiredTool}`,
+          tool: `${getToolPath()} ${currentTool}->${desiredTool}`,
         });
       }, 0);
     }
@@ -507,10 +550,12 @@ export function CreativeCoveCanvas() {
         appendEditorDebugEntry({
           detail: info.target ?? "unknown",
           event: info.name,
-          tool: currentEditor.getCurrentToolId(),
+          tool: getToolPath(),
         });
 
         if (info.name === "pointer_up") {
+          window.setTimeout(() => finalizeIncompleteDrawShapes("pointer_up:0ms"), 0);
+          window.setTimeout(() => finalizeIncompleteDrawShapes("pointer_up:250ms"), 250);
           restoreActiveTool("pointer_up");
         }
 
@@ -521,8 +566,13 @@ export function CreativeCoveCanvas() {
         appendEditorDebugEntry({
           detail: "editor lifecycle",
           event: info.name,
-          tool: currentEditor.getCurrentToolId(),
+          tool: getToolPath(),
         });
+
+        if (info.name === "complete") {
+          window.setTimeout(() => finalizeIncompleteDrawShapes("complete"), 0);
+        }
+
         restoreActiveTool(info.name);
         return;
       }
@@ -531,7 +581,7 @@ export function CreativeCoveCanvas() {
         appendEditorDebugEntry({
           detail: "click sequence",
           event: info.name,
-          tool: currentEditor.getCurrentToolId(),
+          tool: getToolPath(),
         });
       }
     };
@@ -546,7 +596,7 @@ export function CreativeCoveCanvas() {
       appendEditorDebugEntry({
         detail: shapes.map((shape) => shape.type ?? shape.id).join(", "),
         event: "created-shapes",
-        tool: currentEditor.getCurrentToolId(),
+        tool: getToolPath(),
       });
     };
 
@@ -554,7 +604,7 @@ export function CreativeCoveCanvas() {
       appendEditorDebugEntry({
         detail: `${shapeIds.length} removed`,
         event: "deleted-shapes",
-        tool: currentEditor.getCurrentToolId(),
+        tool: getToolPath(),
       });
     };
 
@@ -573,7 +623,7 @@ export function CreativeCoveCanvas() {
       appendEditorDebugEntry({
         detail: `${removedShapes.length} removed via ${entry.source}`,
         event: "change",
-        tool: currentEditor.getCurrentToolId(),
+        tool: getToolPath(),
       });
     };
 
