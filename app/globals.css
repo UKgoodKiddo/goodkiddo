@@ -1631,11 +1631,10 @@ textarea {
 
 .creative-cove-title-card {
   position: absolute;
-  top: 8.7%;
-  left: 50%;
+  top: 9.8%;
+  left: clamp(0.9rem, 4vw, 1.35rem);
   z-index: 34;
-  width: min(72%, 19.5rem);
-  transform: translateX(-50%);
+  width: min(38%, 10rem);
 }
 
 .creative-cove-ui {
@@ -1798,7 +1797,7 @@ textarea {
 
 .creative-cove-toolbar {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.28rem;
 }
 

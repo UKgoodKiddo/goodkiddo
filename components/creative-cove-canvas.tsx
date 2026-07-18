@@ -188,7 +188,6 @@ const TOOLBAR_BUTTONS: ToolbarButtonConfig[] = [
     label: "Thickness",
     panel: "thickness",
   },
-  { action: "clear", iconSrc: MASK_ASSETS.refreshIcon, id: "clear", label: "Refresh" },
   { action: "save", iconSrc: MASK_ASSETS.saveIcon, id: "save", label: "Save" },
 ];
 
