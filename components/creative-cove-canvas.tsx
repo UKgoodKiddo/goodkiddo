@@ -30,6 +30,7 @@ type ToolbarButtonConfig = {
 };
 
 type ColorSwatchConfig = {
+  canvasColor: string;
   id: string;
   imageSrc: string;
   tldrawColor: TLDefaultColorStyle;
@@ -115,21 +116,6 @@ const CREATIVE_COVE_ISOLATION_OPTIONS = {
   camera: { isLocked: true },
   maxPages: 1,
 } as const;
-const SIMPLE_CANVAS_COLOR_MAP = {
-  black: "#111111",
-  blue: "#3c5ed7",
-  green: "#54d315",
-  grey: "#8f98a4",
-  "light-blue": "#72c7ff",
-  "light-green": "#b6ef84",
-  "light-red": "#ff8383",
-  "light-violet": "#d8a2ff",
-  orange: "#ff7a00",
-  red: "#ff2020",
-  violet: "#9637c9",
-  white: "#ffffff",
-  yellow: "#ffc71f",
-} satisfies Record<TLDefaultColorStyle, string>;
 const SIMPLE_CANVAS_SIZE_MAP: Record<TLDefaultSizeStyle, number> = {
   l: 18,
   m: 12,
@@ -192,16 +178,16 @@ const TOOLBAR_BUTTONS: ToolbarButtonConfig[] = [
 ];
 
 const COLOR_SWATCHES: ColorSwatchConfig[] = [
-  { id: "blue", imageSrc: MASK_ASSETS.blueSwatch, tldrawColor: "blue" },
-  { id: "orange", imageSrc: MASK_ASSETS.orangeSwatch, tldrawColor: "orange" },
-  { id: "black", imageSrc: MASK_ASSETS.blackSwatch, tldrawColor: "black" },
-  { id: "green", imageSrc: MASK_ASSETS.greenSwatch, tldrawColor: "green" },
-  { id: "brown", imageSrc: MASK_ASSETS.brownSwatch, tldrawColor: "orange" },
-  { id: "red", imageSrc: MASK_ASSETS.redSwatch, tldrawColor: "red" },
-  { id: "purple", imageSrc: MASK_ASSETS.purpleSwatch, tldrawColor: "violet" },
-  { id: "pink", imageSrc: MASK_ASSETS.pinkSwatch, tldrawColor: "light-red" },
-  { id: "yellow", imageSrc: MASK_ASSETS.yellowSwatch, tldrawColor: "yellow" },
-  { id: "white", imageSrc: MASK_ASSETS.whiteSwatch, tldrawColor: "white" },
+  { canvasColor: "#3c5ed7", id: "blue", imageSrc: MASK_ASSETS.blueSwatch, tldrawColor: "blue" },
+  { canvasColor: "#ff7a00", id: "orange", imageSrc: MASK_ASSETS.orangeSwatch, tldrawColor: "orange" },
+  { canvasColor: "#111111", id: "black", imageSrc: MASK_ASSETS.blackSwatch, tldrawColor: "black" },
+  { canvasColor: "#54d315", id: "green", imageSrc: MASK_ASSETS.greenSwatch, tldrawColor: "green" },
+  { canvasColor: "#9d5a2f", id: "brown", imageSrc: MASK_ASSETS.brownSwatch, tldrawColor: "orange" },
+  { canvasColor: "#ff2020", id: "red", imageSrc: MASK_ASSETS.redSwatch, tldrawColor: "red" },
+  { canvasColor: "#9637c9", id: "purple", imageSrc: MASK_ASSETS.purpleSwatch, tldrawColor: "violet" },
+  { canvasColor: "#ff5cad", id: "pink", imageSrc: MASK_ASSETS.pinkSwatch, tldrawColor: "light-red" },
+  { canvasColor: "#ffc71f", id: "yellow", imageSrc: MASK_ASSETS.yellowSwatch, tldrawColor: "yellow" },
+  { canvasColor: "#ffffff", id: "white", imageSrc: MASK_ASSETS.whiteSwatch, tldrawColor: "white" },
 ];
 
 const SIZE_BUTTONS: SizeButtonConfig[] = [
@@ -335,6 +321,7 @@ function CreativeCoveThicknessButton({
 export function CreativeCoveCanvas() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [activeColor, setActiveColor] = useState<TLDefaultColorStyle>("blue");
+  const [activeSwatchId, setActiveSwatchId] = useState<string>("blue");
   const [activeSize, setActiveSize] = useState<TLDefaultSizeStyle>("m");
   const [activeTool, setActiveTool] = useState<CreativeToolId>("draw");
   const [canvasStatus, setCanvasStatus] = useState<CanvasStatus>({
@@ -374,6 +361,7 @@ export function CreativeCoveCanvas() {
   const mountCountRef = useRef(0);
   const objectIdsRef = useRef(new WeakMap<object, number>());
   const nextObjectIdRef = useRef(1);
+  const activeSwatch = COLOR_SWATCHES.find((swatch) => swatch.id === activeSwatchId) ?? COLOR_SWATCHES[0];
 
   function appendEditorDebugEntry(entry: EditorDebugEntry) {
     if (entry.event === "pointer_down" || entry.event === "pointer_move" || entry.event === "pointer_up") {
@@ -1118,16 +1106,17 @@ export function CreativeCoveCanvas() {
     });
   }
 
-  function handleColorChange(color: TLDefaultColorStyle) {
+  function handleColorChange(swatch: ColorSwatchConfig) {
     if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
-      logToolbarCommand("color", editor, `nextColor:${color}`);
+      logToolbarCommand("color", editor, `nextColor:${swatch.id}/${swatch.tldrawColor}`);
     }
 
     if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS && editor) {
-      editor.setStyleForSelectedShapes(DefaultColorStyle, color);
+      editor.setStyleForSelectedShapes(DefaultColorStyle, swatch.tldrawColor);
     }
 
-    setActiveColor(color);
+    setActiveColor(swatch.tldrawColor);
+    setActiveSwatchId(swatch.id);
     setActiveTool("draw");
   }
 
@@ -1404,7 +1393,7 @@ export function CreativeCoveCanvas() {
               {ENABLE_SIMPLE_CREATIVE_COVE_CANVAS ? (
                 <CreativeCoveSimpleCanvas
                   className="creative-cove-simple-canvas"
-                  color={SIMPLE_CANVAS_COLOR_MAP[activeColor]}
+                  color={activeSwatch.canvasColor}
                   ref={simpleCanvasRef}
                   size={SIMPLE_CANVAS_SIZE_MAP[activeSize]}
                   tool={activeTool}
@@ -1471,9 +1460,9 @@ export function CreativeCoveCanvas() {
                 <CreativeCoveColorButton
                   key={swatch.id}
                   imageSrc={swatch.imageSrc}
-                  isActive={activeColor === swatch.tldrawColor}
+                  isActive={activeSwatchId === swatch.id}
                   label={swatch.id}
-                  onClick={() => handleColorChange(swatch.tldrawColor)}
+                  onClick={() => handleColorChange(swatch)}
                 />
               ))}
             </div>
