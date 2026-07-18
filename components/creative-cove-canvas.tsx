@@ -943,7 +943,7 @@ export function CreativeCoveCanvas() {
           <p className="creative-cove-debug-panel__summary">
             {`status: ${canvasStatus.toolPath} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
           </p>
-          <div className="creative-cove-debug-panel__log">
+          <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--pointer">
             {pointerDebugLog.map((entry, index) => (
               <div className="creative-cove-debug-panel__entry" key={`${entry.layer}-${entry.phase}-${entry.type}-${index}`}>
                 <span>{entry.type}</span>
@@ -956,14 +956,20 @@ export function CreativeCoveCanvas() {
             ))}
           </div>
           <p className="creative-cove-debug-panel__summary">Editor event stream</p>
-          <div className="creative-cove-debug-panel__log">
-            {editorDebugLog.map((entry, index) => (
-              <div className="creative-cove-debug-panel__entry" key={`${entry.event}-${entry.tool}-${index}`}>
-                <span>{entry.event}</span>
-                <span>{entry.tool}</span>
-                <span>{entry.detail}</span>
+          <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--editor">
+            {editorDebugLog.length ? (
+              editorDebugLog.map((entry, index) => (
+                <div className="creative-cove-debug-panel__entry" key={`${entry.event}-${entry.tool}-${index}`}>
+                  <span>{entry.event}</span>
+                  <span>{entry.tool}</span>
+                  <span>{entry.detail}</span>
+                </div>
+              ))
+            ) : (
+              <div className="creative-cove-debug-panel__entry">
+                <span>No editor events logged yet.</span>
               </div>
-            ))}
+            )}
           </div>
         </aside>
       </section>
