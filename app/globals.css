@@ -1631,7 +1631,7 @@ textarea {
 
 .creative-cove-title-card {
   position: absolute;
-  top: 7.6%;
+  top: 5.4%;
   left: clamp(8.4rem, 32vw, 10.8rem);
   z-index: 34;
   width: min(60%, 16rem);
