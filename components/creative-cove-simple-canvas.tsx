@@ -37,6 +37,23 @@ export type CreativeCoveSimpleCanvasHandle = {
 
 const BACKGROUND_COLOR = "#ffffff";
 
+function getCreativeCoveExportName() {
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    "-",
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0"),
+    "-",
+    String(now.getMilliseconds()).padStart(3, "0"),
+  ].join("");
+
+  return `creative-cove-art-${stamp}.png`;
+}
+
 function drawStroke(
   context: CanvasRenderingContext2D,
   stroke: Stroke,
@@ -264,7 +281,7 @@ export const CreativeCoveSimpleCanvas = forwardRef<
         }
 
         const link = document.createElement("a");
-        link.download = "creative-cove-art.png";
+        link.download = getCreativeCoveExportName();
         link.href = canvas.toDataURL("image/png");
         link.click();
       },

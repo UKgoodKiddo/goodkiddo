@@ -118,6 +118,24 @@ const CREATIVE_COVE_ISOLATION_OPTIONS = {
   camera: { isLocked: true },
   maxPages: 1,
 } as const;
+
+function getCreativeCoveExportBaseName() {
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    "-",
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0"),
+    "-",
+    String(now.getMilliseconds()).padStart(3, "0"),
+  ].join("");
+
+  return `creative-cove-art-${stamp}`;
+}
+
 const SIMPLE_CANVAS_SIZE_MAP: Record<TLDefaultSizeStyle, number> = {
   l: 18,
   m: 12,
@@ -1244,7 +1262,7 @@ export function CreativeCoveCanvas() {
     try {
       await exportAs(editor, pageShapeIds, {
         format: "png",
-        name: "creative-cove-art",
+        name: getCreativeCoveExportBaseName(),
       });
     } finally {
       setIsSaving(false);
