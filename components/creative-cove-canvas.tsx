@@ -76,8 +76,6 @@ const MASK_ASSETS = {
   blueSwatch: `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/colour-swatches/blue.webp`,
   blackSwatch: `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/colour-swatches/black.webp`,
   brownSwatch: `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/colour-swatches/brown.webp`,
-  canvasFrameMask:
-    `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/canvas-frame-masks/tldraw-canvas-frame-mask.webp`,
   coloursIcon: `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/button-icons/colours-icon.webp`,
   eraserIcon: `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/button-icons/eraser-icon.webp`,
   greenSwatch: `${CREATIVE_COVE_BASE_PATH}/tldraw-masks-and-buttons/colour-swatches/green.webp`,
@@ -423,13 +421,6 @@ export function CreativeCoveCanvas() {
             <div className="creative-cove-drawing-stage">
               <Tldraw autoFocus hideUi onMount={setEditor} />
             </div>
-            <img
-              alt=""
-              aria-hidden="true"
-              className="creative-cove-frame-mask"
-              fetchPriority="high"
-              src={MASK_ASSETS.canvasFrameMask}
-            />
           </div>
 
           <div className="creative-cove-controls">

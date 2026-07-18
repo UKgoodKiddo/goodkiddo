@@ -1371,7 +1371,6 @@ textarea {
 
 .creative-cove-background,
 .creative-cove-title-card,
-.creative-cove-frame-mask,
 .creative-cove-decor,
 .creative-cove-bubble {
   user-select: none;
@@ -1659,15 +1658,6 @@ textarea {
 
 .creative-cove-drawing-stage .tl-background {
   background-color: rgba(255, 255, 255, 0.96) !important;
-}
-
-.creative-cove-frame-mask {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
 }
 
 .creative-cove-controls {
