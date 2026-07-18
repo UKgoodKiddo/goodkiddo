@@ -5,6 +5,10 @@ import {
   DefaultColorStyle,
   DefaultSizeStyle,
   exportAs,
+  getPointerInfo,
+  preventDefault,
+  releasePointerCapture,
+  setPointerCapture,
   Tldraw,
   type Editor,
   type TLDefaultColorStyle,
@@ -798,6 +802,130 @@ export function CreativeCoveCanvas() {
       currentEditor.off("created-shapes", handleCreatedShapes);
       currentEditor.off("deleted-shapes", handleDeletedShapes);
       currentEditor.off("change", handleChange);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor || !stageRef.current) {
+      return;
+    }
+
+    const currentEditor = editor;
+    const tlCanvas = stageRef.current.querySelector(".tl-canvas");
+
+    if (!(tlCanvas instanceof HTMLElement)) {
+      appendEditorDebugEntry({
+        detail: `No tl-canvas found for native touch fallback | ${getEditorRelationshipSummary(currentEditor)}`,
+        event: "native-touch-missing",
+        tool: currentEditor.getPath(),
+      });
+      return;
+    }
+
+    const ownerDocument = currentEditor.getContainerDocument();
+    let activePointerId: number | null = null;
+
+    appendEditorDebugEntry({
+      detail: `Attached native touch fallback | ${getEditorRelationshipSummary(currentEditor)}`,
+      event: "native-touch-attach",
+      tool: currentEditor.getPath(),
+    });
+
+    function handleTouchStart(event: TouchEvent) {
+      currentEditor.markEventAsHandled(event as any);
+      preventDefault(event as any);
+    }
+
+    function handleTouchEnd(event: TouchEvent) {
+      currentEditor.markEventAsHandled(event as any);
+      preventDefault(event as any);
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (event.pointerType !== "touch") {
+        return;
+      }
+
+      activePointerId = event.pointerId;
+      currentEditor.markEventAsHandled(event as any);
+      setPointerCapture(tlCanvas, event);
+      currentEditor.dispatch({
+        type: "pointer",
+        target: "canvas",
+        name: "pointer_down",
+        ...getPointerInfo(currentEditor, event),
+        isPenDirect: false,
+      });
+    }
+
+    function handlePointerMove(event: PointerEvent) {
+      if (event.pointerType !== "touch" || activePointerId !== event.pointerId) {
+        return;
+      }
+
+      currentEditor.markEventAsHandled(event as any);
+      currentEditor.dispatch({
+        type: "pointer",
+        target: "canvas",
+        name: "pointer_move",
+        ...getPointerInfo(currentEditor, event),
+      });
+    }
+
+    function finishPointer(event: PointerEvent, reason: "pointer_up" | "pointercancel") {
+      if (event.pointerType !== "touch" || activePointerId !== event.pointerId) {
+        return;
+      }
+
+      currentEditor.markEventAsHandled(event as any);
+      releasePointerCapture(tlCanvas, event);
+
+      if (reason === "pointer_up") {
+        currentEditor.dispatch({
+          type: "pointer",
+          target: "canvas",
+          name: "pointer_up",
+          ...getPointerInfo(currentEditor, event),
+        });
+      } else {
+        currentEditor.complete();
+        appendEditorDebugEntry({
+          detail: `Completed native touch pointer after pointercancel | ${getEditorRelationshipSummary(currentEditor)}`,
+          event: "native-touch-cancel",
+          tool: currentEditor.getPath(),
+        });
+      }
+
+      activePointerId = null;
+    }
+
+    function handlePointerUp(event: PointerEvent) {
+      finishPointer(event, "pointer_up");
+    }
+
+    function handlePointerCancel(event: PointerEvent) {
+      finishPointer(event, "pointercancel");
+    }
+
+    tlCanvas.addEventListener("touchstart", handleTouchStart, { capture: true, passive: false });
+    tlCanvas.addEventListener("touchend", handleTouchEnd, { capture: true, passive: false });
+    tlCanvas.addEventListener("pointerdown", handlePointerDown, { capture: true, passive: false });
+    ownerDocument.body.addEventListener("pointermove", handlePointerMove, { passive: false });
+    ownerDocument.body.addEventListener("pointerup", handlePointerUp, { passive: false });
+    ownerDocument.body.addEventListener("pointercancel", handlePointerCancel, { passive: false });
+
+    return () => {
+      tlCanvas.removeEventListener("touchstart", handleTouchStart, true);
+      tlCanvas.removeEventListener("touchend", handleTouchEnd, true);
+      tlCanvas.removeEventListener("pointerdown", handlePointerDown, true);
+      ownerDocument.body.removeEventListener("pointermove", handlePointerMove);
+      ownerDocument.body.removeEventListener("pointerup", handlePointerUp);
+      ownerDocument.body.removeEventListener("pointercancel", handlePointerCancel);
+      appendEditorDebugEntry({
+        detail: `Detached native touch fallback | ${getEditorRelationshipSummary(currentEditor)}`,
+        event: "native-touch-detach",
+        tool: currentEditor.getPath(),
+      });
     };
   }, [editor]);
 
