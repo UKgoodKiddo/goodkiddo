@@ -7,8 +7,8 @@ import { startTransition, useEffect, useRef, useState, type CSSProperties } from
 
 const CREATIVE_COVE_ROUTE = "/child/kiddo_explorers/creative_cove";
 const CHILD_HOME_ROUTE = "/child";
-const ENTER_DURATION_MS = 680;
-const REDUCED_ENTER_DURATION_MS = 180;
+const ENTER_DURATION_MS = 420;
+const REDUCED_ENTER_DURATION_MS = 140;
 
 const KIDDO_EXPLORERS_ASSETS = {
   background: "/kiddo-explorer-asset-handover/kiddo-explorers-ui-background.webp",
@@ -50,12 +50,10 @@ function SparkleOverlay() {
 
 export function KiddoExplorersMap() {
   const router = useRouter();
-  const biomeButtonRef = useRef<HTMLButtonElement | null>(null);
   const enterTimeoutRef = useRef<number | null>(null);
   const [isEnteringCreativeCove, setIsEnteringCreativeCove] = useState(false);
   const [isWhaleJumping, setIsWhaleJumping] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [biomeTransitionStyle, setBiomeTransitionStyle] = useState<CSSProperties>({});
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -82,34 +80,6 @@ export function KiddoExplorersMap() {
     }
 
     const nextDuration = prefersReducedMotion ? REDUCED_ENTER_DURATION_MS : ENTER_DURATION_MS;
-    const buttonBounds = biomeButtonRef.current?.getBoundingClientRect();
-
-    if (buttonBounds) {
-      const viewportCenterX = window.innerWidth / 2;
-      const viewportCenterY = window.innerHeight / 2;
-      const currentCenterX = buttonBounds.left + buttonBounds.width / 2;
-      const currentCenterY = buttonBounds.top + buttonBounds.height / 2;
-      const shiftX = viewportCenterX - currentCenterX;
-      const shiftY = viewportCenterY - currentCenterY;
-      const scale = Math.min(
-        3.7,
-        Math.max(
-          prefersReducedMotion ? 1.06 : 2.8,
-          Math.min(
-            window.innerWidth / buttonBounds.width,
-            window.innerHeight / buttonBounds.height,
-          ) * (prefersReducedMotion ? 1 : 1.2),
-        ),
-      );
-
-      setBiomeTransitionStyle({
-        "--explorers-biome-shift-x": `${shiftX}px`,
-        "--explorers-biome-shift-y": `${shiftY}px`,
-        "--explorers-biome-scale": `${scale}`,
-        "--explorers-biome-enter-duration": `${nextDuration}ms`,
-      } as CSSProperties);
-    }
-
     setIsEnteringCreativeCove(true);
     enterTimeoutRef.current = window.setTimeout(() => {
       startTransition(() => {
@@ -141,12 +111,10 @@ export function KiddoExplorersMap() {
 
       <div className="kiddo-explorers-biome-layer">
         <button
-          ref={biomeButtonRef}
           aria-label="Open Creative Cove"
           className={`kiddo-explorers-biome-button${isEnteringCreativeCove ? " is-entering" : ""}`}
           disabled={isEnteringCreativeCove}
           onClick={handleCreativeCoveOpen}
-          style={biomeTransitionStyle}
           type="button"
         >
           <Image
@@ -172,7 +140,7 @@ export function KiddoExplorersMap() {
             className="kiddo-explorers-home-button__image"
             height={166}
             priority
-            sizes="52px"
+            sizes="64px"
             src={KIDDO_EXPLORERS_ASSETS.homeButton}
             width={177}
           />

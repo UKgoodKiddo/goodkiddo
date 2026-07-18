@@ -2061,9 +2061,7 @@ textarea {
   background-position: center top;
   background-repeat: no-repeat;
   background-size: cover;
-  transition:
-    transform var(--explorers-biome-enter-duration, 680ms) cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 220ms ease;
+  transition: opacity 180ms ease;
 }
 
 .kiddo-explorers-transition-overlay {
@@ -2074,18 +2072,14 @@ textarea {
     linear-gradient(180deg, rgba(4, 35, 103, 0.04), rgba(4, 22, 82, 0.36));
   opacity: 0;
   transition:
-    opacity var(--explorers-biome-enter-duration, 680ms) cubic-bezier(0.22, 1, 0.36, 1),
-    backdrop-filter var(--explorers-biome-enter-duration, 680ms) cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 200ms ease,
+    backdrop-filter 200ms ease;
   backdrop-filter: blur(0);
 }
 
-.kiddo-explorers-scene.is-entering .kiddo-explorers-background {
-  transform: scale(1.02);
-}
-
 .kiddo-explorers-scene.is-entering .kiddo-explorers-transition-overlay {
-  opacity: 1;
-  backdrop-filter: blur(2px);
+  opacity: 0.45;
+  backdrop-filter: blur(1px);
 }
 
 .kiddo-explorers-sparkle-layer {
@@ -2177,7 +2171,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: clamp(48px, 12vw, 56px);
+  width: clamp(56px, 14vw, 68px);
   min-width: 48px;
   min-height: 48px;
   transition:
@@ -2201,7 +2195,7 @@ textarea {
 }
 
 .kiddo-explorers-home-button__image {
-  width: 56%;
+  width: 68%;
   height: auto;
   filter: drop-shadow(0 14px 22px rgba(7, 32, 98, 0.22));
 }
@@ -2230,7 +2224,7 @@ textarea {
 }
 
 .kiddo-explorers-biome-button.is-entering {
-  animation: kiddo-explorers-biome-enter var(--explorers-biome-enter-duration, 680ms) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: kiddo-explorers-biome-spin-enter 420ms linear forwards;
 }
 
 .kiddo-explorers-biome-image {
@@ -2254,19 +2248,17 @@ textarea {
   }
 }
 
-@keyframes kiddo-explorers-biome-enter {
+@keyframes kiddo-explorers-biome-spin-enter {
   0% {
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translateZ(0) rotate(0deg) scale(1);
   }
 
-  18% {
-    transform: translate3d(0, 0, 0) scale(0.96);
+  25% {
+    transform: translateZ(0) rotate(270deg) scale(0.99);
   }
 
   100% {
-    transform:
-      translate3d(var(--explorers-biome-shift-x, 0px), var(--explorers-biome-shift-y, 0px), 0)
-      scale(var(--explorers-biome-scale, 3));
+    transform: translateZ(0) rotate(1080deg) scale(1);
   }
 }
 
@@ -2379,7 +2371,7 @@ textarea {
 
 @media (min-width: 640px) {
   .kiddo-explorers-home-button {
-    width: clamp(52px, 9vw, 60px);
+    width: clamp(60px, 11vw, 72px);
   }
 
   .kiddo-explorers-biome-button {
@@ -2404,10 +2396,8 @@ textarea {
 
   .kiddo-explorers-biome-button.is-entering {
     animation: none;
-    transform:
-      translate3d(var(--explorers-biome-shift-x, 0px), var(--explorers-biome-shift-y, 0px), 0)
-      scale(var(--explorers-biome-scale, 1.06));
-    transition: transform 180ms ease-out;
+    opacity: 0.78;
+    transition: opacity 140ms ease-out;
   }
 
   .kiddo-explorers-background {
