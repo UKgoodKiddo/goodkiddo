@@ -912,6 +912,18 @@ export function CreativeCoveCanvas() {
         return;
       }
 
+      if (currentEditor.getPath() !== `${activeToolRef.current}.idle`) {
+        appendEditorDebugEntry({
+          detail: `Settling stale interaction before pointerdown | was:${currentEditor.getPath()} | ${getEditorRelationshipSummary(
+            currentEditor,
+          )}`,
+          event: "touch-bridge:pre-settle",
+          tool: currentEditor.getPath(),
+        });
+        currentEditor.complete();
+        currentEditor.setCurrentTool(activeToolRef.current);
+      }
+
       activePointerId = event.pointerId;
       currentEditor.focus();
       currentEditor.markEventAsHandled(event as any);
@@ -998,6 +1010,9 @@ export function CreativeCoveCanvas() {
             name: "pointer_up",
             ...getPointerInfo(currentEditor, event),
           });
+          currentEditor.complete();
+          currentEditor.setCurrentTool(activeToolRef.current);
+          currentEditor.updatePointer();
         } catch (error) {
           appendEditorDebugEntry({
             detail: `Bridge pointerup dispatch failed: ${String(error)} | ${getEditorRelationshipSummary(currentEditor)}`,
