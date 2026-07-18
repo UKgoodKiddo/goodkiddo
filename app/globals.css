@@ -1631,10 +1631,10 @@ textarea {
 
 .creative-cove-title-card {
   position: absolute;
-  top: 9.8%;
-  left: clamp(0.9rem, 4vw, 1.35rem);
+  top: 8.7%;
+  left: clamp(3.35rem, 16vw, 5rem);
   z-index: 34;
-  width: min(38%, 10rem);
+  width: min(57%, 15rem);
 }
 
 .creative-cove-ui {
@@ -1656,7 +1656,7 @@ textarea {
 
 .creative-cove-canvas-shell {
   position: absolute;
-  top: 13.6%;
+  top: 11.6%;
   right: clamp(0.75rem, 3.5vw, 1.1rem);
   bottom: calc(env(safe-area-inset-bottom, 0px) + 12.2rem);
   left: clamp(0.75rem, 3.5vw, 1.1rem);
