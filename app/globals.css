@@ -1285,6 +1285,7 @@ textarea {
   inset: 0;
   z-index: 90;
   overflow: hidden;
+  overscroll-behavior: none;
   background: linear-gradient(180deg, #3dcaff 0%, #0e69dc 38%, #0a42c8 100%);
 }
 
@@ -1361,6 +1362,7 @@ textarea {
   width: 100%;
   aspect-ratio: 9 / 16;
   overflow: hidden;
+  overscroll-behavior: none;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 2.35rem;
   background: linear-gradient(180deg, #3dcaff 0%, #0e69dc 38%, #0a42c8 100%);
@@ -1624,6 +1626,7 @@ textarea {
   position: absolute;
   inset: 0;
   z-index: 30;
+  overscroll-behavior: none;
 }
 
 .creative-cove-canvas-shell {
@@ -1633,6 +1636,7 @@ textarea {
   width: 76%;
   aspect-ratio: 1 / 1;
   transform: translateX(-50%);
+  overscroll-behavior: none;
 }
 
 .creative-cove-drawing-stage {
@@ -1643,6 +1647,8 @@ textarea {
   left: 14.8%;
   overflow: hidden;
   touch-action: none;
+  overscroll-behavior: none;
+  -webkit-touch-callout: none;
   border-radius: 1.45rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.98));

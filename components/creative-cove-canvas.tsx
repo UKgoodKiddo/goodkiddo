@@ -386,6 +386,7 @@ export function CreativeCoveCanvas() {
       return;
     }
 
+    const stableStageElement = stageElement;
     const loggedEvents = new Set<string>();
     const maxEntries = 18;
 
@@ -474,29 +475,90 @@ export function CreativeCoveCanvas() {
       currentEditor.complete();
     }
 
+    function stabilizeTouchPointer(event: PointerEvent) {
+      if (event.pointerType !== "touch") {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (currentEditor) {
+        currentEditor.focus({ focusContainer: false });
+      }
+
+      if (event.type === "pointerdown") {
+        try {
+          stableStageElement.setPointerCapture(event.pointerId);
+        } catch {
+          // Some Android browsers can throw if capture is unavailable for the event target.
+        }
+
+        appendEditorDebugEntry({
+          detail: `Stage captured touch pointer ${event.pointerId} | ${getEditorRelationshipSummary(currentEditor)}`,
+          event: "touch-guard:pointerdown",
+          tool: currentEditor?.getPath() ?? "no-editor",
+        });
+        return;
+      }
+
+      if (event.type === "pointerup" || event.type === "pointercancel") {
+        if (stableStageElement.hasPointerCapture(event.pointerId)) {
+          stableStageElement.releasePointerCapture(event.pointerId);
+        }
+
+        appendEditorDebugEntry({
+          detail: `Stage released touch pointer ${event.pointerId} on ${event.type} | ${getEditorRelationshipSummary(currentEditor)}`,
+          event: `touch-guard:${event.type}`,
+          tool: currentEditor?.getPath() ?? "no-editor",
+        });
+      }
+    }
+
+    function blockNativeTouchScroll(event: TouchEvent) {
+      event.preventDefault();
+    }
+
     const cleanupCallbacks: Array<() => void> = [];
     attachPointerDebugListeners(sceneElement, "scene", cleanupCallbacks);
-    attachPointerDebugListeners(stageElement, "stage", cleanupCallbacks);
-    stageElement.addEventListener("pointercancel", completeOnPointerCancel, { passive: true });
+    attachPointerDebugListeners(stableStageElement, "stage", cleanupCallbacks);
+    stableStageElement.addEventListener("pointercancel", completeOnPointerCancel, { passive: true });
     cleanupCallbacks.push(() =>
-      stageElement.removeEventListener("pointercancel", completeOnPointerCancel),
+      stableStageElement.removeEventListener("pointercancel", completeOnPointerCancel),
     );
+    for (const eventName of ["pointerdown", "pointermove", "pointerup", "pointercancel"] as const) {
+      stableStageElement.addEventListener(eventName, stabilizeTouchPointer, {
+        capture: true,
+        passive: false,
+      });
+      cleanupCallbacks.push(() =>
+        stableStageElement.removeEventListener(eventName, stabilizeTouchPointer, true),
+      );
+    }
+    for (const eventName of ["touchstart", "touchmove", "touchend", "touchcancel"] as const) {
+      stableStageElement.addEventListener(eventName, blockNativeTouchScroll, {
+        capture: true,
+        passive: false,
+      });
+      cleanupCallbacks.push(() =>
+        stableStageElement.removeEventListener(eventName, blockNativeTouchScroll, true),
+      );
+    }
 
     const tlRoot =
-      stageElement.querySelector(".tl-container") ??
-      stageElement.querySelector(".tl-canvas") ??
-      stageElement.querySelector("[data-tldraw]");
+      stableStageElement.querySelector(".tl-container") ??
+      stableStageElement.querySelector(".tl-canvas") ??
+      stableStageElement.querySelector("[data-tldraw]");
 
     if (tlRoot) {
       attachPointerDebugListeners(tlRoot, "tldraw-root", cleanupCallbacks);
     }
 
-    const tlCanvas = stageElement.querySelector(".tl-canvas");
+    const tlCanvas = stableStageElement.querySelector(".tl-canvas");
     if (tlCanvas) {
       attachPointerDebugListeners(tlCanvas, "tldraw-canvas", cleanupCallbacks);
     }
 
-    const tlBackgroundWrapper = stageElement.querySelector(".tl-background__wrapper");
+    const tlBackgroundWrapper = stableStageElement.querySelector(".tl-background__wrapper");
     if (tlBackgroundWrapper) {
       attachPointerDebugListeners(
         tlBackgroundWrapper,
@@ -505,12 +567,12 @@ export function CreativeCoveCanvas() {
       );
     }
 
-    const tlBackground = stageElement.querySelector(".tl-background");
+    const tlBackground = stableStageElement.querySelector(".tl-background");
     if (tlBackground) {
       attachPointerDebugListeners(tlBackground, "tldraw-background", cleanupCallbacks);
     }
 
-    const tlHtmlLayer = stageElement.querySelector(".tl-html-layer");
+    const tlHtmlLayer = stableStageElement.querySelector(".tl-html-layer");
     if (tlHtmlLayer) {
       attachPointerDebugListeners(tlHtmlLayer, "tldraw-html-layer", cleanupCallbacks);
     }
