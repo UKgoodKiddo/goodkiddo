@@ -79,11 +79,13 @@ type DrawShapeLike = {
 
 type CanvasStatus = {
   activeColor: string;
+  camera: string;
   drawShapeCount: number;
   editorInstance: string;
   mountCount: number;
   pageShapeCount: number;
   toolPath: string;
+  visibility: string;
 };
 
 type DebugCounters = {
@@ -103,6 +105,10 @@ const ENABLE_BARE_CANVAS_ISOLATION = true;
 const ENABLE_CREATIVE_COVE_PERSISTENCE = false;
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
 const MAX_DEBUG_ENTRIES = 24;
+const CREATIVE_COVE_ISOLATION_OPTIONS = {
+  camera: { isLocked: true },
+  maxPages: 1,
+} as const;
 
 const BACKGROUND_ASSETS = {
   bubble: `${CREATIVE_COVE_BASE_PATH}/ui-background-images/bubble.webp`,
@@ -306,11 +312,13 @@ export function CreativeCoveCanvas() {
   const [activeTool, setActiveTool] = useState<CreativeToolId>("draw");
   const [canvasStatus, setCanvasStatus] = useState<CanvasStatus>({
     activeColor: "blue",
+    camera: "cam 0,0 z1.00",
     drawShapeCount: 0,
     editorInstance: "editor:none store:none",
     mountCount: 0,
     pageShapeCount: 0,
     toolPath: "loading",
+    visibility: "viewport:unknown",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [editorDebugLog, setEditorDebugLog] = useState<EditorDebugEntry[]>([]);
@@ -627,18 +635,35 @@ export function CreativeCoveCanvas() {
     function refreshCanvasStatus(reason: string) {
       const pageShapes = currentEditor.getCurrentPageShapes();
       const drawShapes = pageShapes.filter((shape) => shape.type === "draw");
+      const camera = currentEditor.getCamera();
+      const viewportBounds = currentEditor.getViewportPageBounds();
+      const currentPageBounds = currentEditor.getCurrentPageBounds();
+      const firstDrawBounds = drawShapes[0]
+        ? currentEditor.getShapePageBounds(drawShapes[0].id)
+        : undefined;
+      const visibility = currentPageBounds
+        ? viewportBounds.includes(currentPageBounds)
+          ? "viewport:contains-page"
+          : firstDrawBounds && viewportBounds.includes(firstDrawBounds)
+            ? "viewport:contains-draw"
+            : "viewport:draw-offscreen"
+        : "viewport:empty";
 
       setCanvasStatus({
         activeColor: activeColorRef.current,
+        camera: `cam ${Math.round(camera.x)},${Math.round(camera.y)} z${camera.z.toFixed(2)}`,
         drawShapeCount: drawShapes.length,
         editorInstance: getEditorInstanceLabel(currentEditor),
         mountCount: mountCountRef.current,
         pageShapeCount: pageShapes.length,
         toolPath: getToolPath(),
+        visibility,
       });
 
       appendEditorDebugEntry({
-        detail: `${reason} | page:${pageShapes.length} draw:${drawShapes.length} color:${activeColorRef.current} | ${getEditorRelationshipSummary(currentEditor)}`,
+        detail: `${reason} | page:${pageShapes.length} draw:${drawShapes.length} color:${activeColorRef.current} | ${visibility} | cam:${Math.round(
+          camera.x,
+        )},${Math.round(camera.y)} z${camera.z.toFixed(2)} | ${getEditorRelationshipSummary(currentEditor)}`,
         event: "status",
         tool: getToolPath(),
       });
@@ -858,6 +883,7 @@ export function CreativeCoveCanvas() {
       }
 
       activePointerId = event.pointerId;
+      currentEditor.focus();
       currentEditor.markEventAsHandled(event as any);
       preventDefault(event as any);
       setPointerCapture(bridgeElement, event);
@@ -893,6 +919,7 @@ export function CreativeCoveCanvas() {
         return;
       }
 
+      currentEditor.focus({ focusContainer: false });
       currentEditor.markEventAsHandled(event as any);
       preventDefault(event as any);
       bumpBridgeCounter("pointer_move");
@@ -918,6 +945,7 @@ export function CreativeCoveCanvas() {
         return;
       }
 
+      currentEditor.focus({ focusContainer: false });
       currentEditor.markEventAsHandled(event as any);
       preventDefault(event as any);
       releasePointerCapture(bridgeElement, event);
@@ -993,14 +1021,20 @@ export function CreativeCoveCanvas() {
   function handleEditorMount(editorInstance: Editor) {
     mountCountRef.current += 1;
     editorRef.current = editorInstance;
+    if (ENABLE_BARE_CANVAS_ISOLATION) {
+      editorInstance.setCameraOptions({ isLocked: true });
+      editorInstance.focus();
+    }
     setEditor(editorInstance);
     setCanvasStatus({
       activeColor: activeColorRef.current,
+      camera: "cam 0,0 z1.00",
       drawShapeCount: 0,
       editorInstance: getEditorInstanceLabel(editorInstance),
       mountCount: mountCountRef.current,
       pageShapeCount: 0,
       toolPath: editorInstance.getPath(),
+      visibility: "viewport:unknown",
     });
     appendEditorDebugEntry({
       detail: `mount #${mountCountRef.current} | persistence:${ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : "disabled"} | ${getEditorRelationshipSummary(editorInstance)}`,
@@ -1101,6 +1135,7 @@ export function CreativeCoveCanvas() {
                 autoFocus
                 hideUi
                 onMount={handleEditorMount}
+                options={ENABLE_BARE_CANVAS_ISOLATION ? CREATIVE_COVE_ISOLATION_OPTIONS : undefined}
                 persistenceKey={
                   ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : undefined
                 }
@@ -1121,6 +1156,9 @@ export function CreativeCoveCanvas() {
             </p>
             <p className="creative-cove-debug-panel__summary">
               {`status: ${canvasStatus.toolPath} | ${canvasStatus.editorInstance} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`${canvasStatus.camera} | ${canvasStatus.visibility}`}
             </p>
             <p className="creative-cove-debug-panel__summary">
               {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
