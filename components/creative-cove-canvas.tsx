@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { CreativeCoveSimpleCanvas } from "@/components/creative-cove-simple-canvas";
 import {
   DefaultColorStyle,
   DefaultSizeStyle,
@@ -104,12 +105,34 @@ type DebugCounters = {
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
 const ENABLE_BARE_CANVAS_ISOLATION = true;
 const ENABLE_CREATIVE_COVE_PERSISTENCE = false;
+const ENABLE_SIMPLE_CREATIVE_COVE_CANVAS = true;
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
 const MAX_DEBUG_ENTRIES = 24;
 const CREATIVE_COVE_ISOLATION_OPTIONS = {
   camera: { isLocked: true },
   maxPages: 1,
 } as const;
+const SIMPLE_CANVAS_COLOR_MAP = {
+  black: "#111111",
+  blue: "#3c5ed7",
+  green: "#54d315",
+  grey: "#8f98a4",
+  "light-blue": "#72c7ff",
+  "light-green": "#b6ef84",
+  "light-red": "#ff8383",
+  "light-violet": "#d8a2ff",
+  orange: "#ff7a00",
+  red: "#ff2020",
+  violet: "#9637c9",
+  white: "#ffffff",
+  yellow: "#ffc71f",
+} satisfies Record<TLDefaultColorStyle, string>;
+const SIMPLE_CANVAS_SIZE_MAP: Record<TLDefaultSizeStyle, number> = {
+  l: 18,
+  m: 12,
+  s: 8,
+  xl: 24,
+};
 
 const BACKGROUND_ASSETS = {
   bubble: `${CREATIVE_COVE_BASE_PATH}/ui-background-images/bubble.webp`,
@@ -1169,6 +1192,38 @@ export function CreativeCoveCanvas() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
+    return (
+      <div className="creative-cove-shell creative-cove-shell--isolation">
+        <section className="creative-cove-scene creative-cove-scene--isolation" ref={sceneRef}>
+          <div className="creative-cove-ui creative-cove-ui--isolation">
+            <div className="creative-cove-drawing-stage creative-cove-drawing-stage--isolation">
+              <CreativeCoveSimpleCanvas
+                className="creative-cove-simple-canvas"
+                color={SIMPLE_CANVAS_COLOR_MAP[activeColor]}
+                size={SIMPLE_CANVAS_SIZE_MAP[activeSize]}
+                tool={activeTool}
+              />
+            </div>
+          </div>
+
+          <aside
+            className="creative-cove-debug-panel creative-cove-debug-panel--isolation"
+            aria-live="polite"
+          >
+            <p className="creative-cove-debug-panel__title">Creative Cove</p>
+            <p className="creative-cove-debug-panel__summary">
+              Simple canvas fallback is active for Android reliability testing.
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`tool:${activeTool} | color:${activeColor} | size:${activeSize}`}
+            </p>
+          </aside>
+        </section>
+      </div>
+    );
   }
 
   if (ENABLE_BARE_CANVAS_ISOLATION) {
