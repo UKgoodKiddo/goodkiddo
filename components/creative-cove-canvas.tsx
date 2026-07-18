@@ -84,6 +84,7 @@ type CanvasStatus = {
   editorInstance: string;
   mountCount: number;
   pageShapeCount: number;
+  render: string;
   toolPath: string;
   visibility: string;
 };
@@ -317,6 +318,7 @@ export function CreativeCoveCanvas() {
     editorInstance: "editor:none store:none",
     mountCount: 0,
     pageShapeCount: 0,
+    render: "render:unknown",
     toolPath: "loading",
     visibility: "viewport:unknown",
   });
@@ -638,6 +640,18 @@ export function CreativeCoveCanvas() {
       const camera = currentEditor.getCamera();
       const viewportBounds = currentEditor.getViewportPageBounds();
       const currentPageBounds = currentEditor.getCurrentPageBounds();
+      const editorContainer = currentEditor.getContainer();
+      const tlCanvasElement = editorContainer.querySelector(".tl-canvas");
+      const svgElement = editorContainer.querySelector("svg");
+      const pathCount = svgElement?.querySelectorAll("path").length ?? 0;
+      const render = tlCanvasElement
+        ? (() => {
+            const computedStyle = window.getComputedStyle(tlCanvasElement);
+            return `canvas:${computedStyle.display}/${computedStyle.visibility}/${computedStyle.opacity} svg:${
+              svgElement ? 1 : 0
+            } paths:${pathCount}`;
+          })()
+        : "canvas:none";
       const firstDrawBounds = drawShapes[0]
         ? currentEditor.getShapePageBounds(drawShapes[0].id)
         : undefined;
@@ -656,6 +670,7 @@ export function CreativeCoveCanvas() {
         editorInstance: getEditorInstanceLabel(currentEditor),
         mountCount: mountCountRef.current,
         pageShapeCount: pageShapes.length,
+        render,
         toolPath: getToolPath(),
         visibility,
       });
@@ -663,10 +678,22 @@ export function CreativeCoveCanvas() {
       appendEditorDebugEntry({
         detail: `${reason} | page:${pageShapes.length} draw:${drawShapes.length} color:${activeColorRef.current} | ${visibility} | cam:${Math.round(
           camera.x,
-        )},${Math.round(camera.y)} z${camera.z.toFixed(2)} | ${getEditorRelationshipSummary(currentEditor)}`,
+        )},${Math.round(camera.y)} z${camera.z.toFixed(2)} | ${render} | ${getEditorRelationshipSummary(currentEditor)}`,
         event: "status",
         tool: getToolPath(),
       });
+    }
+
+    function forceCanvasRefresh(reason: string) {
+      currentEditor.focus({ focusContainer: false });
+      currentEditor.updateViewportScreenBounds(currentEditor.getContainer());
+      currentEditor.setCamera({ ...currentEditor.getCamera() }, { force: true, immediate: true });
+      appendEditorDebugEntry({
+        detail: `${reason} | forced viewport+camera refresh | ${getEditorRelationshipSummary(currentEditor)}`,
+        event: "render-refresh",
+        tool: getToolPath(),
+      });
+      window.setTimeout(() => refreshCanvasStatus(`refresh:${reason}`), 0);
     }
 
     function finalizeIncompleteDrawShapes(reason: string) {
@@ -738,6 +765,8 @@ export function CreativeCoveCanvas() {
         if (info.name === "pointer_up") {
           window.setTimeout(() => finalizeIncompleteDrawShapes("pointer_up:0ms"), 0);
           window.setTimeout(() => finalizeIncompleteDrawShapes("pointer_up:250ms"), 250);
+          window.setTimeout(() => forceCanvasRefresh("pointer_up:0ms"), 0);
+          window.setTimeout(() => forceCanvasRefresh("pointer_up:250ms"), 250);
           window.setTimeout(() => refreshCanvasStatus("pointer_up"), 80);
           restoreActiveTool("pointer_up");
         }
@@ -754,6 +783,7 @@ export function CreativeCoveCanvas() {
 
         if (info.name === "complete") {
           window.setTimeout(() => finalizeIncompleteDrawShapes("complete"), 0);
+          window.setTimeout(() => forceCanvasRefresh("complete"), 0);
         }
 
         window.setTimeout(() => refreshCanvasStatus(info.name), 0);
@@ -1033,6 +1063,7 @@ export function CreativeCoveCanvas() {
       editorInstance: getEditorInstanceLabel(editorInstance),
       mountCount: mountCountRef.current,
       pageShapeCount: 0,
+      render: "render:unknown",
       toolPath: editorInstance.getPath(),
       visibility: "viewport:unknown",
     });
@@ -1160,6 +1191,7 @@ export function CreativeCoveCanvas() {
             <p className="creative-cove-debug-panel__summary">
               {`${canvasStatus.camera} | ${canvasStatus.visibility}`}
             </p>
+            <p className="creative-cove-debug-panel__summary">{canvasStatus.render}</p>
             <p className="creative-cove-debug-panel__summary">
               {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
             </p>
