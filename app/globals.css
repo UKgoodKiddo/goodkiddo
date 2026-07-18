@@ -1631,10 +1631,10 @@ textarea {
 
 .creative-cove-title-card {
   position: absolute;
-  top: 8.7%;
-  left: clamp(0.75rem, 3.5vw, 1.1rem);
+  top: 7.6%;
+  left: clamp(8.4rem, 32vw, 10.8rem);
   z-index: 34;
-  width: min(57%, 15rem);
+  width: min(60%, 16rem);
 }
 
 .creative-cove-ui {
