@@ -1,25 +1,11 @@
-import { ChildPageScaffold } from "@/components/child-page-scaffold";
+import { CreativeCoveBackButton } from "@/components/creative-cove-back-button";
 import { CreativeCoveShell } from "@/components/creative-cove-shell";
-import { ChildSummaryCard } from "@/components/child-sections";
-import { getChildModeData } from "@/lib/data";
 
-export default async function CreativeCovePage(props: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const [childMode, searchParams] = await Promise.all([
-    getChildModeData(),
-    props.searchParams,
-  ]);
-
-  const bannerCode =
-    typeof searchParams.status === "string" ? searchParams.status : undefined;
-
+export default function CreativeCovePage() {
   return (
-    <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
-      <section className="space-y-5">
-        <ChildSummaryCard childMode={childMode} />
-        <CreativeCoveShell />
-      </section>
-    </ChildPageScaffold>
+    <main className="creative-cove-page" aria-label="Creative Cove">
+      <CreativeCoveBackButton />
+      <CreativeCoveShell />
+    </main>
   );
 }

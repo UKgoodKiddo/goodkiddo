@@ -1,0 +1,158 @@
+Creative Cove Background – CSS Layer Instructions
+==================================================
+
+REFERENCE
+---------
+Use the supplied full underwater image as the visual reference for final placement.
+The separate assets in this folder should be layered over ui-background so the page
+recreates the reference image while allowing gentle animation and interaction.
+
+GENERAL RULES
+-------------
+- ui-background is the fixed base layer and should fill the full viewport.
+- Use a 9:16 mobile-first layout.
+- Preserve aspect ratio on every asset.
+- Use position: absolute for decorative assets.
+- Keep interactive artwork above the background but below the main drawing-pad UI.
+- Use transform and opacity animations only where possible for smooth mobile performance.
+- Add pointer-events: none to purely decorative elements.
+- Respect prefers-reduced-motion by disabling or simplifying continuous animation.
+- Avoid layout movement; animate with transform rather than top/left.
+- All decorative layers should scale proportionally across screen sizes.
+
+LAYER ORDER
+-----------
+1. ui-background
+2. distant bubbles
+3. rocks and stone platform
+4. coral and seaweed
+5. starfish
+6. crabby
+7. foreground bubbles
+8. Creative Cove UI
+
+ASSET INSTRUCTIONS
+------------------
+
+ui-background
+- Fill the entire page.
+- Use object-fit: cover.
+- Keep centred.
+- This is the static underwater base.
+
+bubble
+- Reuse this same asset multiple times.
+- Create approximately 12–20 bubbles.
+- Randomise size, horizontal position, opacity, speed and delay.
+- Bubbles should rise slowly from the lower half of the screen.
+- Add a slight horizontal drift so they do not travel in perfectly straight lines.
+- Suggested size range: 12px–46px.
+- Suggested duration range: 8s–18s.
+- Fade in near the bottom and fade out near the top.
+- Decorative only; pointer-events: none.
+
+crabby
+- Position on the lower-right stone platform, matching the reference.
+- Keep fully visible and facing inward.
+- Add a subtle idle animation:
+  - tiny up/down movement every few seconds
+  - occasional blink
+  - optional small claw wiggle
+- Keep movement gentle so it does not distract from the drawing area.
+- This asset may be tappable later, so do not permanently disable pointer events.
+
+large-rocks
+- Place toward the lower-left side.
+- Use as a static foreground anchor.
+- No continuous animation.
+- Keep behind coral and seaweed.
+
+small-rock
+- Reuse several times near the bottom edge.
+- Vary size and rotation slightly.
+- Static.
+- Use to make the seabed feel natural.
+
+stone-platform
+- Place at the lower-right.
+- Crab sits on top of this.
+- Static.
+- Keep below crabby in z-index.
+
+orange-bubble-coral
+- Place near the lower-left rocks.
+- Static.
+- Slight scale variation is acceptable.
+- Optional very small breathing motion, but static is preferred.
+
+purple-bubble-coral
+- Place near the lower-right foreground.
+- Static.
+- Keep below crabby and above the stone platform.
+
+pink-coral
+- Place mainly along the lower-left edge.
+- Static.
+- May overlap slightly with large-rocks and seaweed.
+
+purple-coral
+- Place near the lower-left or lower-centre edge.
+- Static.
+- Use behind starfish and in front of rocks.
+
+seaweed-1
+- Place lower-left.
+- Anchor transform-origin at bottom centre.
+- Add slow sway animation.
+- Suggested rotation range: -2deg to 2deg.
+- Suggested duration: 5s–8s.
+
+seaweed-2
+- Place lower-left or centre-left.
+- Use a different sway duration and delay from seaweed-1.
+- Suggested rotation range: -3deg to 3deg.
+- Suggested duration: 6s–10s.
+
+seaweed-3
+- Place lower-right.
+- Anchor at bottom centre.
+- Slow sway in the opposite phase to nearby seaweed.
+- Suggested duration: 7s–11s.
+
+seaweed-4
+- Place lower-right edge.
+- Use the smallest or narrowest seaweed here.
+- Add gentle sway with a unique delay.
+- Keep partly behind crabby where appropriate.
+
+pink-starfish
+- Place on the lower-left sand.
+- Static.
+- Slight rotation is acceptable.
+- Optional tiny scale pulse on tap only.
+
+orange-starfish
+- Place on the lower-right sand.
+- Static.
+- Slight rotation is acceptable.
+- Optional tiny scale pulse on tap only.
+
+page-title-card
+- Place this at the top centre of the page around 5% down from the top edge of the page.
+
+RESPONSIVE PLACEMENT
+--------------------
+- Base all positions on percentages rather than fixed pixels where possible.
+- On narrow phones, keep decoration close to the bottom and side edges.
+- Ensure the centre remains clear for the drawing pad.
+- Decorative assets should not cover toolbar controls or page navigation.
+- Use clamp() for important asset widths.
+
+PERFORMANCE
+-----------
+- Prefer WebP assets.
+- Lazy-load any asset not needed immediately.
+- Reuse the single bubble file instead of storing multiple bubble images.
+- Keep simultaneous animations modest.
+- Use will-change: transform only on elements that actually animate.
+- Avoid blur filters and heavy box shadows on mobile.

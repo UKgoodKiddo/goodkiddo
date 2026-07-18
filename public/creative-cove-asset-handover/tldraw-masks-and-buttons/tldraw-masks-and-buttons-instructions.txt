@@ -1,0 +1,55 @@
+Creative Cove – TLDraw Masks & Buttons
+
+This folder contains the decorative UI assets for the Creative Cove
+drawing page.
+
+Goal
+
+Recreate the layout shown in the supplied reference screenshots while
+keeping the TLDraw canvas fully functional beneath the artwork.
+
+Canvas Frame
+
+-   Stretch the canvas-frame-mask to fit the TLDraw drawing area only.
+-   Preserve the artwork aspect ratio as much as possible using CSS.
+-   Use pointer-events: none.
+-   Position above the canvas and below any interactive buttons.
+-   The centre opening must remain fully transparent so drawings are
+    never covered.
+-   Use object-fit: fill or a 9-slice / border-image technique if
+    required to avoid distorting the corners.
+
+Toolbar
+
+Arrange the buttons beneath the canvas exactly as shown.
+
+Order: 1. Pen 2. Eraser 3. Undo 4. Colours 5. Refresh 6. Save
+
+Rules: - Equal spacing. - Equal button size. - Rounded white buttons by
+default. - Selected button receives the blue GoodKiddo gradient
+background. - Labels switch from blue to white when selected. - Icons
+remain centred.
+
+Colour Row
+
+Place the colour swatches directly below the toolbar. - Equal spacing. -
+Circular buttons. - Selected colour receives a subtle white outline and
+scale increase.
+
+Pen Thickness
+
+Place three thickness buttons below the colour row.
+
+Order: - Thin - Medium - Thick
+
+-   Medium is selected by default.
+-   Selected state uses the GoodKiddo blue outline/background.
+-   All three buttons remain equal width.
+
+General
+
+-   Mobile-first (9:16).
+-   Use percentage positioning where possible.
+-   Prefer flex layouts over fixed pixel positioning.
+-   Keep decorative assets non-interactive unless explicitly required.
+-   Optimise for Android WebView performance.

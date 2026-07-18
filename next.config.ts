@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  typescript: {
+    tsconfigPath:
+      process.env.NODE_ENV === "production" ? "tsconfig.build.json" : "tsconfig.json",
+  },
   images: {
     remotePatterns: [
       {
