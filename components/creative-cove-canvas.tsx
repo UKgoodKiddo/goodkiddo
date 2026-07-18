@@ -74,6 +74,7 @@ type DrawShapeLike = {
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
+const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
 
 const BACKGROUND_ASSETS = {
   bubble: `${CREATIVE_COVE_BASE_PATH}/ui-background-images/bubble.webp`,
@@ -283,6 +284,7 @@ export function CreativeCoveCanvas() {
   const activeColorRef = useRef(activeColor);
   const activeSizeRef = useRef(activeSize);
   const activeToolRef = useRef(activeTool);
+  const mountCountRef = useRef(0);
 
   useEffect(() => {
     activeColorRef.current = activeColor;
@@ -644,6 +646,19 @@ export function CreativeCoveCanvas() {
     setActiveTool(toolId);
   }
 
+  function handleEditorMount(editorInstance: Editor) {
+    mountCountRef.current += 1;
+    setEditor(editorInstance);
+    setEditorDebugLog((current) => [
+      {
+        detail: `mount #${mountCountRef.current}`,
+        event: "editor-mount",
+        tool: editorInstance.getPath(),
+      },
+      ...current,
+    ].slice(0, 18));
+  }
+
   function handleColorChange(color: TLDefaultColorStyle) {
     if (editor) {
       editor.setStyleForSelectedShapes(DefaultColorStyle, color);
@@ -795,7 +810,12 @@ export function CreativeCoveCanvas() {
         <div className="creative-cove-ui">
           <div className="creative-cove-canvas-shell">
             <div className="creative-cove-drawing-stage" ref={stageRef}>
-              <Tldraw autoFocus hideUi onMount={setEditor} />
+              <Tldraw
+                autoFocus
+                hideUi
+                onMount={handleEditorMount}
+                persistenceKey={CREATIVE_COVE_PERSISTENCE_KEY}
+              />
             </div>
           </div>
 
