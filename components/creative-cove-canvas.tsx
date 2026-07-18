@@ -21,12 +21,14 @@ import {
 import "tldraw/tldraw.css";
 
 type CreativeToolId = "draw" | "eraser";
+type ControlPanelId = "colors" | "thickness";
 
 type ToolbarButtonConfig = {
-  action: "tool" | "undo" | "clear" | "save";
+  action: "tool" | "panel" | "undo" | "clear" | "save";
   iconSrc: string;
   id: string;
   label: string;
+  panel?: ControlPanelId;
 };
 
 type ColorSwatchConfig = {
@@ -172,7 +174,20 @@ const TOOLBAR_BUTTONS: ToolbarButtonConfig[] = [
   { action: "tool", iconSrc: MASK_ASSETS.pencilIcon, id: "draw", label: "Pen" },
   { action: "tool", iconSrc: MASK_ASSETS.eraserIcon, id: "eraser", label: "Eraser" },
   { action: "undo", iconSrc: MASK_ASSETS.undoIcon, id: "undo", label: "Undo" },
-  { action: "tool", iconSrc: MASK_ASSETS.coloursIcon, id: "colour-picker", label: "Colours" },
+  {
+    action: "panel",
+    iconSrc: MASK_ASSETS.coloursIcon,
+    id: "colour-picker",
+    label: "Colours",
+    panel: "colors",
+  },
+  {
+    action: "panel",
+    iconSrc: MASK_ASSETS.pencilThicknessThick,
+    id: "thickness-picker",
+    label: "Thickness",
+    panel: "thickness",
+  },
   { action: "clear", iconSrc: MASK_ASSETS.refreshIcon, id: "clear", label: "Refresh" },
   { action: "save", iconSrc: MASK_ASSETS.saveIcon, id: "save", label: "Save" },
 ];
@@ -321,6 +336,7 @@ function CreativeCoveThicknessButton({
 export function CreativeCoveCanvas() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [activeColor, setActiveColor] = useState<TLDefaultColorStyle>("blue");
+  const [activePanel, setActivePanel] = useState<ControlPanelId>("colors");
   const [activeSwatchId, setActiveSwatchId] = useState<string>("blue");
   const [activeSize, setActiveSize] = useState<TLDefaultSizeStyle>("m");
   const [activeTool, setActiveTool] = useState<CreativeToolId>("draw");
@@ -1080,6 +1096,11 @@ export function CreativeCoveCanvas() {
     setActiveTool(toolId);
   }
 
+  function handlePanelChange(panel: ControlPanelId) {
+    setActivePanel(panel);
+    setActiveTool("draw");
+  }
+
   function handleEditorMount(editorInstance: Editor) {
     mountCountRef.current += 1;
     editorRef.current = editorInstance;
@@ -1116,6 +1137,7 @@ export function CreativeCoveCanvas() {
     }
 
     setActiveColor(swatch.tldrawColor);
+    setActivePanel("colors");
     setActiveSwatchId(swatch.id);
     setActiveTool("draw");
   }
@@ -1130,6 +1152,7 @@ export function CreativeCoveCanvas() {
     }
 
     setActiveSize(size);
+    setActivePanel("thickness");
     setActiveTool("draw");
   }
 
@@ -1416,7 +1439,7 @@ export function CreativeCoveCanvas() {
               {TOOLBAR_BUTTONS.map((button) => {
                 const isActive =
                   (button.action === "tool" && button.id === activeTool) ||
-                  (button.id === "colour-picker" && activeTool === "draw");
+                  (button.action === "panel" && button.panel === activePanel);
 
                 return (
                   <CreativeCoveToolbarButton
@@ -1439,6 +1462,11 @@ export function CreativeCoveCanvas() {
 
                           setActiveTool("draw");
                           return;
+                        case "panel":
+                          if (button.panel) {
+                            handlePanelChange(button.panel);
+                          }
+                          return;
                         case "undo":
                           handleUndo();
                           return;
@@ -1455,28 +1483,32 @@ export function CreativeCoveCanvas() {
               })}
             </div>
 
-            <div className="creative-cove-swatches" aria-label="Colour swatches" role="group">
-              {COLOR_SWATCHES.map((swatch) => (
-                <CreativeCoveColorButton
-                  key={swatch.id}
-                  imageSrc={swatch.imageSrc}
-                  isActive={activeSwatchId === swatch.id}
-                  label={swatch.id}
-                  onClick={() => handleColorChange(swatch)}
-                />
-              ))}
-            </div>
-
-            <div className="creative-cove-thickness-row" aria-label="Pen thickness" role="group">
-              {SIZE_BUTTONS.map((sizeButton) => (
-                <CreativeCoveThicknessButton
-                  key={sizeButton.id}
-                  iconSrc={sizeButton.iconSrc}
-                  isActive={activeSize === sizeButton.tldrawSize}
-                  label={sizeButton.label}
-                  onClick={() => handleSizeChange(sizeButton.tldrawSize)}
-                />
-              ))}
+            <div className="creative-cove-control-viewport">
+              {activePanel === "colors" ? (
+                <div className="creative-cove-swatches" aria-label="Colour swatches" role="group">
+                  {COLOR_SWATCHES.map((swatch) => (
+                    <CreativeCoveColorButton
+                      key={swatch.id}
+                      imageSrc={swatch.imageSrc}
+                      isActive={activeSwatchId === swatch.id}
+                      label={swatch.id}
+                      onClick={() => handleColorChange(swatch)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="creative-cove-thickness-row" aria-label="Pen thickness" role="group">
+                  {SIZE_BUTTONS.map((sizeButton) => (
+                    <CreativeCoveThicknessButton
+                      key={sizeButton.id}
+                      iconSrc={sizeButton.iconSrc}
+                      isActive={activeSize === sizeButton.tldrawSize}
+                      label={sizeButton.label}
+                      onClick={() => handleSizeChange(sizeButton.tldrawSize)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

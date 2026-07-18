@@ -1308,11 +1308,11 @@ textarea {
 }
 
 .creative-cove-page .creative-cove-canvas-shell {
-  width: min(76vw, 29rem);
+  width: min(calc(100vw - 1.5rem), 31rem);
 }
 
 .creative-cove-page .creative-cove-controls {
-  width: min(86vw, 31rem);
+  width: min(calc(100vw - 1rem), 31rem);
 }
 
 .creative-cove-loading {
@@ -1631,10 +1631,10 @@ textarea {
 
 .creative-cove-title-card {
   position: absolute;
-  top: 4.8%;
+  top: 8.7%;
   left: 50%;
-  z-index: 22;
-  width: min(88%, 26rem);
+  z-index: 34;
+  width: min(72%, 19.5rem);
   transform: translateX(-50%);
 }
 
@@ -1657,25 +1657,21 @@ textarea {
 
 .creative-cove-canvas-shell {
   position: absolute;
-  top: 18%;
-  left: 50%;
-  width: 76%;
-  aspect-ratio: 1 / 1;
-  transform: translateX(-50%);
+  top: 13.6%;
+  right: clamp(0.75rem, 3.5vw, 1.1rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12.2rem);
+  left: clamp(0.75rem, 3.5vw, 1.1rem);
   overscroll-behavior: none;
 }
 
 .creative-cove-drawing-stage {
   position: absolute;
-  top: 11.2%;
-  right: 14.8%;
-  bottom: 14.6%;
-  left: 14.8%;
+  inset: 0;
   overflow: hidden;
   touch-action: none;
   overscroll-behavior: none;
   -webkit-touch-callout: none;
-  border-radius: 1.45rem;
+  border-radius: 1.55rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.98));
   box-shadow:
@@ -1723,12 +1719,13 @@ textarea {
 
 .creative-cove-controls {
   position: absolute;
-  top: 68.2%;
+  right: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.8rem);
   left: 50%;
   display: flex;
-  width: 86%;
+  width: calc(100% - 1rem);
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.42rem;
   transform: translateX(-50%);
 }
 
@@ -1801,8 +1798,8 @@ textarea {
 
 .creative-cove-toolbar {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.42rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.28rem;
 }
 
 .creative-cove-action-button,
@@ -1812,11 +1809,11 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 0.24rem;
-  min-height: 4.85rem;
+  min-height: 4.3rem;
   border: 0;
-  border-radius: 1.25rem;
+  border-radius: 1.15rem;
   background: rgba(255, 255, 255, 0.96);
-  padding: 0.45rem 0.28rem 0.42rem;
+  padding: 0.38rem 0.22rem 0.34rem;
   box-shadow: 0 12px 24px rgba(6, 34, 116, 0.14);
   transition:
     transform 160ms ease,
@@ -1848,13 +1845,13 @@ textarea {
   align-items: flex-start;
   justify-content: center;
   width: 100%;
-  height: 2.35rem;
+  height: 2rem;
   overflow: hidden;
 }
 
 .creative-cove-action-button__icon,
 .creative-cove-thickness-button__icon {
-  width: 2.55rem;
+  width: 2.2rem;
   max-width: 100%;
   clip-path: inset(0 0 23% 0);
   object-fit: contain;
@@ -1862,7 +1859,7 @@ textarea {
 
 .creative-cove-action-button__label,
 .creative-cove-thickness-button__label {
-  font-size: 0.7rem;
+  font-size: 0.63rem;
   font-weight: 900;
   line-height: 1;
   color: var(--primary);
@@ -1874,17 +1871,34 @@ textarea {
   color: #ffffff;
 }
 
+.creative-cove-control-viewport {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.creative-cove-control-viewport::-webkit-scrollbar {
+  display: none;
+}
+
 .creative-cove-swatches {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.56rem 0.42rem;
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  gap: 0.48rem;
+  padding: 0.12rem 0.18rem 0.2rem;
 }
 
 .creative-cove-swatch-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: 4.2rem;
+  min-width: 4.2rem;
   aspect-ratio: 1 / 1;
   border: 0;
   border-radius: 999px;
@@ -1913,13 +1927,16 @@ textarea {
 }
 
 .creative-cove-thickness-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  gap: 0.48rem;
+  padding: 0.12rem 0.18rem 0.2rem;
 }
 
 .creative-cove-thickness-button {
-  min-height: 4.45rem;
+  min-width: 5.4rem;
+  min-height: 4.2rem;
 }
 
 @media (min-width: 640px) {
@@ -1930,8 +1947,8 @@ textarea {
   }
 
   .creative-cove-controls {
-    width: 84%;
-    gap: 0.8rem;
+    width: min(calc(100% - 1.5rem), 31rem);
+    gap: 0.56rem;
   }
 
   .creative-cove-debug-panel {
@@ -1945,29 +1962,38 @@ textarea {
   }
 
   .creative-cove-toolbar {
-    gap: 0.52rem;
+    gap: 0.4rem;
   }
 
   .creative-cove-action-button,
   .creative-cove-thickness-button {
-    min-height: 5.25rem;
-    border-radius: 1.4rem;
-    padding-inline: 0.38rem;
+    min-height: 4.95rem;
+    border-radius: 1.3rem;
+    padding-inline: 0.3rem;
   }
 
   .creative-cove-action-button__icon-wrap,
   .creative-cove-thickness-button__icon-wrap {
-    height: 2.7rem;
+    height: 2.4rem;
   }
 
   .creative-cove-action-button__icon,
   .creative-cove-thickness-button__icon {
-    width: 2.9rem;
+    width: 2.55rem;
   }
 
   .creative-cove-action-button__label,
   .creative-cove-thickness-button__label {
-    font-size: 0.76rem;
+    font-size: 0.68rem;
+  }
+
+  .creative-cove-swatch-button {
+    width: 4.55rem;
+    min-width: 4.55rem;
+  }
+
+  .creative-cove-thickness-button {
+    min-width: 6rem;
   }
 }
 
