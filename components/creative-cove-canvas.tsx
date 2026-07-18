@@ -96,6 +96,7 @@ type DebugCounters = {
 };
 
 const CREATIVE_COVE_BASE_PATH = "/creative-cove-asset-handover";
+const ENABLE_BARE_CANVAS_ISOLATION = true;
 const ENABLE_CREATIVE_COVE_PERSISTENCE = false;
 const CREATIVE_COVE_PERSISTENCE_KEY = "goodkiddo-creative-cove";
 const MAX_DEBUG_ENTRIES = 24;
@@ -813,7 +814,7 @@ export function CreativeCoveCanvas() {
     const currentEditor = editor;
     const stageElement = stageRef.current;
 
-    const ownerDocument = currentEditor.getContainerDocument();
+    const ownerDocument = stageElement.ownerDocument;
     let activePointerId: number | null = null;
 
     appendEditorDebugEntry({
@@ -1021,6 +1022,76 @@ export function CreativeCoveCanvas() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (ENABLE_BARE_CANVAS_ISOLATION) {
+    return (
+      <div className="creative-cove-shell creative-cove-shell--isolation">
+        <section className="creative-cove-scene creative-cove-scene--isolation" ref={sceneRef}>
+          <div className="creative-cove-ui creative-cove-ui--isolation">
+            <div className="creative-cove-drawing-stage creative-cove-drawing-stage--isolation" ref={stageRef}>
+              <Tldraw
+                autoFocus
+                hideUi
+                onMount={handleEditorMount}
+                persistenceKey={
+                  ENABLE_CREATIVE_COVE_PERSISTENCE ? CREATIVE_COVE_PERSISTENCE_KEY : undefined
+                }
+              />
+            </div>
+          </div>
+
+          <aside
+            className="creative-cove-debug-panel creative-cove-debug-panel--isolation"
+            aria-live="polite"
+          >
+            <p className="creative-cove-debug-panel__title">Pointer debug</p>
+            <p className="creative-cove-debug-panel__summary">
+              {pointerDebugLog.length
+                ? "DOM events first, editor events below."
+                : "Touch the drawing area to log canvas and editor pointer events."}
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`status: ${canvasStatus.toolPath} | ${canvasStatus.editorInstance} | mount ${canvasStatus.mountCount} | page ${canvasStatus.pageShapeCount} | draw ${canvasStatus.drawShapeCount} | color ${canvasStatus.activeColor}`}
+            </p>
+            <p className="creative-cove-debug-panel__summary">
+              {`dom d:${debugCounters.domPointerDown} m:${debugCounters.domPointerMove} u:${debugCounters.domPointerUp} | editor d:${debugCounters.editorPointerDown} m:${debugCounters.editorPointerMove} u:${debugCounters.editorPointerUp}`}
+            </p>
+            <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--pointer">
+              {pointerDebugLog.map((entry, index) => (
+                <div
+                  className="creative-cove-debug-panel__entry"
+                  key={`${entry.layer}-${entry.phase}-${entry.type}-${index}`}
+                >
+                  <span>{entry.type}</span>
+                  <span>{entry.layer}</span>
+                  <span>{entry.phase}</span>
+                  <span>{entry.pointerType}</span>
+                  <span>{entry.defaultPrevented ? "prevented" : "open"}</span>
+                  <span>{entry.target}</span>
+                </div>
+              ))}
+            </div>
+            <p className="creative-cove-debug-panel__summary">Editor event stream</p>
+            <div className="creative-cove-debug-panel__log creative-cove-debug-panel__log--editor">
+              {editorDebugLog.length ? (
+                editorDebugLog.map((entry, index) => (
+                  <div className="creative-cove-debug-panel__entry" key={`${entry.event}-${entry.tool}-${index}`}>
+                    <span>{entry.event}</span>
+                    <span>{entry.tool}</span>
+                    <span>{entry.detail}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="creative-cove-debug-panel__entry">
+                  <span>No editor events logged yet.</span>
+                </div>
+              )}
+            </div>
+          </aside>
+        </section>
+      </div>
+    );
   }
 
   return (

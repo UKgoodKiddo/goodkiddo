@@ -1280,6 +1280,11 @@ textarea {
   margin-inline: auto;
 }
 
+.creative-cove-shell--isolation {
+  max-width: none;
+  height: 100%;
+}
+
 .creative-cove-page {
   position: fixed;
   inset: 0;
@@ -1369,6 +1374,17 @@ textarea {
   box-shadow:
     0 28px 60px rgba(7, 26, 85, 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.creative-cove-scene--isolation {
+  min-height: 100dvh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgba(61, 202, 255, 0.2) 0%, rgba(14, 105, 220, 0.12) 100%),
+    #f4f8ff;
+  box-shadow: none;
 }
 
 .creative-cove-background,
@@ -1629,6 +1645,16 @@ textarea {
   overscroll-behavior: none;
 }
 
+.creative-cove-ui--isolation {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 4.75rem)
+    0.75rem
+    calc(env(safe-area-inset-bottom, 0px) + 16rem);
+}
+
 .creative-cove-canvas-shell {
   position: absolute;
   top: 18%;
@@ -1662,6 +1688,16 @@ textarea {
   touch-action: none !important;
 }
 
+.creative-cove-drawing-stage--isolation {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  border-radius: 1.2rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(16, 84, 217, 0.12),
+    0 12px 24px rgba(5, 26, 96, 0.1);
+}
+
 .creative-cove-controls {
   position: absolute;
   top: 68.2%;
@@ -1693,6 +1729,12 @@ textarea {
   backdrop-filter: blur(10px);
   pointer-events: none;
   transform: translateX(-50%);
+}
+
+.creative-cove-debug-panel--isolation {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: 32vh;
 }
 
 .creative-cove-debug-panel__title {
@@ -1872,6 +1914,11 @@ textarea {
   .creative-cove-debug-panel {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 15rem);
     width: min(21rem, calc(100vw - 2rem));
+  }
+
+  .creative-cove-debug-panel--isolation {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    width: min(24rem, calc(100vw - 2rem));
   }
 
   .creative-cove-toolbar {
