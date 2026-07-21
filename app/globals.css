@@ -2222,6 +2222,8 @@ textarea {
   width: clamp(56px, 14vw, 68px);
   min-width: 48px;
   min-height: 48px;
+  will-change: transform;
+  animation: kiddo-explorers-header-button-float 3.8s ease-in-out infinite;
   transition:
     transform 120ms ease,
     filter 160ms ease;
@@ -2260,6 +2262,9 @@ textarea {
   min-width: 48px;
   min-height: 48px;
   pointer-events: auto;
+  will-change: transform;
+  animation: kiddo-explorers-header-button-float 4.1s ease-in-out infinite;
+  animation-delay: -1.5s;
   transition:
     transform 120ms ease,
     filter 160ms ease;
@@ -2278,6 +2283,17 @@ textarea {
   height: auto;
   border-radius: 999px;
   filter: drop-shadow(0 14px 22px rgba(7, 32, 98, 0.22));
+}
+
+@keyframes kiddo-explorers-header-button-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .kiddo-explorers-biome-button {
@@ -2495,6 +2511,11 @@ textarea {
 
   .kiddo-explorers-achievements-link {
     transition: none;
+    animation: none;
+  }
+
+  .kiddo-explorers-home-button {
+    animation: none;
   }
 
   .kiddo-explorers-whale-track,
