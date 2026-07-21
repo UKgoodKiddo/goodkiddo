@@ -34,6 +34,14 @@ export type ChildProfile = {
   created_at: string;
 };
 
+export type ChildAchievement = {
+  id: string;
+  family_id: string;
+  child_profile_id: string;
+  achievement_id: string;
+  unlocked_at: string;
+};
+
 export type BooperStatus = "active" | "lost" | "disabled";
 
 export type BooperInventoryStatus =
@@ -385,6 +393,18 @@ export type Database = {
         Update: Partial<ChildProfile>;
         Relationships: [];
       };
+      child_achievements: {
+        Row: ChildAchievement;
+        Insert: {
+          id?: string;
+          family_id: string;
+          child_profile_id: string;
+          achievement_id: string;
+          unlocked_at?: string;
+        };
+        Update: Partial<ChildAchievement>;
+        Relationships: [];
+      };
       booper_inventory: {
         Row: BooperInventory;
         Insert: {
@@ -605,6 +625,16 @@ export type Database = {
         Returns: {
           claimed_count: number;
           claimed_total: number;
+        }[];
+      };
+      award_child_achievement: {
+        Args: {
+          target_achievement_id: string;
+          target_child_profile_id: string;
+        };
+        Returns: {
+          achievement_id: string;
+          unlocked_at: string;
         }[];
       };
       approve_task_completion: {

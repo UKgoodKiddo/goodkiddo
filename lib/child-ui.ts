@@ -7,6 +7,7 @@ export const CHILD_PAGE_ROUTES = [
   "/child/tasks",
   "/child/rewards",
   "/child/profile",
+  "/child/achievements",
   "/child/kiddo_explorers",
   "/child/kiddo_explorers/creative_cove",
 ] as const;

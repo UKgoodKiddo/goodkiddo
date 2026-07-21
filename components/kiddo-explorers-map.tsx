@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useRef, useState, type CSSProperties } from "react";
+import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 
 const CREATIVE_COVE_ROUTE = "/child/kiddo_explorers/creative_cove";
+const ACHIEVEMENTS_ROUTE = "/child/achievements";
 const CHILD_HOME_ROUTE = "/child";
 const ENTER_DURATION_MS = 420;
 const REDUCED_ENTER_DURATION_MS = 140;
@@ -144,6 +146,17 @@ export function KiddoExplorersMap() {
             src={KIDDO_EXPLORERS_ASSETS.homeButton}
             width={177}
           />
+        </Link>
+        <Link className="kiddo-explorers-achievements-link" href={ACHIEVEMENTS_ROUTE}>
+          <Image
+            alt=""
+            className="kiddo-explorers-achievements-link__icon"
+            height={28}
+            sizes="28px"
+            src={GOODKIDDO_ASSETS.starIcon}
+            width={28}
+          />
+          <span>Achievements</span>
         </Link>
       </div>
 
