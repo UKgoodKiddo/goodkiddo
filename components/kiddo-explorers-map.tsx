@@ -15,7 +15,7 @@ const KIDDO_EXPLORERS_ASSETS = {
   background: "/kiddo-explorer-asset-handover/kiddo-explorers-ui-background.webp",
   creativeCoveBiome: "/kiddo-explorer-asset-handover/biome-icons/creative-cove-biome.webp",
   homeButton: "/kiddo-explorer-asset-handover/ui-assets/home_button.png",
-  mapButton: "/kiddo-explorer-asset-handover/ui-assets/map_button.png",
+  achievementsButton: "/kiddo-explorer-asset-handover/ui-assets/achievements_button.jpg",
   whale: "/kiddo-explorer-asset-handover/ui-assets/whale.png",
 } as const;
 
@@ -155,10 +155,10 @@ export function KiddoExplorersMap() {
           <Image
             alt=""
             className="kiddo-explorers-achievements-link__icon"
-            height={168}
-            sizes="(max-width: 640px) 72px, 88px"
-            src={KIDDO_EXPLORERS_ASSETS.mapButton}
-            width={168}
+            height={1280}
+            sizes="64px"
+            src={KIDDO_EXPLORERS_ASSETS.achievementsButton}
+            width={1280}
           />
         </Link>
       </div>

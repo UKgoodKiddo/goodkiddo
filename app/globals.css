@@ -2251,27 +2251,32 @@ textarea {
 
 .kiddo-explorers-achievements-link {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + clamp(140px, 23vh, 210px));
-  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + clamp(12px, 2.5vh, 28px));
+  right: clamp(12px, 3vw, 24px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: clamp(56px, 14vw, 68px);
+  min-width: 48px;
+  min-height: 48px;
   pointer-events: auto;
-  transform: translateX(-50%);
-  transition: transform 160ms ease;
+  transition:
+    transform 120ms ease,
+    filter 160ms ease;
 }
 
 .kiddo-explorers-achievements-link:hover {
-  transform: translateX(-50%) translateY(-1px);
+  filter: brightness(1.03);
 }
 
 .kiddo-explorers-achievements-link:active {
-  transform: translateX(-50%) scale(0.97);
+  transform: scale(0.94);
 }
 
 .kiddo-explorers-achievements-link__icon {
-  width: clamp(62px, 15vw, 86px);
+  width: 68%;
   height: auto;
+  border-radius: 999px;
   filter: drop-shadow(0 14px 22px rgba(7, 32, 98, 0.22));
 }
 
@@ -2450,7 +2455,7 @@ textarea {
   }
 
   .kiddo-explorers-achievements-link {
-    top: calc(env(safe-area-inset-top, 0px) + clamp(156px, 23vh, 228px));
+    width: clamp(60px, 11vw, 72px);
   }
 
   .kiddo-explorers-biome-button {
@@ -2459,12 +2464,6 @@ textarea {
 
   .kiddo-explorers-whale-track {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-  }
-}
-
-@media (max-width: 420px) {
-  .kiddo-explorers-achievements-link__icon {
-    width: clamp(58px, 18vw, 72px);
   }
 }
 
