@@ -8,7 +8,6 @@ import {
   ACHIEVEMENT_DEFINITION_MAP,
   ACHIEVEMENT_DEFINITIONS,
   ACHIEVEMENT_PROGRESS_LAYOUT,
-  FINAL_ACHIEVEMENT_ID,
   type AchievementId,
 } from "@/lib/achievement-definitions";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
@@ -22,7 +21,6 @@ const ACHIEVEMENTS_ASSETS = {
 
 type ChildAchievementsBoardProps = {
   childName: string;
-  previewMode: string | null;
   unlockedAchievementIds: AchievementId[];
   unlockedAtById: Partial<Record<AchievementId, string>>;
   unlockedStandardBadgeCount: number;
@@ -33,35 +31,18 @@ type SelectedBadgeState = {
   locked: boolean;
 } | null;
 
-function buildPreviewLabel(previewMode: string | null) {
-  if (!previewMode) {
-    return null;
-  }
-
-  switch (previewMode) {
-    case "all-locked":
-      return "Preview: all locked";
-    case "some-unlocked":
-      return "Preview: some unlocked";
-    case "all-standard":
-      return "Preview: all 8 unlocked";
-    case "super-boop":
-      return "Preview: Super Boop unlocked";
-    default:
-      return "Preview mode";
-  }
-}
-
 export function ChildAchievementsBoard({
   childName,
-  previewMode,
   unlockedAchievementIds,
   unlockedAtById,
   unlockedStandardBadgeCount,
 }: ChildAchievementsBoardProps) {
   const [selectedBadge, setSelectedBadge] = useState<SelectedBadgeState>(null);
   const unlockedSet = new Set(unlockedAchievementIds);
-  const previewLabel = buildPreviewLabel(previewMode);
+  const progressBadges = ACHIEVEMENT_DEFINITIONS.map((definition) => ({
+    id: definition.id,
+    isUnlocked: unlockedSet.has(definition.id),
+  }));
   const selectedDefinition = selectedBadge
     ? ACHIEVEMENT_DEFINITION_MAP[selectedBadge.achievementId]
     : null;
@@ -102,13 +83,6 @@ export function ChildAchievementsBoard({
               width={168}
             />
           </Link>
-
-          <div className="child-achievements-progress-pill">
-            <span>{unlockedStandardBadgeCount} / 8 badges found</span>
-            {previewLabel ? (
-              <span className="child-achievements-progress-pill__preview">{previewLabel}</span>
-            ) : null}
-          </div>
         </div>
 
         <div className="child-achievements-artwork-shell">
@@ -133,17 +107,12 @@ export function ChildAchievementsBoard({
                   } as CSSProperties
                 }
               >
-                {Array.from({ length: 9 }).map((_, index) => {
-                  const isUnlocked =
-                    index < 8
-                      ? index < unlockedStandardBadgeCount
-                      : unlockedSet.has(FINAL_ACHIEVEMENT_ID);
-
+                {progressBadges.map((progressBadge, index) => {
                   return (
                     <span
-                      key={`progress-star-${index + 1}`}
+                      key={`progress-star-${progressBadge.id}`}
                       className="child-achievements-progress-strip__star-shell"
-                      data-unlocked={isUnlocked ? "true" : "false"}
+                      data-unlocked={progressBadge.isUnlocked ? "true" : "false"}
                     >
                       <Image
                         alt=""

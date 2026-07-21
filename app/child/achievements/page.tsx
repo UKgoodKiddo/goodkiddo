@@ -36,7 +36,6 @@ export default async function ChildAchievementsPage({
   return (
     <ChildAchievementsBoard
       childName={pageData.child.display_name}
-      previewMode={pageData.previewMode}
       unlockedAchievementIds={pageData.unlockedAchievementIds}
       unlockedAtById={pageData.unlockedAtById}
       unlockedStandardBadgeCount={pageData.unlockedStandardBadgeCount}

@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useRef, useState, type CSSProperties } from "react";
-import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 
 const CREATIVE_COVE_ROUTE = "/child/kiddo_explorers/creative_cove";
 const ACHIEVEMENTS_ROUTE = "/child/achievements";
@@ -16,6 +15,7 @@ const KIDDO_EXPLORERS_ASSETS = {
   background: "/kiddo-explorer-asset-handover/kiddo-explorers-ui-background.webp",
   creativeCoveBiome: "/kiddo-explorer-asset-handover/biome-icons/creative-cove-biome.webp",
   homeButton: "/kiddo-explorer-asset-handover/ui-assets/home_button.png",
+  mapButton: "/kiddo-explorer-asset-handover/ui-assets/map_button.png",
   whale: "/kiddo-explorer-asset-handover/ui-assets/whale.png",
 } as const;
 
@@ -147,16 +147,19 @@ export function KiddoExplorersMap() {
             width={177}
           />
         </Link>
-        <Link className="kiddo-explorers-achievements-link" href={ACHIEVEMENTS_ROUTE}>
+        <Link
+          aria-label="Open achievements"
+          className="kiddo-explorers-achievements-link"
+          href={ACHIEVEMENTS_ROUTE}
+        >
           <Image
             alt=""
             className="kiddo-explorers-achievements-link__icon"
-            height={28}
-            sizes="28px"
-            src={GOODKIDDO_ASSETS.starIcon}
-            width={28}
+            height={168}
+            sizes="(max-width: 640px) 72px, 88px"
+            src={KIDDO_EXPLORERS_ASSETS.mapButton}
+            width={168}
           />
-          <span>Achievements</span>
         </Link>
       </div>
 

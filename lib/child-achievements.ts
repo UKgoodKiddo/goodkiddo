@@ -33,6 +33,7 @@ export type ChildAchievementsPageData = {
   familyName: string | null;
   previewMode: AchievementPreviewMode | null;
   setupMessage: string | null;
+  unlockedBadgeCount: number;
   unlockedAchievementIds: AchievementId[];
   unlockedAtById: Partial<Record<AchievementId, string>>;
   unlockedStandardBadgeCount: number;
@@ -41,6 +42,7 @@ export type ChildAchievementsPageData = {
 
 export type AwardAchievementResult = {
   canUnlockSuperBoop: boolean;
+  unlockedBadgeCount: number;
   unlockedAchievementIds: AchievementId[];
   unlockedAtById: Partial<Record<AchievementId, string>>;
   unlockedStandardBadgeCount: number;
@@ -76,6 +78,7 @@ function buildAchievementState(rows: readonly Pick<ChildAchievement, "achievemen
 
   return {
     canUnlockSuperBoop: unlockedStandardBadgeCount === STANDARD_BADGE_COUNT,
+    unlockedBadgeCount: unlockedAchievementIds.length,
     unlockedAchievementIds,
     unlockedAtById,
     unlockedStandardBadgeCount,
@@ -112,6 +115,7 @@ function applyPreviewMode(previewMode: AchievementPreviewMode) {
 
   return {
     canUnlockSuperBoop: unlockedStandardBadgeCount === STANDARD_BADGE_COUNT,
+    unlockedBadgeCount: DEV_PREVIEW_UNLOCKS[previewMode].length,
     unlockedAchievementIds: [...DEV_PREVIEW_UNLOCKS[previewMode]],
     unlockedAtById,
     unlockedStandardBadgeCount,
@@ -174,6 +178,7 @@ export async function getChildAchievementsPageData(params?: {
       previewMode,
       setupMessage:
         "Configure Supabase plus child mode secrets to read live child achievement data.",
+      unlockedBadgeCount: previewState?.unlockedBadgeCount ?? 0,
       unlockedAchievementIds: previewState?.unlockedAchievementIds ?? [],
       unlockedAtById: previewState?.unlockedAtById ?? {},
       unlockedStandardBadgeCount: previewState?.unlockedStandardBadgeCount ?? 0,
@@ -191,6 +196,7 @@ export async function getChildAchievementsPageData(params?: {
       familyName: null,
       previewMode,
       setupMessage: "Launch child mode from the parent dashboard to bind this device.",
+      unlockedBadgeCount: 0,
       unlockedAchievementIds: [],
       unlockedAtById: {},
       unlockedStandardBadgeCount: 0,
@@ -221,6 +227,7 @@ export async function getChildAchievementsPageData(params?: {
       familyName: context.familyName,
       previewMode,
       setupMessage: "This child profile could not be loaded on this device.",
+      unlockedBadgeCount: 0,
       unlockedAchievementIds: [],
       unlockedAtById: {},
       unlockedStandardBadgeCount: 0,
@@ -237,6 +244,7 @@ export async function getChildAchievementsPageData(params?: {
     familyName: context.familyName,
     previewMode,
     setupMessage: null,
+    unlockedBadgeCount: previewState?.unlockedBadgeCount ?? liveState.unlockedBadgeCount,
     unlockedAchievementIds:
       previewState?.unlockedAchievementIds ?? liveState.unlockedAchievementIds,
     unlockedAtById: previewState?.unlockedAtById ?? liveState.unlockedAtById,

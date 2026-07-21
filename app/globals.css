@@ -2251,37 +2251,28 @@ textarea {
 
 .kiddo-explorers-achievements-link {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + clamp(12px, 2.5vh, 28px));
-  right: clamp(12px, 3vw, 24px);
+  top: calc(env(safe-area-inset-top, 0px) + clamp(140px, 23vh, 210px));
+  left: 50%;
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  padding: 0.7rem 1rem;
-  color: #0d46b4;
-  box-shadow: 0 14px 32px rgba(6, 34, 116, 0.18);
-  font-size: 0.9rem;
-  font-weight: 900;
-  line-height: 1;
+  justify-content: center;
   pointer-events: auto;
-  transition:
-    transform 160ms ease,
-    background-color 160ms ease,
-    color 160ms ease;
+  transform: translateX(-50%);
+  transition: transform 160ms ease;
 }
 
 .kiddo-explorers-achievements-link:hover {
-  transform: translateY(-1px);
+  transform: translateX(-50%) translateY(-1px);
 }
 
 .kiddo-explorers-achievements-link:active {
-  transform: scale(0.97);
+  transform: translateX(-50%) scale(0.97);
 }
 
 .kiddo-explorers-achievements-link__icon {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: clamp(62px, 15vw, 86px);
+  height: auto;
+  filter: drop-shadow(0 14px 22px rgba(7, 32, 98, 0.22));
 }
 
 .kiddo-explorers-biome-button {
@@ -2458,6 +2449,10 @@ textarea {
     width: clamp(60px, 11vw, 72px);
   }
 
+  .kiddo-explorers-achievements-link {
+    top: calc(env(safe-area-inset-top, 0px) + clamp(156px, 23vh, 228px));
+  }
+
   .kiddo-explorers-biome-button {
     bottom: clamp(170px, 19vh, 260px);
   }
@@ -2468,14 +2463,8 @@ textarea {
 }
 
 @media (max-width: 420px) {
-  .kiddo-explorers-achievements-link {
-    padding-inline: 0.8rem;
-    font-size: 0.82rem;
-  }
-
   .kiddo-explorers-achievements-link__icon {
-    width: 1.35rem;
-    height: 1.35rem;
+    width: clamp(58px, 18vw, 72px);
   }
 }
 
@@ -2539,19 +2528,26 @@ textarea {
 }
 
 .child-achievements-page {
-  display: flex;
-  width: 100%;
-  flex: 1;
-  flex-direction: column;
-  gap: 1rem;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #59cfff;
 }
 
 .child-achievements-page__topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 18;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 0.9rem)
+    clamp(0.85rem, 3vw, 1.35rem)
+    0;
 }
 
 .child-achievements-map-button {
@@ -2600,16 +2596,17 @@ textarea {
 }
 
 .child-achievements-artwork-shell {
-  display: flex;
-  flex: 1;
-  align-items: flex-start;
-  justify-content: center;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
 
 .child-achievements-artwork-frame {
   position: relative;
-  width: min(100%, calc((100dvh - 13rem) * 0.5615292700119474), 36rem);
-  max-width: 100%;
+  width: min(100vw, calc(100dvh * 0.5615292700119474));
+  height: min(100dvh, calc(100vw / 0.5615292700119474));
   aspect-ratio: 940 / 1674;
 }
 
@@ -2797,11 +2794,13 @@ textarea {
 
 @media (max-width: 640px) {
   .child-achievements-artwork-frame {
-    width: min(100%, calc((100dvh - 14rem) * 0.5615292700119474), 31rem);
+    width: min(100vw, calc(100dvh * 0.5615292700119474));
+    height: min(100dvh, calc(100vw / 0.5615292700119474));
   }
 
   .child-achievements-progress-pill {
     font-size: 0.78rem;
+    max-width: 72vw;
   }
 }
 
