@@ -1,9 +1,4 @@
-import { ChildPageScaffold } from "@/components/child-page-scaffold";
-import {
-  ChildRewardQueueCard,
-  ChildRewardsCard,
-  ChildSummaryCard,
-} from "@/components/child-sections";
+import { ChildRewardsScene } from "@/components/child-rewards-scene";
 import { getChildModeData } from "@/lib/data";
 
 export default async function ChildRewardsPage(props: {
@@ -17,15 +12,5 @@ export default async function ChildRewardsPage(props: {
   const bannerCode =
     typeof searchParams.status === "string" ? searchParams.status : undefined;
 
-  return (
-    <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
-      <section className="space-y-5">
-        <ChildSummaryCard childMode={childMode} />
-        <section className="space-y-5">
-          <ChildRewardsCard childMode={childMode} returnTo="/child/rewards" />
-          <ChildRewardQueueCard childMode={childMode} />
-        </section>
-      </section>
-    </ChildPageScaffold>
-  );
+  return <ChildRewardsScene bannerCode={bannerCode} childMode={childMode} />;
 }

@@ -1,5 +1,4 @@
-import { ChildPageScaffold } from "@/components/child-page-scaffold";
-import { ChildProfileStudio, ChildSummaryCard } from "@/components/child-sections";
+import { ChildProfileScene } from "@/components/child-profile-scene";
 import { getChildModeData } from "@/lib/data";
 
 export default async function ChildProfilePage(props: {
@@ -13,12 +12,5 @@ export default async function ChildProfilePage(props: {
   const bannerCode =
     typeof searchParams.status === "string" ? searchParams.status : undefined;
 
-  return (
-    <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
-      <section className="space-y-5">
-        <ChildSummaryCard childMode={childMode} />
-        <ChildProfileStudio childMode={childMode} />
-      </section>
-    </ChildPageScaffold>
-  );
+  return <ChildProfileScene bannerCode={bannerCode} childMode={childMode} />;
 }

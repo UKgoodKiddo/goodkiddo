@@ -47,22 +47,28 @@ export function ChildBottomNav({
     return null;
   }
 
+  const isImmersiveSceneRoute =
+    pathname === "/child" ||
+    pathname === "/child/tasks" ||
+    pathname === "/child/rewards" ||
+    pathname === "/child/profile";
+
   return (
     <nav
       aria-label="Child navigation"
       className={cn(
-        "rounded-[1.8rem] bg-white p-3 text-[color:var(--foreground)] shadow-[0_18px_35px_rgba(7,26,85,0.18)]",
-        pathname === "/child"
-          ? "child-bottom-nav child-bottom-nav--home"
+        "rounded-[1.35rem] bg-white p-1.5 text-[color:var(--foreground)] shadow-[0_18px_35px_rgba(7,26,85,0.18)]",
+        isImmersiveSceneRoute
+          ? "child-bottom-nav child-bottom-nav--scene"
           : "mt-6",
       )}
     >
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-1">
         {navItems.map((item) => (
           <Link
             key={item.label}
             className={cn(
-              "flex min-h-[4.75rem] flex-col items-center justify-center rounded-[1.2rem] px-2 py-3 text-center text-[0.74rem] font-black transition-colors",
+              "flex min-h-[2.35rem] flex-col items-center justify-center rounded-[0.95rem] px-1 py-1 text-center text-[0.58rem] font-black transition-colors",
               pathname === item.href
                 ? "bg-[#eaf1ff] text-[color:var(--primary)]"
                 : "bg-transparent text-[color:var(--ink-soft)]",
@@ -72,14 +78,14 @@ export function ChildBottomNav({
             <div className="flex items-center justify-center">
               <Image
                 alt=""
-                className={item.href === "/child" ? "h-7 w-7" : "h-8 w-8"}
-                height={item.href === "/child" ? 28 : 32}
+                className={item.href === "/child" ? "h-4 w-4" : "h-[1.15rem] w-[1.15rem]"}
+                height={item.href === "/child" ? 16 : 18}
                 src={item.icon}
                 unoptimized
-                width={item.href === "/child" ? 28 : 32}
+                width={item.href === "/child" ? 16 : 18}
               />
             </div>
-            <span className="mt-2 leading-tight">{item.label}</span>
+            <span className="mt-0.5 leading-tight">{item.label}</span>
           </Link>
         ))}
       </div>

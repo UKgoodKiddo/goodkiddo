@@ -1,5 +1,4 @@
-import { ChildPageScaffold } from "@/components/child-page-scaffold";
-import { ChildSummaryCard, ChildTasksCard } from "@/components/child-sections";
+import { ChildTasksScene } from "@/components/child-tasks-scene";
 import { getChildModeData } from "@/lib/data";
 
 export default async function ChildTasksPage(props: {
@@ -13,12 +12,5 @@ export default async function ChildTasksPage(props: {
   const bannerCode =
     typeof searchParams.status === "string" ? searchParams.status : undefined;
 
-  return (
-    <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
-      <section className="space-y-5">
-        <ChildSummaryCard childMode={childMode} />
-        <ChildTasksCard childMode={childMode} />
-      </section>
-    </ChildPageScaffold>
-  );
+  return <ChildTasksScene bannerCode={bannerCode} childMode={childMode} />;
 }

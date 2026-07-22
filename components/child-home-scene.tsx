@@ -177,7 +177,10 @@ export function ChildHomeScene({
           </div>
         </div>
 
-        <SpinningNavLink className="child-home-scan-panel" href="/child/collect">
+        <div
+          aria-disabled="true"
+          className="child-home-scan-panel child-home-scan-panel--inactive"
+        >
           <div className="child-home-scan-panel__badge">
             <p className="child-home-scan-panel__copy">
               <span>Ask a grown-up to</span>
@@ -192,7 +195,7 @@ export function ChildHomeScene({
               width={340}
             />
           </div>
-        </SpinningNavLink>
+        </div>
 
         <div className="child-home-shortcuts">
           <SpinningNavLink
