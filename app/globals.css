@@ -857,6 +857,21 @@ textarea {
   justify-content: space-between;
 }
 
+.child-nav-link--spinning {
+  animation: child-nav-link-spin 0.9s linear infinite;
+  will-change: transform;
+}
+
+@keyframes child-nav-link-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .child-home-profile-link {
   position: relative;
   display: inline-flex;
@@ -1014,7 +1029,7 @@ textarea {
 .child-home-waiting-pill {
   margin-top: 0.4rem;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.45rem;
   max-width: 100%;
   border-radius: 999px;
@@ -1025,11 +1040,18 @@ textarea {
     0 14px 24px rgba(2, 16, 67, 0.18);
   font-size: clamp(0.72rem, 2.3vw, 0.85rem);
   font-weight: 800;
-  white-space: nowrap;
+  line-height: 1.14;
+  white-space: normal;
+}
+
+.child-home-waiting-pill span {
+  display: block;
+  max-width: 15.25rem;
 }
 
 .child-home-waiting-pill img {
   flex-shrink: 0;
+  margin-top: 0.06rem;
 }
 
 .child-home-level-row {

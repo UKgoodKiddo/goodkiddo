@@ -4,12 +4,12 @@ import {
   KiddoRouteImage,
   type KiddoImageDebugMode,
 } from "@/components/kiddo-route-image";
+import { SpinningNavLink } from "@/components/spinning-nav-link";
 import { resolveChildBanner } from "@/lib/child-ui";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import type { ChildModeData } from "@/lib/types";
 import { formatBoops } from "@/lib/utils";
 import Image from "next/image";
-import Link from "next/link";
 import type { CSSProperties } from "react";
 
 const HOME_TWINKLE_STARS = [
@@ -82,7 +82,7 @@ export function ChildHomeScene({
 
       <div className="child-home-topbar">
         <ExitChildModeButton className="border-white/70 bg-white/96 text-[#0d348d] shadow-[0_14px_32px_rgba(4,25,94,0.28)] hover:bg-white" />
-        <Link
+        <SpinningNavLink
           aria-label="Open changing room"
           className="child-home-profile-link child-home-profile-link--icon"
           href="/child/profile"
@@ -95,7 +95,7 @@ export function ChildHomeScene({
             unoptimized
             width={64}
           />
-        </Link>
+        </SpinningNavLink>
       </div>
 
       {banner || childMode.usingDemoMode ? (
@@ -177,7 +177,7 @@ export function ChildHomeScene({
           </div>
         </div>
 
-        <Link className="child-home-scan-panel" href="/child/collect">
+        <SpinningNavLink className="child-home-scan-panel" href="/child/collect">
           <div className="child-home-scan-panel__badge">
             <p className="child-home-scan-panel__copy">
               <span>Ask a grown-up to</span>
@@ -192,10 +192,10 @@ export function ChildHomeScene({
               width={340}
             />
           </div>
-        </Link>
+        </SpinningNavLink>
 
         <div className="child-home-shortcuts">
-          <Link
+          <SpinningNavLink
             aria-label="Open tasks"
             className="child-home-shortcut"
             href="/child/tasks"
@@ -209,8 +209,8 @@ export function ChildHomeScene({
               width={112}
             />
             <span className="child-home-shortcut__label">Tasks</span>
-          </Link>
-          <Link
+          </SpinningNavLink>
+          <SpinningNavLink
             aria-label="Open rewards"
             className="child-home-shortcut"
             href="/child/rewards"
@@ -224,8 +224,8 @@ export function ChildHomeScene({
               width={112}
             />
             <span className="child-home-shortcut__label">Rewards</span>
-          </Link>
-          <Link
+          </SpinningNavLink>
+          <SpinningNavLink
             aria-label="Open Kiddo Explorers"
             className="child-home-shortcut"
             href="/child/kiddo_explorers"
@@ -239,7 +239,7 @@ export function ChildHomeScene({
               width={134}
             />
             <span className="child-home-shortcut__label">Kiddo Explorers</span>
-          </Link>
+          </SpinningNavLink>
         </div>
       </div>
     </section>
