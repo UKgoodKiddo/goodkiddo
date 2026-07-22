@@ -1207,7 +1207,7 @@ textarea {
 }
 
 .child-tasks-page {
-  --child-tasks-viewport-card-width: min(84vw, 23rem);
+  --child-tasks-viewport-card-width: min(88vw, 24.25rem);
   position: relative;
   flex: 1 1 auto;
   min-height: 100dvh;
@@ -1318,7 +1318,7 @@ textarea {
 
 .child-tasks-slide__card .child-visual-task-card {
   padding: 0.55rem;
-  padding-right: 4.1rem;
+  padding-right: 5.25rem;
 }
 
 .child-tasks-slide__card .child-visual-task-image-wrap {
@@ -1334,15 +1334,19 @@ textarea {
 
 .child-tasks-slide__card .child-task-reward-badge {
   top: 0.55rem;
-  right: 0.55rem;
+  right: 0.22rem;
   padding: 0.32rem 0.52rem;
   font-size: 0.68rem;
+}
+
+.child-tasks-slide__card .child-task-card__action {
+  right: 0.22rem;
 }
 
 .child-tasks-scene-fallback-card {
   overflow: hidden;
   min-height: 7.3rem;
-  padding: 0.65rem 4.15rem 0.65rem 0.7rem;
+  padding: 0.65rem 5.25rem 0.65rem 0.7rem;
 }
 
 .child-tasks-scene-fallback-card .task-icon-frame {
@@ -1913,7 +1917,7 @@ textarea {
   }
 
   .child-tasks-page {
-    --child-tasks-viewport-card-width: min(86vw, 20rem);
+    --child-tasks-viewport-card-width: min(90vw, 21rem);
   }
 
   .child-tasks-hero {

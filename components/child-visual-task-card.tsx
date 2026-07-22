@@ -176,7 +176,7 @@ export function ChildVisualTaskCard({
           />
         </div>
       </div>
-      <div className="child-task-reward-badge absolute right-4 top-4 shrink-0 flex-nowrap">
+      <div className="child-task-reward-badge child-task-card__reward absolute right-4 top-4 shrink-0 flex-nowrap">
         <span className="child-task-reward-badge__content">
           <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
           <span
@@ -186,7 +186,7 @@ export function ChildVisualTaskCard({
           />
         </span>
       </div>
-      <div className="absolute bottom-4 right-4">
+      <div className="child-task-card__action absolute bottom-4 right-4">
         <ChildTaskBoopButton
           imageDebugMode={imageDebugMode}
           size="compact"
