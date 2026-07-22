@@ -7,20 +7,6 @@ import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import type { ChildModeData } from "@/lib/types";
 import { formatBoops } from "@/lib/utils";
 import Image from "next/image";
-import type { CSSProperties } from "react";
-
-const PROFILE_TWINKLE_STARS = [
-  { delay: "0.1s", duration: "3.05s", left: "8%", size: "0.36rem", top: "8%" },
-  { delay: "0.7s", duration: "3.45s", left: "21%", size: "0.62rem", top: "11%" },
-  { delay: "1.25s", duration: "2.85s", left: "39%", size: "0.3rem", top: "7%" },
-  { delay: "0.55s", duration: "3.2s", left: "58%", size: "0.54rem", top: "10%" },
-  { delay: "1.6s", duration: "2.95s", left: "74%", size: "0.34rem", top: "8%" },
-  { delay: "0.35s", duration: "3.7s", left: "87%", size: "0.68rem", top: "13%" },
-  { delay: "1.15s", duration: "3.1s", left: "13%", size: "0.7rem", top: "24%" },
-  { delay: "0.85s", duration: "2.75s", left: "29%", size: "0.4rem", top: "30%" },
-  { delay: "1.9s", duration: "3.4s", left: "61%", size: "0.5rem", top: "27%" },
-  { delay: "0.45s", duration: "2.9s", left: "81%", size: "0.34rem", top: "33%" },
-] as const;
 
 export function ChildProfileScene({
   bannerCode,
@@ -49,23 +35,6 @@ export function ChildProfileScene({
         unoptimized
       />
       <div aria-hidden="true" className="child-home-background-glow" />
-      <div aria-hidden="true" className="child-home-twinkle-layer">
-        {PROFILE_TWINKLE_STARS.map((star, index) => (
-          <span
-            key={`child-profile-star-${index}`}
-            className="child-home-twinkle-star"
-            style={
-              {
-                "--twinkle-delay": star.delay,
-                "--twinkle-duration": star.duration,
-                "--twinkle-left": star.left,
-                "--twinkle-size": star.size,
-                "--twinkle-top": star.top,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
 
       <div className="child-home-topbar">
         <ExitChildModeButton className="border-white/70 bg-white/96 text-[#0d348d] shadow-[0_14px_32px_rgba(4,25,94,0.28)] hover:bg-white" />

@@ -10,22 +10,6 @@ import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import type { ChildModeData } from "@/lib/types";
 import { formatBoops } from "@/lib/utils";
 import Image from "next/image";
-import type { CSSProperties } from "react";
-
-const HOME_TWINKLE_STARS = [
-  { delay: "0s", duration: "2.8s", left: "8%", size: "0.38rem", top: "8%" },
-  { delay: "0.6s", duration: "3.4s", left: "19%", size: "0.62rem", top: "12%" },
-  { delay: "1.1s", duration: "2.6s", left: "34%", size: "0.3rem", top: "7%" },
-  { delay: "0.9s", duration: "3.1s", left: "52%", size: "0.56rem", top: "10%" },
-  { delay: "1.7s", duration: "2.9s", left: "69%", size: "0.36rem", top: "6%" },
-  { delay: "0.25s", duration: "3.8s", left: "84%", size: "0.7rem", top: "11%" },
-  { delay: "1.35s", duration: "3.2s", left: "12%", size: "0.72rem", top: "22%" },
-  { delay: "0.8s", duration: "2.7s", left: "28%", size: "0.42rem", top: "28%" },
-  { delay: "1.9s", duration: "3.5s", left: "61%", size: "0.6rem", top: "24%" },
-  { delay: "0.4s", duration: "2.95s", left: "79%", size: "0.34rem", top: "31%" },
-  { delay: "1.5s", duration: "3.6s", left: "16%", size: "0.5rem", top: "43%" },
-  { delay: "1.05s", duration: "2.85s", left: "73%", size: "0.52rem", top: "49%" },
-] as const;
 
 export function ChildHomeScene({
   bannerCode,
@@ -62,23 +46,6 @@ export function ChildHomeScene({
         unoptimized
       />
       <div aria-hidden="true" className="child-home-background-glow" />
-      <div aria-hidden="true" className="child-home-twinkle-layer">
-        {HOME_TWINKLE_STARS.map((star, index) => (
-          <span
-            key={`child-home-star-${index}`}
-            className="child-home-twinkle-star"
-            style={
-              {
-                "--twinkle-delay": star.delay,
-                "--twinkle-duration": star.duration,
-                "--twinkle-left": star.left,
-                "--twinkle-size": star.size,
-                "--twinkle-top": star.top,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
 
       <div className="child-home-topbar">
         <ExitChildModeButton className="border-white/70 bg-white/96 text-[#0d348d] shadow-[0_14px_32px_rgba(4,25,94,0.28)] hover:bg-white" />

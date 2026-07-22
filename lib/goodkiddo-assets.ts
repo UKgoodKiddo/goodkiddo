@@ -57,6 +57,8 @@ export const GOODKIDDO_ASSETS = {
   childChangingRoomButton: "/goodkiddo/child ui buttons/Changing room icon.png",
   childCreativeCoveButton: "/goodkiddo/child ui buttons/creative cove button.png",
   childHomeBackground: "/goodkiddo/child-home-handover/child-ui-background.webp",
+  childTasksBackground: "/goodkiddo/child-home-handover/tasks-ui-background.webp",
+  childRewardsBackground: "/goodkiddo/child-home-handover/rewards-ui-background.webp",
   childHomeLevelBadge: "/goodkiddo/child-home-handover/star-level-badge.webp",
   childHomeNfcBadge: "/goodkiddo/child-home-handover/nfc-badge.webp",
   childKiddoExplorersButton:

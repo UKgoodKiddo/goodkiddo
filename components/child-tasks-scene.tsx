@@ -15,20 +15,6 @@ import { getTaskCardCatalog, findTaskCardAssetInCatalog } from "@/lib/task-card-
 import type { ChildModeData } from "@/lib/types";
 import { formatBoops } from "@/lib/utils";
 import Image from "next/image";
-import type { CSSProperties } from "react";
-
-const TASKS_TWINKLE_STARS = [
-  { delay: "0.15s", duration: "3.2s", left: "10%", size: "0.34rem", top: "10%" },
-  { delay: "0.9s", duration: "2.75s", left: "24%", size: "0.6rem", top: "8%" },
-  { delay: "1.35s", duration: "3.55s", left: "43%", size: "0.28rem", top: "12%" },
-  { delay: "0.45s", duration: "2.95s", left: "64%", size: "0.54rem", top: "9%" },
-  { delay: "1.8s", duration: "3.45s", left: "82%", size: "0.38rem", top: "13%" },
-  { delay: "0.6s", duration: "2.9s", left: "14%", size: "0.68rem", top: "26%" },
-  { delay: "1.5s", duration: "3.35s", left: "31%", size: "0.36rem", top: "33%" },
-  { delay: "1.05s", duration: "2.8s", left: "57%", size: "0.5rem", top: "29%" },
-  { delay: "0.25s", duration: "3.6s", left: "77%", size: "0.32rem", top: "37%" },
-  { delay: "1.2s", duration: "2.7s", left: "89%", size: "0.58rem", top: "30%" },
-] as const;
 
 function renderFallbackTaskCard(
   task: ChildModeData["tasks"][number],
@@ -121,27 +107,10 @@ export async function ChildTasksScene({
         fill
         priority
         sizes="100vw"
-        src={GOODKIDDO_ASSETS.childHomeBackground}
+        src={GOODKIDDO_ASSETS.childTasksBackground}
         unoptimized
       />
       <div aria-hidden="true" className="child-home-background-glow" />
-      <div aria-hidden="true" className="child-home-twinkle-layer">
-        {TASKS_TWINKLE_STARS.map((star, index) => (
-          <span
-            key={`child-tasks-star-${index}`}
-            className="child-home-twinkle-star"
-            style={
-              {
-                "--twinkle-delay": star.delay,
-                "--twinkle-duration": star.duration,
-                "--twinkle-left": star.left,
-                "--twinkle-size": star.size,
-                "--twinkle-top": star.top,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
 
       <div className="child-home-topbar">
         <ExitChildModeButton className="border-white/70 bg-white/96 text-[#0d348d] shadow-[0_14px_32px_rgba(4,25,94,0.28)] hover:bg-white" />
