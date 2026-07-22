@@ -1440,7 +1440,7 @@ textarea {
 }
 
 .child-rewards-page {
-  --child-rewards-viewport-card-width: min(72vw, 18.5rem);
+  --child-rewards-viewport-card-width: min(58.32vw, 14.985rem);
   position: relative;
   flex: 1 1 auto;
   min-height: 100dvh;
@@ -1507,6 +1507,7 @@ textarea {
   min-height: 0;
   flex: 1 1 auto;
   align-items: center;
+  padding-block: 0.2rem;
 }
 
 .child-rewards-viewport {
@@ -1528,11 +1529,14 @@ textarea {
 .child-rewards-slide__card {
   position: relative;
   display: flex;
-  min-height: 12.2rem;
+  min-height: 10rem;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.32rem;
   border-radius: 1.8rem;
-  padding: 0.9rem 0.8rem 0.95rem;
+  padding: 0.72rem 0.72rem 0.78rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(245, 249, 255, 0.3));
 }
 
 .child-rewards-slide__card[data-locked="true"] {
@@ -1540,6 +1544,9 @@ textarea {
 }
 
 .child-rewards-slide__card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
   min-width: 0;
   text-align: center;
 }
@@ -1551,7 +1558,6 @@ textarea {
 }
 
 .child-rewards-slide__subtitle {
-  margin-top: 0.18rem;
   font-size: 0.72rem;
   font-weight: 900;
   line-height: 1.2;
@@ -1561,7 +1567,7 @@ textarea {
 }
 
 .child-rewards-slide__card .child-reward-request-wrap {
-  gap: 0.42rem;
+  gap: 0.24rem;
 }
 
 .child-rewards-slide__card .child-reward-request-icon {
@@ -1915,7 +1921,7 @@ textarea {
   }
 
   .child-rewards-page {
-    --child-rewards-viewport-card-width: min(76vw, 16.5rem);
+    --child-rewards-viewport-card-width: min(61.56vw, 13.365rem);
   }
 
   .child-rewards-hero {
@@ -1932,7 +1938,7 @@ textarea {
   }
 
   .child-rewards-slide__card {
-    min-height: 11.1rem;
+    min-height: 9.15rem;
   }
 
   .child-profile-page {

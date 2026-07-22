@@ -127,11 +127,11 @@ export function ChildRewardsScene({
                     >
                       <div className="child-rewards-slide__card-copy">
                         <p className="child-rewards-slide__title">{reward.title}</p>
-                        <p className="child-rewards-slide__subtitle">
-                          {isLocked
-                            ? `${reward.cost - boopBalance} more boops needed`
-                            : "Ready to request"}
-                        </p>
+                        {isLocked ? (
+                          <p className="child-rewards-slide__subtitle">
+                            {reward.cost - boopBalance} more boops needed
+                          </p>
+                        ) : null}
                       </div>
                       <ChildRewardRequestButton
                         cost={reward.cost}
