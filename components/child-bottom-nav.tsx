@@ -50,7 +50,12 @@ export function ChildBottomNav({
   return (
     <nav
       aria-label="Child navigation"
-      className="mt-6 rounded-[1.8rem] bg-white p-3 text-[color:var(--foreground)] shadow-[0_18px_35px_rgba(7,26,85,0.18)]"
+      className={cn(
+        "rounded-[1.8rem] bg-white p-3 text-[color:var(--foreground)] shadow-[0_18px_35px_rgba(7,26,85,0.18)]",
+        pathname === "/child"
+          ? "child-bottom-nav child-bottom-nav--home"
+          : "mt-6",
+      )}
     >
       <div className="grid grid-cols-4 gap-2">
         {navItems.map((item) => (

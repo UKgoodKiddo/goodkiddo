@@ -18,6 +18,9 @@ import {
   type Editor,
   type TLDefaultColorStyle,
   type TLDefaultSizeStyle,
+  type TLEventInfo,
+  type TLShapeId,
+  type TLShapePartial,
 } from "tldraw";
 import "tldraw/tldraw.css";
 
@@ -82,7 +85,7 @@ type EditorDebugEntry = {
 };
 
 type DrawShapeLike = {
-  id: unknown;
+  id: TLShapeId;
   props?: {
     isComplete?: boolean;
   };
@@ -123,6 +126,12 @@ const CREATIVE_COVE_ISOLATION_OPTIONS = {
   camera: { isLocked: true },
   maxPages: 1,
 } as const;
+
+function getDeterministicUnit(seed: number) {
+  const raw = Math.sin(seed * 12.9898) * 43758.5453;
+
+  return raw - Math.floor(raw);
+}
 
 function getCreativeCoveExportBaseName() {
   const now = new Date();
@@ -425,6 +434,12 @@ export function CreativeCoveCanvas() {
     setEditorDebugLog((current) => [entry, ...current].slice(0, MAX_DEBUG_ENTRIES));
   }
 
+  function scheduleEditorDebugEntry(entry: EditorDebugEntry) {
+    return window.setTimeout(() => {
+      appendEditorDebugEntry(entry);
+    }, 0);
+  }
+
   function getObjectInstanceId(target: object | null | undefined) {
     if (!target) {
       return "none";
@@ -481,12 +496,15 @@ export function CreativeCoveCanvas() {
 
   useEffect(() => {
     visibleEditorRef.current = editor;
-
-    appendEditorDebugEntry({
+    const timeoutId = scheduleEditorDebugEntry({
       detail: getEditorRelationshipSummary(editor),
       event: "visible-editor-sync",
       tool: editor?.getPath() ?? "no-editor",
     });
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [editor]);
 
   useEffect(() => {
@@ -676,7 +694,7 @@ export function CreativeCoveCanvas() {
       return;
     }
 
-    appendEditorDebugEntry({
+    const timeoutId = scheduleEditorDebugEntry({
       detail: `Applying tool/style sync | tool:${activeTool} color:${activeColor} size:${activeSize} | ${getEditorRelationshipSummary(editor)}`,
       event: "effect-apply-style",
       tool: editor.getPath(),
@@ -685,6 +703,10 @@ export function CreativeCoveCanvas() {
     editor.setCurrentTool(activeTool);
     editor.setStyleForNextShapes(DefaultColorStyle, activeColor);
     editor.setStyleForNextShapes(DefaultSizeStyle, activeSize);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [activeColor, activeSize, activeTool, editor]);
 
   useEffect(() => {
@@ -776,13 +798,13 @@ export function CreativeCoveCanvas() {
         return;
       }
 
-      currentEditor.updateShapes(
-        incompleteDrawShapes.map((shape) => ({
-          id: shape.id,
-          props: { isComplete: true },
-          type: "draw" as const,
-        })) as any,
-      );
+      const updates: TLShapePartial[] = incompleteDrawShapes.map((shape) => ({
+        id: shape.id,
+        props: { isComplete: true },
+        type: "draw",
+      }));
+
+      currentEditor.updateShapes(updates);
 
       appendEditorDebugEntry({
         detail: `${incompleteDrawShapes.length} forced complete on ${reason} | ${getEditorRelationshipSummary(currentEditor)}`,
@@ -818,10 +840,10 @@ export function CreativeCoveCanvas() {
       }, 0);
     }
 
-    const handleEditorEvent = (info: any) => {
+    const handleEditorEvent = (info: TLEventInfo) => {
       if (info.type === "pointer") {
         appendEditorDebugEntry({
-          detail: `${info.target ?? "unknown"} | ${getEditorRelationshipSummary(currentEditor)}`,
+          detail: `${info.target} | ${getEditorRelationshipSummary(currentEditor)}`,
           event: info.name,
           tool: getToolPath(),
         });
@@ -990,8 +1012,8 @@ export function CreativeCoveCanvas() {
 
       activePointerId = event.pointerId;
       currentEditor.focus();
-      currentEditor.markEventAsHandled(event as any);
-      preventDefault(event as any);
+      currentEditor.markEventAsHandled(event);
+      preventDefault(event);
       setPointerCapture(bridgeElement, event);
       bumpBridgeCounter("pointer_down");
 
@@ -1026,8 +1048,8 @@ export function CreativeCoveCanvas() {
       }
 
       currentEditor.focus({ focusContainer: false });
-      currentEditor.markEventAsHandled(event as any);
-      preventDefault(event as any);
+      currentEditor.markEventAsHandled(event);
+      preventDefault(event);
       bumpBridgeCounter("pointer_move");
 
       try {
@@ -1052,8 +1074,8 @@ export function CreativeCoveCanvas() {
       }
 
       currentEditor.focus({ focusContainer: false });
-      currentEditor.markEventAsHandled(event as any);
-      preventDefault(event as any);
+      currentEditor.markEventAsHandled(event);
+      preventDefault(event);
       releasePointerCapture(bridgeElement, event);
 
       if (reason === "pointer_up") {
@@ -1154,12 +1176,12 @@ export function CreativeCoveCanvas() {
 
     const bubble: TapBubbleSpec = {
       delay: "0s",
-      drift: `${Math.round((Math.random() - 0.5) * 18)}px`,
-      duration: `${(8.8 + Math.random() * 2.4).toFixed(2)}s`,
+      drift: `${Math.round((getDeterministicUnit(bubbleId + leftPercent) - 0.5) * 18)}px`,
+      duration: `${(8.8 + getDeterministicUnit(bubbleId + startPercent + 17) * 2.4).toFixed(2)}s`,
       id: bubbleId,
       left: `${Math.min(Math.max(leftPercent, 6), 94).toFixed(2)}%`,
       opacity: 0.78,
-      size: `${(1 + Math.random() * 0.7).toFixed(2)}rem`,
+      size: `${(1 + getDeterministicUnit(bubbleId + leftPercent + startPercent + 31) * 0.7).toFixed(2)}rem`,
       start: `${Math.min(Math.max(startPercent, 12), 94).toFixed(2)}%`,
     };
 

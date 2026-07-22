@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 function LockIcon() {
   return (
@@ -31,7 +32,11 @@ function LockIcon() {
   );
 }
 
-export function ExitChildModeButton() {
+export function ExitChildModeButton({
+  className,
+}: {
+  className?: string;
+}) {
   const pathname = usePathname();
 
   if (pathname === "/child/unlock") {
@@ -41,7 +46,10 @@ export function ExitChildModeButton() {
   return (
     <Link
       aria-label="Unlock parent mode"
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white shadow-[0_10px_24px_rgba(7,22,66,0.22)] transition-colors duration-150 hover:bg-white/16"
+      className={cn(
+        "flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white shadow-[0_10px_24px_rgba(7,22,66,0.22)] transition-colors duration-150 hover:bg-white/16",
+        className,
+      )}
       href="/child/unlock"
       title="Unlock parent mode"
     >

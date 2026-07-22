@@ -1,8 +1,4 @@
-import { ChildPageScaffold } from "@/components/child-page-scaffold";
-import {
-  ChildSectionLaunchButtons,
-  ChildSummaryCard,
-} from "@/components/child-sections";
+import { ChildHomeScene } from "@/components/child-home-scene";
 import type { KiddoImageDebugMode } from "@/components/kiddo-route-image";
 import { getChildModeData } from "@/lib/data";
 
@@ -22,11 +18,10 @@ export default async function ChildPage(props: {
       : "off";
 
   return (
-    <ChildPageScaffold bannerCode={bannerCode} childMode={childMode}>
-      <section className="space-y-5">
-        <ChildSummaryCard childMode={childMode} imageDebugMode={imageDebugMode} />
-        <ChildSectionLaunchButtons />
-      </section>
-    </ChildPageScaffold>
+    <ChildHomeScene
+      bannerCode={bannerCode}
+      childMode={childMode}
+      imageDebugMode={imageDebugMode}
+    />
   );
 }
