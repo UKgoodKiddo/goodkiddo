@@ -15,10 +15,7 @@ import {
   createSupabaseAdminClient,
   createSupabaseServerClient,
 } from "@/lib/supabase/server";
-import type { ChildAchievement, ChildProfile, Database } from "@/lib/types";
-
-type AchievementRow =
-  Database["public"]["Functions"]["award_child_achievement"]["Returns"][number];
+import type { ChildAchievement, ChildProfile } from "@/lib/types";
 
 export type AchievementPreviewMode =
   | "all-locked"
@@ -268,7 +265,7 @@ export async function awardAchievement(params: {
     throw new Error(`Unknown achievement id "${params.achievementId}".`);
   }
 
-  const { data, error } = await context.parentSupabase.rpc("award_child_achievement", {
+  const { error } = await context.parentSupabase.rpc("award_child_achievement", {
     target_achievement_id: params.achievementId,
     target_child_profile_id: params.childId,
   });
@@ -277,10 +274,6 @@ export async function awardAchievement(params: {
     throw new Error(error.message);
   }
 
-  const rows = (data ?? []) as AchievementRow[];
-  const unlockedAchievementIdsFromRpc = rows
-    .map((row) => row.achievement_id)
-    .filter((achievementId): achievementId is AchievementId => isAchievementId(achievementId));
   const { data: allAchievements, error: allAchievementsError } = await context.admin
     .from("child_achievements")
     .select("achievement_id, unlocked_at")

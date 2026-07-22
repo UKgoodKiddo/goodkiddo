@@ -97,6 +97,9 @@ export function ChildAchievementsBoard({
             />
 
             <div aria-hidden="true" className="child-achievements-progress-strip">
+              <p className="sr-only">
+                {`${unlockedStandardBadgeCount} standard achievement badges unlocked so far.`}
+              </p>
               <div
                 className="child-achievements-progress-strip__stars"
                 style={
@@ -107,7 +110,7 @@ export function ChildAchievementsBoard({
                   } as CSSProperties
                 }
               >
-                {progressBadges.map((progressBadge, index) => {
+                {progressBadges.map((progressBadge) => {
                   return (
                     <span
                       key={`progress-star-${progressBadge.id}`}

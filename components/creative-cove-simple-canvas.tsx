@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -57,7 +58,6 @@ function getCreativeCoveExportName() {
 function drawStroke(
   context: CanvasRenderingContext2D,
   stroke: Stroke,
-  rect: { width: number; height: number },
 ) {
   if (!stroke.points.length) {
     return;
@@ -105,20 +105,20 @@ export const CreativeCoveSimpleCanvas = forwardRef<
   const strokesRef = useRef<Stroke[]>([]);
   const surfaceSizeRef = useRef({ height: 1, width: 1 });
 
-  function getContext() {
+  const getContext = useCallback(() => {
     return canvasRef.current?.getContext("2d") ?? null;
-  }
+  }, []);
 
-  function fillBackground(context: CanvasRenderingContext2D) {
+  const fillBackground = useCallback((context: CanvasRenderingContext2D) => {
     const { height, width } = surfaceSizeRef.current;
     context.save();
     context.globalCompositeOperation = "source-over";
     context.fillStyle = BACKGROUND_COLOR;
     context.fillRect(0, 0, width, height);
     context.restore();
-  }
+  }, []);
 
-  function redrawAllStrokes() {
+  const redrawAllStrokes = useCallback(() => {
     const context = getContext();
 
     if (!context) {
@@ -128,15 +128,15 @@ export const CreativeCoveSimpleCanvas = forwardRef<
     fillBackground(context);
 
     for (const stroke of strokesRef.current) {
-      drawStroke(context, stroke, surfaceSizeRef.current);
+      drawStroke(context, stroke);
     }
 
     if (activeStrokeRef.current) {
-      drawStroke(context, activeStrokeRef.current, surfaceSizeRef.current);
+      drawStroke(context, activeStrokeRef.current);
     }
-  }
+  }, [fillBackground, getContext]);
 
-  function resizeCanvas() {
+  const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
 
@@ -163,7 +163,7 @@ export const CreativeCoveSimpleCanvas = forwardRef<
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     redrawAllStrokes();
-  }
+  }, [getContext, redrawAllStrokes]);
 
   function getPoint(event: ReactPointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -228,7 +228,7 @@ export const CreativeCoveSimpleCanvas = forwardRef<
 
   useLayoutEffect(() => {
     resizeCanvas();
-  }, []);
+  }, [resizeCanvas]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -246,7 +246,7 @@ export const CreativeCoveSimpleCanvas = forwardRef<
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [resizeCanvas]);
 
   useEffect(() => {
     if (!activeStrokeRef.current) {
@@ -294,7 +294,7 @@ export const CreativeCoveSimpleCanvas = forwardRef<
         redrawAllStrokes();
       },
     }),
-    [],
+    [redrawAllStrokes],
   );
 
   return (

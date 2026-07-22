@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import {
   CreativeCoveSimpleCanvas,
@@ -305,7 +306,15 @@ function CreativeCoveToolbarButton({
       type="button"
     >
       <span className="creative-cove-action-button__icon-wrap" aria-hidden="true">
-        <img alt="" className="creative-cove-action-button__icon" loading="lazy" src={iconSrc} />
+        <Image
+          alt=""
+          className="creative-cove-action-button__icon"
+          height={96}
+          loading="lazy"
+          src={iconSrc}
+          unoptimized
+          width={96}
+        />
       </span>
       <span className="creative-cove-action-button__label">{label}</span>
     </button>
@@ -332,7 +341,15 @@ function CreativeCoveColorButton({
       onClick={onClick}
       type="button"
     >
-      <img alt="" className="creative-cove-swatch-button__image" loading="lazy" src={imageSrc} />
+      <Image
+        alt=""
+        className="creative-cove-swatch-button__image"
+        height={96}
+        loading="lazy"
+        src={imageSrc}
+        unoptimized
+        width={96}
+      />
     </button>
   );
 }
@@ -357,7 +374,15 @@ function CreativeCoveThicknessButton({
       type="button"
     >
       <span className="creative-cove-thickness-button__icon-wrap" aria-hidden="true">
-        <img alt="" className="creative-cove-thickness-button__icon" loading="lazy" src={iconSrc} />
+        <Image
+          alt=""
+          className="creative-cove-thickness-button__icon"
+          height={96}
+          loading="lazy"
+          src={iconSrc}
+          unoptimized
+          width={96}
+        />
       </span>
       <span className="creative-cove-thickness-button__label">{label}</span>
     </button>
@@ -421,7 +446,7 @@ export function CreativeCoveCanvas() {
     };
   }, []);
 
-  function appendEditorDebugEntry(entry: EditorDebugEntry) {
+  const appendEditorDebugEntry = useCallback((entry: EditorDebugEntry) => {
     if (entry.event === "pointer_down" || entry.event === "pointer_move" || entry.event === "pointer_up") {
       setDebugCounters((current) => ({
         ...current,
@@ -432,15 +457,15 @@ export function CreativeCoveCanvas() {
     }
 
     setEditorDebugLog((current) => [entry, ...current].slice(0, MAX_DEBUG_ENTRIES));
-  }
+  }, []);
 
-  function scheduleEditorDebugEntry(entry: EditorDebugEntry) {
+  const scheduleEditorDebugEntry = useCallback((entry: EditorDebugEntry) => {
     return window.setTimeout(() => {
       appendEditorDebugEntry(entry);
     }, 0);
-  }
+  }, [appendEditorDebugEntry]);
 
-  function getObjectInstanceId(target: object | null | undefined) {
+  const getObjectInstanceId = useCallback((target: object | null | undefined) => {
     if (!target) {
       return "none";
     }
@@ -455,18 +480,18 @@ export function CreativeCoveCanvas() {
     nextObjectIdRef.current += 1;
     objectIdsRef.current.set(target, nextId);
     return `#${nextId}`;
-  }
+  }, []);
 
   function getEditorStore(editorInstance: Editor | null | undefined) {
     const candidate = (editorInstance as (Editor & { store?: object | null }) | null | undefined)?.store;
     return candidate && typeof candidate === "object" ? candidate : null;
   }
 
-  function getEditorInstanceLabel(editorInstance: Editor | null | undefined) {
+  const getEditorInstanceLabel = useCallback((editorInstance: Editor | null | undefined) => {
     return `editor:${getObjectInstanceId(editorInstance)} store:${getObjectInstanceId(getEditorStore(editorInstance))}`;
-  }
+  }, [getObjectInstanceId]);
 
-  function getEditorRelationshipSummary(targetEditor: Editor | null | undefined) {
+  const getEditorRelationshipSummary = useCallback((targetEditor: Editor | null | undefined) => {
     const refEditor = editorRef.current;
     const visibleEditorInstance = visibleEditorRef.current;
 
@@ -478,15 +503,15 @@ export function CreativeCoveCanvas() {
       `target===ref ${targetEditor === refEditor}`,
       `target===visible ${targetEditor === visibleEditorInstance}`,
     ].join(" | ");
-  }
+  }, [getEditorInstanceLabel]);
 
-  function logToolbarCommand(command: string, targetEditor: Editor | null | undefined, detail: string) {
+  const logToolbarCommand = useCallback((command: string, targetEditor: Editor | null | undefined, detail: string) => {
     appendEditorDebugEntry({
       detail: `${detail} | ${getEditorRelationshipSummary(targetEditor)}`,
       event: `toolbar:${command}`,
       tool: targetEditor?.getPath() ?? "no-editor",
     });
-  }
+  }, [appendEditorDebugEntry, getEditorRelationshipSummary]);
 
   useEffect(() => {
     activeColorRef.current = activeColor;
@@ -505,7 +530,7 @@ export function CreativeCoveCanvas() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [editor]);
+  }, [editor, getEditorRelationshipSummary, scheduleEditorDebugEntry]);
 
   useEffect(() => {
     const sceneElement = sceneRef.current;
@@ -687,7 +712,7 @@ export function CreativeCoveCanvas() {
       });
       cleanupCallbacks.forEach((cleanup) => cleanup());
     };
-  }, [editor]);
+  }, [appendEditorDebugEntry, editor, getEditorRelationshipSummary]);
 
   useEffect(() => {
     if (!editor) {
@@ -707,7 +732,7 @@ export function CreativeCoveCanvas() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [activeColor, activeSize, activeTool, editor]);
+  }, [activeColor, activeSize, activeTool, editor, getEditorRelationshipSummary, scheduleEditorDebugEntry]);
 
   useEffect(() => {
     if (!editor) {
@@ -952,7 +977,7 @@ export function CreativeCoveCanvas() {
       currentEditor.off("deleted-shapes", handleDeletedShapes);
       currentEditor.off("change", handleChange);
     };
-  }, [editor]);
+  }, [appendEditorDebugEntry, editor, getEditorInstanceLabel, getEditorRelationshipSummary]);
 
   useEffect(() => {
     if (!editor || !stageRef.current) {
@@ -1142,7 +1167,7 @@ export function CreativeCoveCanvas() {
         tool: currentEditor.getPath(),
       });
     };
-  }, [editor]);
+  }, [appendEditorDebugEntry, editor, getEditorRelationshipSummary]);
 
   function handleToolChange(toolId: CreativeToolId) {
     if (!ENABLE_SIMPLE_CREATIVE_COVE_CANVAS) {
@@ -1428,20 +1453,24 @@ export function CreativeCoveCanvas() {
   return (
     <div className="creative-cove-shell">
       <section className="creative-cove-scene" ref={sceneRef}>
-        <img
+        <Image
           alt=""
           aria-hidden="true"
           className="creative-cove-background"
-          fetchPriority="high"
+          fill
+          priority
+          sizes="100vw"
           src={BACKGROUND_ASSETS.uiBackground}
+          unoptimized
         />
 
         <div className="creative-cove-bubble-layer creative-cove-bubble-layer--far" aria-hidden="true">
           {FAR_BUBBLES.map((bubble, index) => (
-            <img
+            <Image
               key={`far-bubble-${index}`}
               alt=""
               className="creative-cove-bubble"
+              height={128}
               loading="lazy"
               src={BACKGROUND_ASSETS.bubble}
               style={
@@ -1455,18 +1484,23 @@ export function CreativeCoveCanvas() {
                   "--bubble-start": bubble.start,
                 } as CSSProperties
               }
+              unoptimized
+              width={128}
             />
           ))}
         </div>
 
         <div className="creative-cove-decor-layer" aria-hidden="true">
           {DECORATIVE_ASSETS.map((asset) => (
-            <img
+            <Image
               key={asset.className}
               alt=""
               className={asset.className}
+              height={512}
               loading={asset.loading ?? "lazy"}
               src={asset.src}
+              unoptimized
+              width={512}
             />
           ))}
         </div>
@@ -1476,10 +1510,11 @@ export function CreativeCoveCanvas() {
           aria-hidden="true"
         >
           {FOREGROUND_BUBBLES.map((bubble, index) => (
-            <img
+            <Image
               key={`foreground-bubble-${index}`}
               alt=""
               className="creative-cove-bubble"
+              height={128}
               loading="lazy"
               src={BACKGROUND_ASSETS.bubble}
               style={
@@ -1493,15 +1528,20 @@ export function CreativeCoveCanvas() {
                   "--bubble-start": bubble.start,
                 } as CSSProperties
               }
+              unoptimized
+              width={128}
             />
           ))}
         </div>
 
-        <img
+        <Image
           alt="Creative Cove. Draw anything. Be creative."
           className="creative-cove-title-card"
-          fetchPriority="high"
+          height={256}
+          priority
           src={BACKGROUND_ASSETS.pageTitleCard}
+          unoptimized
+          width={768}
         />
 
         <div className="creative-cove-ui">
@@ -1617,10 +1657,11 @@ export function CreativeCoveCanvas() {
 
         <div className="creative-cove-bubble-layer creative-cove-bubble-layer--tap" aria-hidden="true">
           {tapBubbles.map((bubble) => (
-            <img
+            <Image
               key={bubble.id}
               alt=""
               className="creative-cove-bubble creative-cove-bubble--tap"
+              height={128}
               loading="lazy"
               src={BACKGROUND_ASSETS.bubble}
               style={
@@ -1634,6 +1675,8 @@ export function CreativeCoveCanvas() {
                   "--bubble-start": bubble.start,
                 } as CSSProperties
               }
+              unoptimized
+              width={128}
             />
           ))}
         </div>
