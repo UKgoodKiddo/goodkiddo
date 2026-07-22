@@ -39,7 +39,7 @@ export function ChildLayoutShell({
           </header>
         ) : null}
         <div className={cn("flex flex-1 flex-col", isHomeRoute ? "min-h-0" : "")}>{children}</div>
-        {childMode.child ? (
+        {childMode.child && !isHomeRoute ? (
           <ChildBottomNav pendingBoopTotal={childMode.pendingBoopTotal} />
         ) : null}
       </div>

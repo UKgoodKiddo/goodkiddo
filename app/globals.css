@@ -812,6 +812,18 @@ textarea {
   transform: translateY(-1px);
 }
 
+.child-home-profile-link--icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+}
+
+.child-home-profile-link__icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .child-home-profile-link__avatar {
   display: inline-flex;
   width: 100%;
@@ -864,17 +876,17 @@ textarea {
   width: min(100%, 29rem);
   margin: 0 auto;
   padding:
-    calc(env(safe-area-inset-top, 0px) + 6.3rem)
+    calc(env(safe-area-inset-top, 0px) + 5.2rem)
     1rem
-    calc(env(safe-area-inset-bottom, 0px) + 9.25rem);
-  gap: clamp(0.9rem, 2.1vh, 1.35rem);
+    calc(env(safe-area-inset-bottom, 0px) + 1.75rem);
+  gap: clamp(0.45rem, 1.2vh, 0.8rem);
 }
 
 .child-home-hero {
   display: grid;
   grid-template-columns: minmax(0, 7.8rem) minmax(0, 1fr);
   align-items: center;
-  gap: 0.95rem;
+  gap: 0.72rem;
 }
 
 .child-home-mascot-wrap {
@@ -888,6 +900,10 @@ textarea {
   height: auto;
   filter: drop-shadow(0 16px 28px rgba(3, 27, 107, 0.38));
   animation: child-home-mascot-bob 3.4s ease-in-out infinite;
+}
+
+.child-home-mascot--avatar {
+  max-height: 11.7rem;
 }
 
 @keyframes child-home-mascot-bob {
@@ -910,7 +926,7 @@ textarea {
 }
 
 .child-home-name {
-  margin-top: 0.35rem;
+  margin-top: 0.15rem;
   font-size: clamp(2.55rem, 10vw, 3.6rem);
   font-weight: 900;
   line-height: 0.94;
@@ -918,7 +934,7 @@ textarea {
 }
 
 .child-home-boops {
-  margin-top: 0.35rem;
+  margin-top: 0.15rem;
   display: inline-flex;
   align-items: baseline;
   gap: 0.4rem;
@@ -937,26 +953,31 @@ textarea {
 }
 
 .child-home-waiting-pill {
-  margin-top: 0.6rem;
+  margin-top: 0.4rem;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   max-width: 100%;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(23, 89, 227, 0.48), rgba(12, 57, 164, 0.6));
-  padding: 0.7rem 0.95rem;
+  padding: 0.55rem 0.8rem;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.18),
     0 14px 24px rgba(2, 16, 67, 0.18);
-  font-size: 0.95rem;
+  font-size: clamp(0.72rem, 2.3vw, 0.85rem);
   font-weight: 800;
+  white-space: nowrap;
+}
+
+.child-home-waiting-pill img {
+  flex-shrink: 0;
 }
 
 .child-home-level-row {
   display: grid;
   grid-template-columns: minmax(0, 5.95rem) minmax(0, 1fr);
   align-items: center;
-  gap: 0.95rem;
+  gap: 0.72rem;
 }
 
 .child-home-level-badge {
@@ -982,36 +1003,36 @@ textarea {
 }
 
 .child-home-level-badge__eyebrow {
-  margin-top: -0.4rem;
-  font-size: 0.68rem;
+  margin-top: calc(-0.4rem + 10px);
+  font-size: 0.56rem;
   font-weight: 900;
   letter-spacing: 0.18em;
   color: rgba(228, 239, 255, 0.88);
 }
 
 .child-home-level-badge__value {
-  margin-top: 0.1rem;
-  font-size: 2.4rem;
+  margin-top: calc(0.1rem + 1px);
+  font-size: 1.9rem;
   font-weight: 900;
   line-height: 0.92;
 }
 
 .child-home-level-copy {
-  font-size: 1.35rem;
+  font-size: 1.28rem;
   font-weight: 900;
   line-height: 1.1;
 }
 
 .child-home-level-subcopy {
-  margin-top: 0.18rem;
-  font-size: 1rem;
+  margin-top: 0.1rem;
+  font-size: 0.94rem;
   font-weight: 800;
   color: rgba(219, 234, 255, 0.92);
 }
 
 .child-home-progress-track {
   position: relative;
-  margin-top: 0.7rem;
+  margin-top: 0.45rem;
   height: 1.1rem;
   overflow: hidden;
   border-radius: 999px;
@@ -1022,6 +1043,7 @@ textarea {
 .child-home-progress-fill {
   height: 100%;
   border-radius: inherit;
+  border-radius: inherit;
   background: linear-gradient(90deg, #ffd54c 0%, #7de36a 52%, #34c3ff 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.42),
@@ -1031,19 +1053,11 @@ textarea {
 .child-home-scan-panel {
   position: relative;
   display: flex;
-  min-height: clamp(13.6rem, 28vh, 16.4rem);
+  min-height: clamp(8.8rem, 16vh, 10.6rem);
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1.35rem 1rem 1.25rem;
-  border-radius: 2rem;
-  background:
-    linear-gradient(180deg, rgba(8, 30, 115, 0.72), rgba(12, 47, 155, 0.95));
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 24px 36px rgba(3, 21, 80, 0.22);
-  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+  justify-content: flex-start;
+  padding: 0.15rem 0 0;
   text-align: center;
   transition: transform 180ms ease, filter 180ms ease;
 }
@@ -1054,25 +1068,39 @@ textarea {
 }
 
 .child-home-scan-panel__copy {
-  max-width: 14rem;
-  font-size: 1.6rem;
+  position: absolute;
+  left: 50%;
+  top: calc(1rem - 10px);
+  z-index: 1;
+  display: grid;
+  gap: 0.06rem;
+  width: min(100%, 11.5rem);
+  transform: translateX(-50%);
+  font-size: clamp(0.72rem, 2.3vw, 0.85rem);
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 1.18;
+  text-shadow: 0 3px 12px rgba(2, 15, 56, 0.24);
 }
 
 .child-home-scan-panel__copy span {
   color: #ffd53f;
 }
 
+.child-home-scan-panel__copy span:first-child {
+  color: white;
+}
+
 .child-home-scan-panel__badge {
-  width: min(100%, 14rem);
+  position: relative;
+  width: min(100%, 12.9rem);
+  margin-top: -0.55rem;
   filter: drop-shadow(0 0 20px rgba(75, 201, 255, 0.34));
 }
 
 .child-home-shortcuts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.35rem;
   align-items: end;
 }
 
@@ -1081,7 +1109,7 @@ textarea {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: 0.38rem;
   min-width: 0;
   text-align: center;
   transition: transform 160ms ease;
@@ -1092,21 +1120,21 @@ textarea {
 }
 
 .child-home-shortcut__icon {
-  width: min(100%, 4.8rem);
+  width: min(100%, 4.45rem);
   height: auto;
   filter: drop-shadow(0 16px 24px rgba(4, 22, 83, 0.26));
 }
 
 .child-home-shortcut__icon--small {
-  width: min(100%, 4.4rem);
+  width: min(100%, 4.05rem);
 }
 
 .child-home-shortcut__icon--wide {
-  width: min(100%, 5.35rem);
+  width: min(100%, 4.95rem);
 }
 
 .child-home-shortcut__label {
-  font-size: 1.02rem;
+  font-size: 0.96rem;
   font-weight: 900;
   line-height: 1.1;
   text-shadow: 0 3px 12px rgba(2, 15, 56, 0.26);
@@ -1124,11 +1152,12 @@ textarea {
 @media (max-width: 380px) {
   .child-home-content {
     padding-inline: 0.8rem;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.25rem);
   }
 
   .child-home-hero {
     grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
-    gap: 0.75rem;
+    gap: 0.6rem;
   }
 
   .child-home-name {
@@ -1144,7 +1173,7 @@ textarea {
   }
 
   .child-home-scan-panel__copy {
-    font-size: 1.35rem;
+    font-size: 0.94rem;
   }
 }
 

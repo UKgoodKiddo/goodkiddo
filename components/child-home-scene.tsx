@@ -51,30 +51,17 @@ export function ChildHomeScene({
         <ExitChildModeButton className="border-white/70 bg-white/96 text-[#0d348d] shadow-[0_14px_32px_rgba(4,25,94,0.28)] hover:bg-white" />
         <Link
           aria-label="Open changing room"
-          className="child-home-profile-link"
+          className="child-home-profile-link child-home-profile-link--icon"
           href="/child/profile"
         >
-          <span className="child-home-profile-link__avatar">
-            <KiddoRouteImage
-              alt={`${childMode.child.display_name} avatar`}
-              className="child-home-profile-link__avatar-image rounded-full object-cover"
-              debugLabel="child-home-profile-avatar"
-              height={76}
-              imageDebugMode={imageDebugMode}
-              src={profilePreview}
-              width={76}
-            />
-          </span>
-          <span className="child-home-profile-link__badge">
-            <Image
-              alt=""
-              className="h-full w-full object-contain"
-              height={44}
-              src={GOODKIDDO_ASSETS.childChangingRoomButton}
-              unoptimized
-              width={44}
-            />
-          </span>
+          <Image
+            alt=""
+            className="child-home-profile-link__icon"
+            height={64}
+            src={GOODKIDDO_ASSETS.childChangingRoomButton}
+            unoptimized
+            width={64}
+          />
         </Link>
       </div>
 
@@ -93,13 +80,13 @@ export function ChildHomeScene({
       <div className="child-home-content">
         <div className="child-home-hero">
           <div className="child-home-mascot-wrap">
-            <Image
-              alt=""
-              className="child-home-mascot"
+            <KiddoRouteImage
+              alt={`${childMode.child.display_name} avatar`}
+              className="child-home-mascot child-home-mascot--avatar object-contain"
+              debugLabel="child-home-hero-avatar"
               height={220}
-              priority
-              src={GOODKIDDO_ASSETS.boopHappy}
-              unoptimized
+              imageDebugMode={imageDebugMode}
+              src={profilePreview}
               width={220}
             />
           </div>
@@ -158,10 +145,11 @@ export function ChildHomeScene({
         </div>
 
         <Link className="child-home-scan-panel" href="/child/collect">
-          <p className="child-home-scan-panel__copy">
-            Ask a grown-up to <span>scan your Booper!</span>
-          </p>
           <div className="child-home-scan-panel__badge">
+            <p className="child-home-scan-panel__copy">
+              <span>Ask a grown-up to</span>
+              <span>scan your Booper!</span>
+            </p>
             <Image
               alt="Scan your Booper"
               className="h-full w-full object-contain"
