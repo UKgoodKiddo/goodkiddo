@@ -1,5 +1,6 @@
 import { ChildHomeScene } from "@/components/child-home-scene";
 import type { KiddoImageDebugMode } from "@/components/kiddo-route-image";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { getChildModeData } from "@/lib/data";
 
 export default async function ChildPage(props: {
@@ -18,10 +19,12 @@ export default async function ChildPage(props: {
       : "off";
 
   return (
-    <ChildHomeScene
-      bannerCode={bannerCode}
-      childMode={childMode}
-      imageDebugMode={imageDebugMode}
-    />
+    <PullToRefreshShell variant="child">
+      <ChildHomeScene
+        bannerCode={bannerCode}
+        childMode={childMode}
+        imageDebugMode={imageDebugMode}
+      />
+    </PullToRefreshShell>
   );
 }
