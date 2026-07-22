@@ -3047,7 +3047,9 @@ textarea {
   z-index: 85;
   overflow: hidden;
   overscroll-behavior: none;
-  background: #59cfff;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(235, 250, 255, 0.95), rgba(235, 250, 255, 0) 26%),
+    linear-gradient(180deg, #9deeff 0%, #71dcff 42%, #49c9fb 100%);
 }
 
 .child-achievements-page__topbar {
@@ -3117,8 +3119,48 @@ textarea {
   overflow: hidden;
 }
 
+.child-achievements-bubble-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.child-achievements-bubble {
+  position: absolute;
+  left: var(--bubble-left);
+  bottom: -10%;
+  width: var(--bubble-size);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.45) 28%, rgba(255, 255, 255, 0.12) 52%, rgba(255, 255, 255, 0.02) 76%),
+    rgba(186, 241, 255, 0.24);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 0 20px rgba(157, 235, 255, 0.26);
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(0.86);
+  animation: child-achievements-bubble-rise var(--bubble-duration) linear infinite;
+  animation-delay: var(--bubble-delay);
+}
+
+.child-achievements-bubble::before {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 18%;
+  width: 28%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  filter: blur(1px);
+}
+
 .child-achievements-artwork-frame {
   position: relative;
+  z-index: 2;
   width: min(100vw, calc(100dvh * 0.5615292700119474));
   height: min(100dvh, calc(100vw / 0.5615292700119474));
   aspect-ratio: 940 / 1674;
@@ -3175,6 +3217,27 @@ textarea {
 
   50% {
     transform: translate(-50%, -50%) translateY(-5px);
+  }
+}
+
+@keyframes child-achievements-bubble-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.82);
+  }
+
+  12% {
+    opacity: 0.82;
+  }
+
+  50% {
+    opacity: 0.62;
+    transform: translate3d(var(--bubble-drift), -48vh, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(var(--bubble-drift) * -0.45), -108vh, 0) scale(1.08);
   }
 }
 
@@ -3322,7 +3385,8 @@ textarea {
   .child-achievements-map-button,
   .child-achievements-progress-strip__star,
   .child-achievements-modal-card,
-  .child-achievements-badge-button__lock {
+  .child-achievements-badge-button__lock,
+  .child-achievements-bubble {
     animation: none !important;
     transition: none !important;
   }

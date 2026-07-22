@@ -14,10 +14,21 @@ import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import { cn, formatDateTimeDetailed } from "@/lib/utils";
 
 const ACHIEVEMENTS_ASSETS = {
-  background: "/achievements-page.webp",
+  background: "/achievements-background.webp",
   lockedBadge: "/locked-badge.webp",
   mapButton: "/kiddo-explorer-asset-handover/ui-assets/map_button.png",
 } as const;
+
+const ACHIEVEMENT_BACKGROUND_BUBBLES = [
+  { left: "8%", size: "clamp(1rem, 3vw, 1.6rem)", duration: "11.5s", delay: "-5.2s", drift: "18px" },
+  { left: "18%", size: "clamp(0.9rem, 2.4vw, 1.35rem)", duration: "13.8s", delay: "-1.1s", drift: "-12px" },
+  { left: "28%", size: "clamp(1.1rem, 2.8vw, 1.7rem)", duration: "10.8s", delay: "-7.4s", drift: "10px" },
+  { left: "41%", size: "clamp(0.85rem, 2.3vw, 1.2rem)", duration: "14.2s", delay: "-3.5s", drift: "-16px" },
+  { left: "54%", size: "clamp(1rem, 2.6vw, 1.45rem)", duration: "12.1s", delay: "-8.6s", drift: "14px" },
+  { left: "66%", size: "clamp(1.2rem, 3.2vw, 1.9rem)", duration: "11.2s", delay: "-2.8s", drift: "-10px" },
+  { left: "77%", size: "clamp(0.95rem, 2.5vw, 1.3rem)", duration: "13.4s", delay: "-6.1s", drift: "15px" },
+  { left: "88%", size: "clamp(1.05rem, 2.9vw, 1.65rem)", duration: "12.7s", delay: "-4.4s", drift: "-14px" },
+] as const;
 
 type ChildAchievementsBoardProps = {
   childName: string;
@@ -86,6 +97,24 @@ export function ChildAchievementsBoard({
         </div>
 
         <div className="child-achievements-artwork-shell">
+          <div aria-hidden="true" className="child-achievements-bubble-layer">
+            {ACHIEVEMENT_BACKGROUND_BUBBLES.map((bubble, index) => (
+              <span
+                key={`achievement-bubble-${bubble.left}-${index}`}
+                className="child-achievements-bubble"
+                style={
+                  {
+                    "--bubble-delay": bubble.delay,
+                    "--bubble-drift": bubble.drift,
+                    "--bubble-duration": bubble.duration,
+                    "--bubble-left": bubble.left,
+                    "--bubble-size": bubble.size,
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </div>
+
           <div className="child-achievements-artwork-frame">
             <Image
               alt="Achievement board"
