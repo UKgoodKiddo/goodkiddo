@@ -144,26 +144,6 @@ export function ChildHomeScene({
           </div>
         </div>
 
-        <div
-          aria-disabled="true"
-          className="child-home-scan-panel child-home-scan-panel--inactive"
-        >
-          <div className="child-home-scan-panel__badge">
-            <p className="child-home-scan-panel__copy">
-              <span>Ask a grown-up to</span>
-              <span>scan your Booper!</span>
-            </p>
-            <Image
-              alt="Scan your Booper"
-              className="h-full w-full object-contain"
-              height={260}
-              src={GOODKIDDO_ASSETS.childHomeNfcBadge}
-              unoptimized
-              width={340}
-            />
-          </div>
-        </div>
-
         <div className="child-home-shortcuts">
           <SpinningNavLink
             aria-label="Open tasks"
