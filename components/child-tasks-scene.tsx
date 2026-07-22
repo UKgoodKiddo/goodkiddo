@@ -56,12 +56,14 @@ function renderFallbackTaskCard(
         </div>
       </div>
       <div className="child-task-reward-badge absolute right-5 top-5 shrink-0 flex-nowrap">
-        <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
-        <span
-          aria-hidden="true"
-          className="child-task-reward-star ml-1 shrink-0"
-          style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
-        />
+        <span className="child-task-reward-badge__content">
+          <span className="whitespace-nowrap leading-none">+{task.boop_reward}</span>
+          <span
+            aria-hidden="true"
+            className="child-task-reward-star shrink-0"
+            style={{ backgroundImage: `url(${GOODKIDDO_ASSETS.starIcon})` }}
+          />
+        </span>
       </div>
       <div className="absolute bottom-5 right-5">
         <ChildTaskBoopButton imageDebugMode={imageDebugMode} size="compact" task={task} />
