@@ -500,7 +500,7 @@ export function BoopPopPiratesGame({
         shipRef.current.style.transform = `translate3d(${nextX}px, 0, 0)`;
         shipRef.current.style.setProperty(
           "--ship-facing",
-          String(shipDirectionRef.current),
+          String(shipDirectionRef.current === 1 ? -1 : 1),
         );
       }
 
@@ -999,6 +999,17 @@ export function BoopPopPiratesGame({
               unoptimized
               width={220}
             />
+          </div>
+
+          <div className="boop-pop-pirates-water-glisten">
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--one" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--two" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--three" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--four" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--five" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--six" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--seven" />
+            <span className="boop-pop-pirates-water-glisten__spark boop-pop-pirates-water-glisten__spark--eight" />
           </div>
         </div>
 

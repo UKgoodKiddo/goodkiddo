@@ -1,4 +1,5 @@
-import { CreativeCoveBackButton } from "@/components/creative-cove-back-button";
+import Image from "next/image";
+import Link from "next/link";
 import { BoopPopPiratesShell } from "@/components/boop-pop-pirates-shell";
 import { getBoopPopPiratesPageData } from "@/lib/boop-pop-pirates-server";
 
@@ -21,7 +22,24 @@ export default async function BoopPopPiratesPage() {
 
   return (
     <main className="boop-pop-pirates-page" aria-label="Boop Pop Pirates">
-      <CreativeCoveBackButton />
+      <div className="boop-pop-pirates-page__topbar">
+        <Link
+          aria-label="Back to Kiddo Explorers map"
+          className="boop-pop-pirates-map-button"
+          href="/child/kiddo_explorers"
+        >
+          <span aria-hidden="true" className="boop-pop-pirates-map-button__art">
+            <Image
+              alt=""
+              className="boop-pop-pirates-map-button__image"
+              fill
+              priority
+              sizes="56px"
+              src="/kiddo-explorer-asset-handover/ui-assets/map_button.png"
+            />
+          </span>
+        </Link>
+      </div>
       <BoopPopPiratesShell
         childId={pageData.child.id}
         childName={pageData.child.display_name}

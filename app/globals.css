@@ -2671,6 +2671,51 @@ textarea {
     #4fc9ff;
 }
 
+.boop-pop-pirates-page__topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 1.85rem)
+    clamp(0.85rem, 3vw, 1.35rem)
+    0;
+}
+
+.boop-pop-pirates-map-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(3.5rem, 14vw, 4.25rem);
+  min-width: 52px;
+  min-height: 52px;
+  border-radius: 999px;
+  transition: transform 160ms ease;
+}
+
+.boop-pop-pirates-map-button:hover {
+  transform: translateY(-1px);
+}
+
+.boop-pop-pirates-map-button:focus-visible {
+  outline: 3px solid rgba(20, 86, 216, 0.88);
+  outline-offset: 4px;
+}
+
+.boop-pop-pirates-map-button__art {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.boop-pop-pirates-map-button__image {
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(5, 33, 111, 0.22));
+}
+
 .boop-pop-pirates-page--empty {
   display: flex;
   align-items: center;
@@ -2749,7 +2794,7 @@ textarea {
 
 .boop-pop-pirates-seagull-track {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + clamp(54px, 9vh, 92px));
+  top: calc(env(safe-area-inset-top, 0px) + clamp(84px, calc(9vh + 30px), 122px));
   left: 0;
   width: clamp(68px, 18vw, 120px);
   opacity: 0.86;
@@ -2761,6 +2806,80 @@ textarea {
   width: 100%;
   height: auto;
   filter: drop-shadow(0 10px 20px rgba(4, 34, 111, 0.14));
+}
+
+.boop-pop-pirates-water-glisten {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 33.333%;
+  overflow: hidden;
+}
+
+.boop-pop-pirates-water-glisten__spark {
+  position: absolute;
+  pointer-events: none;
+}
+
+.boop-pop-pirates-water-glisten__spark {
+  width: clamp(0.7rem, 2vw, 1.1rem);
+  height: clamp(0.7rem, 2vw, 1.1rem);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.92) 50%, rgba(255, 255, 255, 0) 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 42%, rgba(210, 248, 255, 0.92) 50%, rgba(255, 255, 255, 0) 58%);
+  filter:
+    drop-shadow(0 0 8px rgba(173, 236, 255, 0.46))
+    drop-shadow(0 0 18px rgba(147, 225, 255, 0.28));
+  opacity: 0.22;
+  transform-origin: center center;
+  animation: boop-pop-pirates-water-sparkle 3.2s ease-in-out infinite;
+}
+
+.boop-pop-pirates-water-glisten__spark--one {
+  left: 10%;
+  bottom: 14%;
+  animation-delay: -0.7s;
+}
+
+.boop-pop-pirates-water-glisten__spark--two {
+  left: 22%;
+  bottom: 24%;
+  animation-delay: -2.1s;
+}
+
+.boop-pop-pirates-water-glisten__spark--three {
+  left: 36%;
+  bottom: 10%;
+  animation-delay: -1.4s;
+}
+
+.boop-pop-pirates-water-glisten__spark--four {
+  left: 48%;
+  bottom: 22%;
+  animation-delay: -2.9s;
+}
+
+.boop-pop-pirates-water-glisten__spark--five {
+  left: 61%;
+  bottom: 13%;
+  animation-delay: -0.3s;
+}
+
+.boop-pop-pirates-water-glisten__spark--six {
+  left: 72%;
+  bottom: 26%;
+  animation-delay: -1.8s;
+}
+
+.boop-pop-pirates-water-glisten__spark--seven {
+  left: 82%;
+  bottom: 9%;
+  animation-delay: -2.5s;
+}
+
+.boop-pop-pirates-water-glisten__spark--eight {
+  left: 90%;
+  bottom: 19%;
+  animation-delay: -1.1s;
 }
 
 @keyframes boop-pop-pirates-seagull-flight {
@@ -2778,6 +2897,24 @@ textarea {
 
   100% {
     transform: translate3d(calc(-1 * clamp(68px, 18vw, 120px)), 0, 0) scaleX(-1);
+  }
+}
+
+@keyframes boop-pop-pirates-water-sparkle {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.68) rotate(0deg);
+    opacity: 0.14;
+  }
+
+  45% {
+    transform: translate3d(0, -1px, 0) scale(1.08) rotate(45deg);
+    opacity: 0.72;
+  }
+
+  70% {
+    transform: translate3d(1px, 0, 0) scale(0.82) rotate(20deg);
+    opacity: 0.28;
   }
 }
 
