@@ -85,6 +85,7 @@ const SHIP_TAP_THROTTLE_MS = 180;
 const POP_EFFECT_MS = 320;
 const LANDING_EFFECT_MS = 420;
 const COLLECT_ANIMATION_MS = 260;
+const BUBBLE_TAP_BLEED_PX = 10;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -805,17 +806,18 @@ export function BoopPopPiratesGame({
         continue;
       }
 
-      const bubbleRect = bubbleNode.getBoundingClientRect();
-      const paddingX = Math.max(56, bubbleRect.width * 0.9);
-      const paddingY = Math.max(72, bubbleRect.height * 1.2);
-      const centerX = bubbleRect.left + bubbleRect.width / 2;
-      const centerY = bubbleRect.top + bubbleRect.height / 2;
+      const bubbleImageNode = bubbleNode.querySelector<HTMLImageElement>(
+        ".boop-pop-pirates-bubble-button__image",
+      );
+      const hitRect = bubbleImageNode?.getBoundingClientRect() ?? bubbleNode.getBoundingClientRect();
+      const centerX = hitRect.left + hitRect.width / 2;
+      const centerY = hitRect.top + hitRect.height / 2;
 
       if (
-        clientX >= bubbleRect.left - paddingX &&
-        clientX <= bubbleRect.right + paddingX &&
-        clientY >= bubbleRect.top - paddingY &&
-        clientY <= bubbleRect.bottom + paddingY
+        clientX >= hitRect.left - BUBBLE_TAP_BLEED_PX &&
+        clientX <= hitRect.right + BUBBLE_TAP_BLEED_PX &&
+        clientY >= hitRect.top - BUBBLE_TAP_BLEED_PX &&
+        clientY <= hitRect.bottom + BUBBLE_TAP_BLEED_PX
       ) {
         const distance =
           (clientX - centerX) ** 2 +
