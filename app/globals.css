@@ -2781,27 +2781,44 @@ textarea {
   }
 }
 
-.boop-pop-pirates-counter {
+.boop-pop-pirates-stats {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + clamp(0.85rem, 2.6vh, 1.5rem));
   left: 50%;
   z-index: 40;
   display: flex;
+  align-items: flex-start;
+  gap: clamp(0.65rem, 2.8vw, 1rem);
+  transform: translateX(-50%);
+}
+
+.boop-pop-pirates-counter {
+  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.12rem;
-  transform: translateX(-50%);
+  gap: 0.1rem;
+  min-width: clamp(5.25rem, 18vw, 7.1rem);
+  padding: 0.55rem 0.7rem 0.48rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(20, 129, 225, 0.78), rgba(7, 62, 155, 0.78));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 14px 28px rgba(3, 33, 105, 0.24);
   color: #ffffff;
   text-align: center;
   text-shadow:
     0 4px 0 rgba(5, 62, 151, 0.28),
-    0 14px 28px rgba(3, 33, 105, 0.24);
+    0 10px 22px rgba(3, 33, 105, 0.2);
+}
+
+.boop-pop-pirates-counter--timer {
+  min-width: clamp(4.75rem, 16vw, 6.5rem);
 }
 
 .boop-pop-pirates-counter__label {
-  font-size: 0.85rem;
+  font-size: 0.74rem;
   font-weight: 900;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 

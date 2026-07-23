@@ -86,6 +86,8 @@ const POP_EFFECT_MS = 320;
 const LANDING_EFFECT_MS = 420;
 const COLLECT_ANIMATION_MS = 260;
 const BUBBLE_TAP_BLEED_PX = 10;
+const POP_CHALLENGE_DURATION_MS = 60_000;
+const POP_CHALLENGE_TARGET = 50;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -148,6 +150,7 @@ export function BoopPopPiratesGame({
   const nextBubbleIdRef = useRef(1);
   const nextEffectIdRef = useRef(1);
   const nextCollectibleIdRef = useRef(1);
+  const countdownIntervalRef = useRef<number | null>(null);
   const bubbleNodesRef = useRef(new Map<number, HTMLButtonElement>());
   const activeBubblesRef = useRef<BubbleEntity[]>([]);
   const waitingCollectiblesRef = useRef<WaitingCollectibleEntity[]>([]);
@@ -160,7 +163,10 @@ export function BoopPopPiratesGame({
     shuffleCollectibleCycle(),
   );
   const lastRegularBubbleIdRef = useRef<string | null>(null);
-  const regularPopCountRef = useRef(0);
+  const challengePopCountRef = useRef(0);
+  const challengeRewardArmedRef = useRef(false);
+  const challengeRemainingMsRef = useRef(POP_CHALLENGE_DURATION_MS);
+  const challengeDeadlineAtRef = useRef<number | null>(null);
   const persistenceTimeoutsRef = useRef<number[]>([]);
   const transientTimeoutsRef = useRef<number[]>([]);
   const retryAttemptsRef = useRef(
@@ -179,6 +185,9 @@ export function BoopPopPiratesGame({
     width: 390,
   });
   const [popCount, setPopCount] = useState(0);
+  const [countdownSecondsRemaining, setCountdownSecondsRemaining] = useState(
+    POP_CHALLENGE_DURATION_MS / 1000,
+  );
   const [activeBubbles, setActiveBubbles] = useState<BubbleEntity[]>([]);
   const [activeEffects, setActiveEffects] = useState<EffectEntity[]>([]);
   const [fallingCollectibles, setFallingCollectibles] = useState<
@@ -267,10 +276,83 @@ export function BoopPopPiratesGame({
         window.cancelAnimationFrame(resizeFrameRef.current);
       }
 
+      if (countdownIntervalRef.current !== null) {
+        window.clearInterval(countdownIntervalRef.current);
+      }
+
       clearTimeouts(transientTimeouts);
       clearTimeouts(persistenceTimeouts);
     };
   }, []);
+
+  function resetPopChallengeRound() {
+    challengePopCountRef.current = 0;
+    challengeRewardArmedRef.current = false;
+    challengeRemainingMsRef.current = POP_CHALLENGE_DURATION_MS;
+    challengeDeadlineAtRef.current = assetsReady && isDocumentVisible
+      ? Date.now() + POP_CHALLENGE_DURATION_MS
+      : null;
+    setPopCount(0);
+    setCountdownSecondsRemaining(POP_CHALLENGE_DURATION_MS / 1000);
+  }
+
+  useEffect(() => {
+    if (!assetsReady || !isDocumentVisible) {
+      if (challengeDeadlineAtRef.current !== null) {
+        challengeRemainingMsRef.current = Math.max(
+          0,
+          challengeDeadlineAtRef.current - Date.now(),
+        );
+        challengeDeadlineAtRef.current = null;
+      }
+
+      if (countdownIntervalRef.current !== null) {
+        window.clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+
+      return;
+    }
+
+    challengeDeadlineAtRef.current =
+      Date.now() + Math.max(1, challengeRemainingMsRef.current);
+
+    const syncCountdown = () => {
+      if (challengeDeadlineAtRef.current === null) {
+        return;
+      }
+
+      const remainingMs = Math.max(
+        0,
+        challengeDeadlineAtRef.current - Date.now(),
+      );
+
+      if (remainingMs <= 0) {
+        resetPopChallengeRound();
+        return;
+      }
+
+      challengeRemainingMsRef.current = remainingMs;
+      setCountdownSecondsRemaining(Math.ceil(remainingMs / 1000));
+    };
+
+    syncCountdown();
+    countdownIntervalRef.current = window.setInterval(syncCountdown, 250);
+
+    return () => {
+      if (countdownIntervalRef.current !== null) {
+        window.clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+
+      if (challengeDeadlineAtRef.current !== null) {
+        challengeRemainingMsRef.current = Math.max(
+          0,
+          challengeDeadlineAtRef.current - Date.now(),
+        );
+      }
+    };
+  }, [assetsReady, isDocumentVisible]);
 
   function performCollectiblePersistence(collectibleId: BoopPopPiratesCollectibleId) {
     if (persistenceInFlightRef.current.has(collectibleId)) {
@@ -562,6 +644,11 @@ export function BoopPopPiratesGame({
   }
 
   function armMilestoneRewardIfNeeded() {
+    if (challengeRewardArmedRef.current) {
+      return;
+    }
+
+    challengeRewardArmedRef.current = true;
     queuedRewardCountRef.current += 1;
   }
 
@@ -718,15 +805,15 @@ export function BoopPopPiratesGame({
       );
     }
 
-    setPopCount((current) => current + 1);
+    const nextPopCount = challengePopCountRef.current + 1;
+    challengePopCountRef.current = nextPopCount;
+    setPopCount(nextPopCount);
+
+    if (nextPopCount >= POP_CHALLENGE_TARGET) {
+      armMilestoneRewardIfNeeded();
+    }
 
     if (bubble.kind === "regular") {
-      regularPopCountRef.current += 1;
-
-      if (regularPopCountRef.current % 50 === 0) {
-        armMilestoneRewardIfNeeded();
-      }
-
       return;
     }
 
@@ -914,14 +1001,26 @@ export function BoopPopPiratesGame({
           </div>
         </div>
 
-        <div className="boop-pop-pirates-counter" role="status" aria-live="polite">
-          <span className="boop-pop-pirates-counter__label">Pops</span>
-          <span
-            aria-label={`${popCount} pops`}
-            className="boop-pop-pirates-counter__value"
-          >
-            {popCount}
-          </span>
+        <div className="boop-pop-pirates-stats" role="status" aria-live="polite">
+          <div className="boop-pop-pirates-counter">
+            <span className="boop-pop-pirates-counter__label">Pops</span>
+            <span
+              aria-label={`${popCount} pops this round`}
+              className="boop-pop-pirates-counter__value"
+            >
+              {popCount}
+            </span>
+          </div>
+
+          <div className="boop-pop-pirates-counter boop-pop-pirates-counter--timer">
+            <span className="boop-pop-pirates-counter__label">Time</span>
+            <span
+              aria-label={`${countdownSecondsRemaining} seconds remaining`}
+              className="boop-pop-pirates-counter__value"
+            >
+              {countdownSecondsRemaining}
+            </span>
+          </div>
         </div>
 
         <div className="boop-pop-pirates-bubble-layer">
