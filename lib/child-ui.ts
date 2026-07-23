@@ -9,6 +9,7 @@ export const CHILD_PAGE_ROUTES = [
   "/child/achievements",
   "/child/kiddo_explorers",
   "/child/kiddo_explorers/creative_cove",
+  "/child/kiddo_explorers/boop_pop_pirates",
 ] as const;
 
 export type ChildPageRoute = (typeof CHILD_PAGE_ROUTES)[number];

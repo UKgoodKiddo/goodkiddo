@@ -4,15 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useRef, useState, type CSSProperties } from "react";
+import { BOOP_POP_PIRATES_ASSETS, BOOP_POP_PIRATES_ROUTE } from "@/lib/boop-pop-pirates";
 
 const CREATIVE_COVE_ROUTE = "/child/kiddo_explorers/creative_cove";
 const ACHIEVEMENTS_ROUTE = "/child/achievements";
 const CHILD_HOME_ROUTE = "/child";
 const ENTER_DURATION_MS = 420;
 const REDUCED_ENTER_DURATION_MS = 140;
+const PIRATES_ROUTE = BOOP_POP_PIRATES_ROUTE;
 
 const KIDDO_EXPLORERS_ASSETS = {
   background: "/kiddo-explorer-asset-handover/kiddo-explorers-ui-background.webp",
+  boopPopPiratesBiome: BOOP_POP_PIRATES_ASSETS.biomeIcon,
   creativeCoveBiome: "/kiddo-explorer-asset-handover/biome-icons/creative-cove-biome.webp",
   homeButton: "/kiddo-explorer-asset-handover/ui-assets/home_button.png",
   achievementsButton: "/kiddo-explorer-asset-handover/ui-assets/achievements_button.jpg",
@@ -53,7 +56,7 @@ function SparkleOverlay() {
 export function KiddoExplorersMap() {
   const router = useRouter();
   const enterTimeoutRef = useRef<number | null>(null);
-  const [isEnteringCreativeCove, setIsEnteringCreativeCove] = useState(false);
+  const [enteringBiome, setEnteringBiome] = useState<"boop-pop-pirates" | "creative-cove" | null>(null);
   const [isWhaleJumping, setIsWhaleJumping] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -76,22 +79,22 @@ export function KiddoExplorersMap() {
     };
   }, []);
 
-  function handleCreativeCoveOpen() {
-    if (isEnteringCreativeCove) {
+  function openBiome(route: string, biome: "boop-pop-pirates" | "creative-cove") {
+    if (enteringBiome) {
       return;
     }
 
     const nextDuration = prefersReducedMotion ? REDUCED_ENTER_DURATION_MS : ENTER_DURATION_MS;
-    setIsEnteringCreativeCove(true);
+    setEnteringBiome(biome);
     enterTimeoutRef.current = window.setTimeout(() => {
       startTransition(() => {
-        router.push(CREATIVE_COVE_ROUTE);
+        router.push(route);
       });
     }, nextDuration);
   }
 
   function handleWhaleJump() {
-    if (isWhaleJumping || isEnteringCreativeCove) {
+    if (isWhaleJumping || enteringBiome) {
       return;
     }
 
@@ -100,7 +103,7 @@ export function KiddoExplorersMap() {
 
   return (
     <div
-      className={`kiddo-explorers-scene${isEnteringCreativeCove ? " is-entering" : ""}`}
+      className={`kiddo-explorers-scene${enteringBiome ? " is-entering" : ""}`}
       data-reduced-motion={prefersReducedMotion ? "true" : "false"}
     >
       <div
@@ -114,9 +117,11 @@ export function KiddoExplorersMap() {
       <div className="kiddo-explorers-biome-layer">
         <button
           aria-label="Open Creative Cove"
-          className={`kiddo-explorers-biome-button${isEnteringCreativeCove ? " is-entering" : ""}`}
-          disabled={isEnteringCreativeCove}
-          onClick={handleCreativeCoveOpen}
+          className={`kiddo-explorers-biome-button kiddo-explorers-biome-button--creative-cove${enteringBiome === "creative-cove" ? " is-entering" : ""}`}
+          disabled={Boolean(enteringBiome)}
+          onClick={() => {
+            openBiome(CREATIVE_COVE_ROUTE, "creative-cove");
+          }}
           type="button"
         >
           <Image
@@ -126,6 +131,27 @@ export function KiddoExplorersMap() {
             priority
             sizes="(max-width: 640px) 40vw, 230px"
             src={KIDDO_EXPLORERS_ASSETS.creativeCoveBiome}
+            width={768}
+          />
+        </button>
+
+        <button
+          aria-label="Open Boop Pop Pirates"
+          className={`kiddo-explorers-biome-button kiddo-explorers-biome-button--boop-pop-pirates${enteringBiome === "boop-pop-pirates" ? " is-entering" : ""}`}
+          disabled={Boolean(enteringBiome)}
+          onClick={() => {
+            openBiome(PIRATES_ROUTE, "boop-pop-pirates");
+          }}
+          type="button"
+        >
+          <Image
+            alt=""
+            className="kiddo-explorers-biome-image"
+            height={768}
+            preload
+            sizes="(max-width: 640px) 44vw, 250px"
+            src={KIDDO_EXPLORERS_ASSETS.boopPopPiratesBiome}
+            unoptimized
             width={768}
           />
         </button>

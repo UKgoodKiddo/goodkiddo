@@ -42,6 +42,15 @@ export type ChildAchievement = {
   unlocked_at: string;
 };
 
+export type ChildBiomeCollectible = {
+  id: string;
+  family_id: string;
+  child_profile_id: string;
+  biome_id: string;
+  collectible_id: string;
+  collected_at: string;
+};
+
 export type BooperStatus = "active" | "lost" | "disabled";
 
 export type BooperInventoryStatus =
@@ -403,6 +412,19 @@ export type Database = {
           unlocked_at?: string;
         };
         Update: Partial<ChildAchievement>;
+        Relationships: [];
+      };
+      child_biome_collectibles: {
+        Row: ChildBiomeCollectible;
+        Insert: {
+          id?: string;
+          family_id: string;
+          child_profile_id: string;
+          biome_id: string;
+          collectible_id: string;
+          collected_at?: string;
+        };
+        Update: Partial<ChildBiomeCollectible>;
         Relationships: [];
       };
       booper_inventory: {

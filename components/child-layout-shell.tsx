@@ -18,7 +18,13 @@ export function ChildLayoutShell({
   const isTasksRoute = pathname === "/child/tasks";
   const isRewardsRoute = pathname === "/child/rewards";
   const isProfileRoute = pathname === "/child/profile";
-  const isImmersiveSceneRoute = isHomeRoute || isTasksRoute || isRewardsRoute || isProfileRoute;
+  const isKiddoExplorersRoute = pathname.startsWith("/child/kiddo_explorers");
+  const isImmersiveSceneRoute =
+    isHomeRoute ||
+    isTasksRoute ||
+    isRewardsRoute ||
+    isProfileRoute ||
+    isKiddoExplorersRoute;
 
   return (
     <div
@@ -43,7 +49,7 @@ export function ChildLayoutShell({
           </header>
         ) : null}
         <div className={cn("flex flex-1 flex-col", isImmersiveSceneRoute ? "min-h-0" : "")}>{children}</div>
-        {childMode.child && !isHomeRoute ? (
+        {childMode.child && !isHomeRoute && !isKiddoExplorersRoute ? (
           <ChildBottomNav pendingBoopTotal={childMode.pendingBoopTotal} />
         ) : null}
       </div>
