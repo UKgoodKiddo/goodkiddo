@@ -3,6 +3,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import {
   BOOP_POP_PIRATES_BIOME_ID,
+  BOOP_POP_PIRATES_COLLECTIBLE_IDS,
   isBoopPopPiratesCollectibleId,
   type BoopPopPiratesCollectibleId,
 } from "@/lib/boop-pop-pirates";
@@ -84,6 +85,24 @@ function revalidateBoopPopPiratesRoutes() {
   revalidatePath("/child/achievements");
   revalidatePath("/child/kiddo_explorers");
   revalidatePath("/child/kiddo_explorers/boop_pop_pirates");
+}
+
+async function getCollectedBoopPopPiratesCollectibleIds(context: VerifiedChildModeContext) {
+  const { data, error } = await context.admin
+    .from("child_biome_collectibles")
+    .select("collectible_id")
+    .eq("family_id", context.familyId)
+    .eq("child_profile_id", context.childProfileId)
+    .eq("biome_id", BOOP_POP_PIRATES_BIOME_ID)
+    .order("collected_at");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as ChildBiomeCollectibleRow[])
+    .map((row) => row.collectible_id)
+    .filter(isBoopPopPiratesCollectibleId);
 }
 
 export async function getBoopPopPiratesPageData(): Promise<BoopPopPiratesPageData> {
@@ -178,16 +197,22 @@ export async function persistBoopPopPiratesCollectible(
     throw new Error(insertError.message);
   }
 
-  const { error: achievementError } = await context.parentSupabase.rpc(
-    "award_child_achievement",
-    {
-      target_achievement_id: BOOP_POP_PIRATES_BIOME_ID,
-      target_child_profile_id: context.childProfileId,
-    },
+  const collectedCollectibleIds = await getCollectedBoopPopPiratesCollectibleIds(
+    context,
   );
 
-  if (achievementError) {
-    throw new Error(achievementError.message);
+  if (collectedCollectibleIds.length === BOOP_POP_PIRATES_COLLECTIBLE_IDS.length) {
+    const { error: achievementError } = await context.parentSupabase.rpc(
+      "award_child_achievement",
+      {
+        target_achievement_id: BOOP_POP_PIRATES_BIOME_ID,
+        target_child_profile_id: context.childProfileId,
+      },
+    );
+
+    if (achievementError) {
+      throw new Error(achievementError.message);
+    }
   }
 
   revalidateBoopPopPiratesRoutes();
