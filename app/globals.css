@@ -2819,6 +2819,9 @@ textarea {
   position: absolute;
   left: 0;
   bottom: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
   will-change: transform;
   animation: boop-pop-pirates-bubble-rise var(--bubble-duration) linear forwards;
 }
@@ -2838,16 +2841,18 @@ textarea {
 }
 
 .boop-pop-pirates-bubble-button {
+  position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   width: calc(var(--bubble-size) + 26px);
   height: calc(var(--bubble-size) + 26px);
-  margin-left: calc((var(--bubble-size) + 26px) * -0.5);
-  margin-top: calc((var(--bubble-size) + 26px) * -0.5);
   border: 0;
   background: transparent;
   padding: 0;
+  transform: translate(-50%, -50%);
   touch-action: manipulation;
 }
 
@@ -2855,6 +2860,7 @@ textarea {
   display: block;
   width: var(--bubble-size);
   height: var(--bubble-size);
+  pointer-events: none;
   will-change: transform;
   animation: boop-pop-pirates-bubble-sway var(--bubble-sway-duration) ease-in-out infinite;
 }
@@ -2863,6 +2869,7 @@ textarea {
   display: block;
   width: 100%;
   height: auto;
+  pointer-events: none;
   transform: scale(var(--bubble-scale));
   filter: drop-shadow(0 18px 24px rgba(7, 42, 122, 0.18));
 }
@@ -2881,6 +2888,14 @@ textarea {
 .boop-pop-pirates-collectible-layer {
   z-index: 24;
   pointer-events: none;
+}
+
+.boop-pop-pirates-bubble-hit-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 26;
+  background: transparent;
+  touch-action: manipulation;
 }
 
 .boop-pop-pirates-falling-collectible,
@@ -2964,6 +2979,7 @@ textarea {
 
 .boop-pop-pirates-ship-layer {
   z-index: 28;
+  pointer-events: none;
 }
 
 .boop-pop-pirates-ship-button {
@@ -2974,6 +2990,7 @@ textarea {
   border: 0;
   background: transparent;
   padding: 0;
+  pointer-events: auto;
   transform-origin: center center;
   transition: filter 160ms ease;
   touch-action: manipulation;

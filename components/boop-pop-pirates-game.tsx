@@ -7,7 +7,9 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type TouchEvent as ReactTouchEvent,
 } from "react";
 import {
   BOOP_POP_PIRATES_ASSETS,
@@ -72,6 +74,11 @@ type StageMetrics = {
   shipWidth: number;
   width: number;
 };
+
+type BubbleInteractionEvent =
+  | ReactMouseEvent<HTMLElement>
+  | ReactPointerEvent<HTMLElement>
+  | ReactTouchEvent<HTMLElement>;
 
 const MAX_ACTIVE_BUBBLES = 12;
 const SHIP_TAP_THROTTLE_MS = 180;
@@ -644,14 +651,38 @@ export function BoopPopPiratesGame({
     const shouldLaunchCollectible =
       queuedRewardCountRef.current > 0 && owedCollectibleIdRef.current === null;
     const bubble = spawnBubble(shouldLaunchCollectible ? "collectible" : "regular");
+    const nextActiveBubbles =
+      activeBubblesRef.current.length >= MAX_ACTIVE_BUBBLES
+        ? activeBubblesRef.current
+        : [...activeBubblesRef.current, bubble];
 
-    setActiveBubbles((current) =>
-      current.length >= MAX_ACTIVE_BUBBLES ? current : [...current, bubble],
+    if (nextActiveBubbles === activeBubblesRef.current) {
+      return;
+    }
+
+    activeBubblesRef.current = nextActiveBubbles;
+    setActiveBubbles(nextActiveBubbles);
+  }
+
+  function takeActiveBubble(bubbleId: number) {
+    const bubble = activeBubblesRef.current.find((entry) => entry.id === bubbleId);
+
+    if (!bubble) {
+      return null;
+    }
+
+    const nextActiveBubbles = activeBubblesRef.current.filter(
+      (entry) => entry.id !== bubbleId,
     );
+
+    activeBubblesRef.current = nextActiveBubbles;
+    setActiveBubbles(nextActiveBubbles);
+
+    return bubble;
   }
 
   function handleBubbleEscape(bubbleId: number) {
-    const bubble = activeBubblesRef.current.find((entry) => entry.id === bubbleId);
+    const bubble = takeActiveBubble(bubbleId);
 
     if (!bubble) {
       return;
@@ -661,25 +692,19 @@ export function BoopPopPiratesGame({
       owedCollectibleIdRef.current = bubble.collectibleId;
       queuedRewardCountRef.current += 1;
     }
-
-    setActiveBubbles((current) => current.filter((entry) => entry.id !== bubbleId));
   }
 
-  function handleBubblePop(
-    bubbleId: number,
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) {
+  function handleBubblePop(bubbleId: number, event: BubbleInteractionEvent) {
     event.preventDefault();
     event.stopPropagation();
 
-    const bubble = activeBubblesRef.current.find((entry) => entry.id === bubbleId);
+    const bubble = takeActiveBubble(bubbleId);
 
     if (!bubble) {
       return;
     }
 
     const center = getBubbleCenter(bubbleId);
-    setActiveBubbles((current) => current.filter((entry) => entry.id !== bubbleId));
 
     if (center) {
       queueTransientEffect(
@@ -736,6 +761,85 @@ export function BoopPopPiratesGame({
         startY: center.yPx,
       } satisfies FallingCollectibleEntity,
     ]);
+  }
+
+  function getInteractionPoint(event: BubbleInteractionEvent) {
+    if ("touches" in event && event.touches.length > 0) {
+      const touch = event.touches[0];
+      return {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      };
+    }
+
+    if ("changedTouches" in event && event.changedTouches.length > 0) {
+      const touch = event.changedTouches[0];
+      return {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      };
+    }
+
+    if ("clientX" in event) {
+      return {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      };
+    }
+
+    return {
+      clientX: 0,
+      clientY: 0,
+    };
+  }
+
+  function findBubbleIdAtPoint(clientX: number, clientY: number) {
+    let matchedBubbleId: number | null = null;
+    let matchedDistance = Number.POSITIVE_INFINITY;
+
+    for (let index = activeBubblesRef.current.length - 1; index >= 0; index -= 1) {
+      const bubble = activeBubblesRef.current[index];
+      const bubbleNode = bubbleNodesRef.current.get(bubble.id);
+
+      if (!bubbleNode) {
+        continue;
+      }
+
+      const bubbleRect = bubbleNode.getBoundingClientRect();
+      const paddingX = Math.max(56, bubbleRect.width * 0.9);
+      const paddingY = Math.max(72, bubbleRect.height * 1.2);
+      const centerX = bubbleRect.left + bubbleRect.width / 2;
+      const centerY = bubbleRect.top + bubbleRect.height / 2;
+
+      if (
+        clientX >= bubbleRect.left - paddingX &&
+        clientX <= bubbleRect.right + paddingX &&
+        clientY >= bubbleRect.top - paddingY &&
+        clientY <= bubbleRect.bottom + paddingY
+      ) {
+        const distance =
+          (clientX - centerX) ** 2 +
+          (clientY - centerY) ** 2;
+
+        if (distance < matchedDistance) {
+          matchedBubbleId = bubble.id;
+          matchedDistance = distance;
+        }
+      }
+    }
+
+    return matchedBubbleId;
+  }
+
+  function handleStageBubbleInteraction(event: BubbleInteractionEvent) {
+    const point = getInteractionPoint(event);
+    const bubbleId = findBubbleIdAtPoint(point.clientX, point.clientY);
+
+    if (bubbleId === null) {
+      return;
+    }
+
+    handleBubblePop(bubbleId, event);
   }
 
   function handleCollectibleLanding(collectibleId: number) {
@@ -847,7 +951,16 @@ export function BoopPopPiratesGame({
                     : `Pop ${bubble.label.toLowerCase()}`
                 }
                 className="boop-pop-pirates-bubble-button"
+                onClick={(event) => {
+                  handleBubblePop(bubble.id, event);
+                }}
+                onMouseDown={(event) => {
+                  handleBubblePop(bubble.id, event);
+                }}
                 onPointerDown={(event) => {
+                  handleBubblePop(bubble.id, event);
+                }}
+                onTouchStart={(event) => {
                   handleBubblePop(bubble.id, event);
                 }}
                 ref={(node) => {
@@ -875,6 +988,13 @@ export function BoopPopPiratesGame({
             </div>
           ))}
         </div>
+
+        <div
+          className="boop-pop-pirates-bubble-hit-layer"
+          onMouseDown={handleStageBubbleInteraction}
+          onPointerDown={handleStageBubbleInteraction}
+          onTouchStart={handleStageBubbleInteraction}
+        />
 
         <div className="boop-pop-pirates-collectible-layer" aria-hidden="true">
           {fallingCollectibles.map((collectible) => (
