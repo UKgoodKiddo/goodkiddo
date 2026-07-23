@@ -205,6 +205,7 @@ export function BoopPopPiratesGame({
     stageMetrics.height - shipBottomOffsetPx - Math.max(stageMetrics.shipHeight * 0.1, 10);
   const shipPickupTargetYPx =
     stageMetrics.height - shipBottomOffsetPx - Math.max(stageMetrics.shipHeight * 0.48, 48);
+  const isPopChallengeEnabled = assetsReady && isDocumentVisible;
 
   useEffect(() => {
     activeBubblesRef.current = activeBubbles;
@@ -289,7 +290,7 @@ export function BoopPopPiratesGame({
     challengePopCountRef.current = 0;
     challengeRewardArmedRef.current = false;
     challengeRemainingMsRef.current = POP_CHALLENGE_DURATION_MS;
-    challengeDeadlineAtRef.current = assetsReady && isDocumentVisible
+    challengeDeadlineAtRef.current = isPopChallengeEnabled
       ? Date.now() + POP_CHALLENGE_DURATION_MS
       : null;
     setPopCount(0);
@@ -297,7 +298,7 @@ export function BoopPopPiratesGame({
   }
 
   useEffect(() => {
-    if (!assetsReady || !isDocumentVisible) {
+    if (!isPopChallengeEnabled) {
       if (challengeDeadlineAtRef.current !== null) {
         challengeRemainingMsRef.current = Math.max(
           0,
@@ -352,7 +353,7 @@ export function BoopPopPiratesGame({
         );
       }
     };
-  }, [assetsReady, isDocumentVisible]);
+  }, [isPopChallengeEnabled]);
 
   function performCollectiblePersistence(collectibleId: BoopPopPiratesCollectibleId) {
     if (persistenceInFlightRef.current.has(collectibleId)) {
