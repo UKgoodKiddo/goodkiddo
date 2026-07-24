@@ -15,6 +15,7 @@ const navItems = [
   { href: "/parent/approvals", label: "Approvals" },
   { href: "/parent/rewards", label: "Rewards" },
   { href: "/parent/activity", label: "Activity" },
+  { href: "/parent/worry-box", label: "Worry Box" },
   { href: "/parent/child-mode", label: "Child mode" },
   { href: "/parent/settings", label: "Settings" },
 ] as const;

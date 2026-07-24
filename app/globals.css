@@ -73,10 +73,14 @@ textarea {
 }
 
 .shell-card {
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(232, 241, 255, 0.48));
+  box-shadow:
+    0 24px 56px rgba(20, 36, 82, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  backdrop-filter: saturate(165%) blur(24px);
+  -webkit-backdrop-filter: saturate(165%) blur(24px);
 }
 
 .eyebrow {
@@ -174,6 +178,14 @@ textarea {
 .parent-menu-panel {
   animation: parent-menu-panel-in 190ms cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top right;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(232, 241, 255, 0.48)) !important;
+  box-shadow:
+    0 26px 60px rgba(8, 24, 72, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: saturate(165%) blur(24px);
+  -webkit-backdrop-filter: saturate(165%) blur(24px);
 }
 
 .btn-primary {
@@ -210,13 +222,25 @@ textarea {
 }
 
 .list-row {
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(236, 244, 255, 0.46));
+  box-shadow:
+    0 14px 32px rgba(20, 36, 82, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.54);
+  backdrop-filter: saturate(155%) blur(20px);
+  -webkit-backdrop-filter: saturate(155%) blur(20px);
 }
 
 .metric-tile {
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.78));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(236, 244, 255, 0.46));
+  box-shadow:
+    0 14px 32px rgba(20, 36, 82, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+  backdrop-filter: saturate(155%) blur(20px);
+  -webkit-backdrop-filter: saturate(155%) blur(20px);
 }
 
 .hero-burst {
@@ -236,15 +260,226 @@ textarea {
 
 .parent-hero {
   background:
-    radial-gradient(circle at top left, rgba(83, 196, 95, 0.2), transparent 30%),
-    radial-gradient(circle at top right, rgba(20, 86, 216, 0.14), transparent 28%),
-    linear-gradient(135deg, #ffffff, #f2f8ff 72%);
+    radial-gradient(circle at top left, rgba(83, 196, 95, 0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(20, 86, 216, 0.11), transparent 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(237, 245, 255, 0.5) 72%);
+}
+
+.parent-atmosphere-shell {
+  isolation: isolate;
+  background: transparent;
+}
+
+.parent-atmosphere {
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+
+.parent-atmosphere__sky {
+  position: absolute;
+  inset: 0;
+  transition:
+    background 560ms ease,
+    opacity 560ms ease;
+}
+
+.parent-atmosphere__glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(60px);
+  opacity: 0.65;
+  transition:
+    opacity 560ms ease,
+    transform 560ms ease,
+    background 560ms ease;
+}
+
+.parent-atmosphere__glow--upper {
+  top: 8%;
+  left: 50%;
+  width: min(65vw, 30rem);
+  height: min(65vw, 30rem);
+  transform: translateX(-50%);
+}
+
+.parent-atmosphere__glow--lower {
+  right: -6%;
+  bottom: -10%;
+  width: min(48vw, 22rem);
+  height: min(48vw, 22rem);
+}
+
+.parent-theme-cloud-layer,
+.parent-theme-star-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 480ms ease;
+}
+
+.parent-theme-cloud-layer {
+  opacity: 0;
+}
+
+.parent-theme-star-layer {
+  opacity: 0;
+}
+
+.parent-theme-cloud {
+  position: absolute;
+  width: 160px;
+  height: 55px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  filter: blur(1px);
+  animation: parent-theme-cloud-drift linear infinite;
+}
+
+.parent-theme-cloud::before,
+.parent-theme-cloud::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.parent-theme-cloud::before {
+  top: -30px;
+  left: 25px;
+  width: 70px;
+  height: 70px;
+}
+
+.parent-theme-cloud::after {
+  top: -45px;
+  right: 20px;
+  width: 90px;
+  height: 90px;
+}
+
+.parent-theme-cloud--one {
+  top: 22%;
+  left: -180px;
+  opacity: 0.55;
+  animation-duration: 55s;
+}
+
+.parent-theme-cloud--two {
+  top: 42%;
+  left: -240px;
+  opacity: 0.45;
+  transform: scale(0.75);
+  animation-delay: 10s;
+  animation-duration: 75s;
+}
+
+.parent-theme-cloud--three {
+  top: 12%;
+  left: -220px;
+  opacity: 0.4;
+  transform: scale(0.55);
+  animation-delay: 25s;
+  animation-duration: 95s;
+}
+
+@keyframes parent-theme-cloud-drift {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: calc(100vw + 300px) 0;
+  }
+}
+
+.parent-theme-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: white;
+  opacity: 0.95;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+  animation: parent-theme-star-twinkle 3s ease-in-out infinite;
+}
+
+@keyframes parent-theme-star-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    scale: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+    scale: 1.25;
+  }
+}
+
+html[data-parent-theme="day"] .parent-atmosphere__sky {
+  background:
+    radial-gradient(circle at top, rgba(125, 211, 252, 0.28), transparent 32%),
+    linear-gradient(180deg, #edf7ff 0%, #f8fbff 55%, #eef6ff 100%);
+}
+
+html[data-parent-theme="day"] .parent-atmosphere__glow--upper {
+  background: rgba(125, 211, 252, 0.34);
+}
+
+html[data-parent-theme="day"] .parent-atmosphere__glow--lower {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+html[data-parent-theme="day"] .parent-theme-cloud-layer {
+  opacity: 1;
+}
+
+html[data-parent-theme="night"] .parent-atmosphere__sky {
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.09), transparent 30%),
+    linear-gradient(180deg, #040814 0%, #070b16 60%, #05070f 100%);
+}
+
+html[data-parent-theme="night"] .parent-atmosphere__glow--upper {
+  background: rgba(34, 211, 238, 0.16);
+}
+
+html[data-parent-theme="night"] .parent-atmosphere__glow--lower {
+  background: rgba(71, 85, 105, 0.14);
+}
+
+html[data-parent-theme="night"] .parent-theme-star-layer {
+  opacity: 1;
 }
 
 .parent-soft-panel {
-  border: 1px solid rgba(20, 86, 216, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.96));
-  box-shadow: 0 12px 35px rgba(38, 68, 150, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(236, 244, 255, 0.46));
+  box-shadow:
+    0 16px 36px rgba(38, 68, 150, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+  backdrop-filter: saturate(155%) blur(20px);
+  -webkit-backdrop-filter: saturate(155%) blur(20px);
+}
+
+details[name="parent-dashboard-panels"] > summary {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(235, 244, 255, 0.42)) !important;
+  box-shadow:
+    0 12px 26px rgba(20, 36, 82, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  backdrop-filter: saturate(150%) blur(18px);
+  -webkit-backdrop-filter: saturate(150%) blur(18px);
+}
+
+details[name="parent-dashboard-panels"] > summary span {
+  background: rgba(255, 255, 255, 0.44) !important;
+  box-shadow:
+    0 10px 22px rgba(20, 36, 82, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56) !important;
+  backdrop-filter: saturate(145%) blur(14px);
+  -webkit-backdrop-filter: saturate(145%) blur(14px);
 }
 
 .progress-rail {
@@ -2346,6 +2581,100 @@ textarea {
   min-height: 0;
   overflow-y: auto;
   padding-bottom: 0.35rem;
+}
+
+.goodkiddo-worry-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.8) 0%,
+      rgba(219, 234, 254, 0.42) 55%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  opacity: 0.32;
+  box-shadow:
+    0 0 10px rgba(186, 220, 255, 0.18),
+    0 0 20px rgba(255, 255, 255, 0.08);
+  filter: blur(0.2px);
+  animation: goodkiddo-worry-twinkle 8s ease-in-out infinite;
+  z-index: 4;
+}
+
+.goodkiddo-worry-box-drift {
+  animation: goodkiddo-worry-box-drift 9s ease-in-out infinite;
+}
+
+.goodkiddo-worry-note-flight {
+  transform-origin: center top;
+  animation: goodkiddo-worry-note-flight 2.8s ease-in forwards;
+}
+
+@keyframes goodkiddo-worry-twinkle {
+  0%,
+  100% {
+    opacity: 0.12;
+    scale: 0.9;
+  }
+
+  50% {
+    opacity: 0.4;
+    scale: 1.12;
+  }
+}
+
+@keyframes goodkiddo-worry-box-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes goodkiddo-worry-note-flight {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(1);
+  }
+
+  12% {
+    opacity: 1;
+    transform: translateY(14px) scale(1);
+  }
+
+  76% {
+    opacity: 0.95;
+    transform: translateY(var(--worry-drop-distance, 8.7rem)) scale(0.48);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(calc(var(--worry-drop-distance, 8.7rem) + 0.9rem)) scale(0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parent-theme-cloud,
+  .parent-theme-star,
+  .goodkiddo-worry-star,
+  .goodkiddo-worry-box-drift,
+  .goodkiddo-worry-note-flight {
+    animation: none !important;
+  }
+
+  .parent-atmosphere,
+  .parent-atmosphere__sky,
+  .parent-atmosphere__glow,
+  .parent-theme-cloud-layer,
+  .parent-theme-star-layer {
+    transition: none !important;
+  }
 }
 
 .parent-task-wizard-choice,

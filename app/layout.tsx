@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito, Space_Grotesk } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { InstallPromptBanner } from "@/components/install-prompt-banner";
 import { PwaBoot } from "@/components/pwa-boot";
@@ -16,6 +17,8 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["500", "700"],
 });
+
+const parentThemeScript = `(function(){try{if(!window.location.pathname.startsWith("/parent"))return;var hour=(new Date()).getHours();var phase=hour>=19||hour<6?"night":"day";document.documentElement.setAttribute("data-parent-theme",phase)}catch(e){document.documentElement.setAttribute("data-parent-theme","day")}})();`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -54,9 +57,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-parent-theme="day"
       className={`${nunito.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
+        <Script id="parent-theme-bootstrap" strategy="beforeInteractive">
+          {parentThemeScript}
+        </Script>
         <PwaBoot />
         <InstallPromptBanner />
         {children}

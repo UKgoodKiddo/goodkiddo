@@ -286,7 +286,7 @@ export function BoopPopPiratesGame({
     };
   }, []);
 
-  function resetPopChallengeRound() {
+  const resetPopChallengeRound = useEffectEvent(() => {
     challengePopCountRef.current = 0;
     challengeRewardArmedRef.current = false;
     challengeRemainingMsRef.current = POP_CHALLENGE_DURATION_MS;
@@ -295,7 +295,7 @@ export function BoopPopPiratesGame({
       : null;
     setPopCount(0);
     setCountdownSecondsRemaining(POP_CHALLENGE_DURATION_MS / 1000);
-  }
+  });
 
   useEffect(() => {
     if (!isPopChallengeEnabled) {
