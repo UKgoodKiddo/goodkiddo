@@ -1,14 +1,10 @@
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createFamilyAction } from "@/app/actions";
 import { Banner } from "@/components/banner";
-import { BoopCollectorChildCard } from "@/components/boop-collector-child-card";
 import { ClearChildModeStorage } from "@/components/clear-child-mode-storage";
 import { LoadingSubmitButton } from "@/components/loading-submit-button";
-import { ParentRewardWizardLauncher } from "@/components/parent-reward-wizard-launcher";
-import { ParentSurpriseBoopsWizardLauncher } from "@/components/parent-surprise-boops-wizard-launcher";
-import { ParentTaskWizardLauncher } from "@/components/parent-task-wizard-launcher";
+import { ParentDashboardExperience } from "@/components/parent-dashboard-experience";
 import { ShellCard } from "@/components/shell-card";
 import { GOODKIDDO_ASSETS } from "@/lib/goodkiddo-assets";
 import { getTaskCardCatalog } from "@/lib/task-card-catalog";
@@ -17,7 +13,7 @@ import { getParentStatusBanner } from "@/lib/parent-status";
 import { getParentDashboardData } from "@/lib/data";
 import { getServerLocalDateString } from "@/lib/daily-bonus";
 import { subscriptionNeedsPlanSelection } from "@/lib/subscriptions";
-import { formatBoops, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 export default async function ParentPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -46,7 +42,7 @@ export default async function ParentPage(props: {
         <ShellCard className="parent-hero rounded-[2rem] p-6 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
-              <p className="eyebrow">Start here</p>
+              <p className="parent-eyebrow">Start here</p>
               <h2 className="mt-4 text-4xl font-extrabold tracking-tight">
                 Create your family hub
               </h2>
@@ -140,244 +136,29 @@ export default async function ParentPage(props: {
     id: child.id,
     name: child.display_name,
   }));
+  const childBalances = dashboard.children.map((child) => ({
+    avatarUrl: child.avatar_url,
+    boopBalance: child.boop_balance,
+    createdAtLabel: formatDateTime(child.created_at),
+    id: child.id,
+    name: child.display_name,
+  }));
 
   return (
-    <main className="flex flex-1 flex-col gap-6">
+    <main className="flex min-h-0 flex-1 flex-col gap-4">
       {shouldClearChildMode ? <ClearChildModeStorage /> : null}
       {banner ? <Banner message={banner.message} tone={banner.tone} /> : null}
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <details className="group" name="parent-dashboard-panels">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
-              <div>
-                <h2 className="text-3xl font-extrabold">Boop Collector</h2>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
-                  <svg
-                    aria-hidden="true"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M10 4V16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-                    <path d="M4 10H16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-                  </svg>
-                </span>
-              </div>
-            </summary>
-
-            <div className="mt-6">
-              {childSnapshotCards.length ? (
-                <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2">
-                  {childSnapshotCards.map((child) => (
-                    <BoopCollectorChildCard
-                      activeTaskCount={child.activeTaskCount}
-                      avatarUrl={child.avatarUrl}
-                      completedTodayCount={child.completedTodayCount}
-                      key={child.id}
-                      id={child.id}
-                      name={child.name}
-                      waitingToCollectBoops={child.waitingToCollectBoops}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="metric-tile rounded-[1.4rem] p-4 text-sm text-[color:var(--ink-soft)]">
-                  Child cards will appear here once profiles exist.
-                </div>
-              )}
-            </div>
-          </details>
-        </ShellCard>
-
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <p className="eyebrow">Pending approvals</p>
-          <h2 className="mt-3 text-3xl font-extrabold">Parent to do list</h2>
-          <div className="mt-6 flex items-center justify-between rounded-[1.6rem] bg-[#f6f9ff] px-5 py-5">
-            <div>
-              <p className="text-sm font-bold text-[color:var(--ink-soft)]">
-                Outstanding approvals
-              </p>
-              <p className="mt-2 text-4xl font-extrabold">{pendingApprovals}</p>
-            </div>
-            <Link className="btn btn-primary text-center" href="/parent/approvals">
-              Open approvals
-            </Link>
-          </div>
-          <div className="mt-4 space-y-3 text-center text-sm text-[color:var(--ink-soft)]">
-            <p>{dashboard.pendingTaskCompletions.length} task completions waiting.</p>
-            <p>
-              {dashboard.redemptions.filter((redemption) => redemption.status === "pending").length} reward
-              requests waiting.
-            </p>
-          </div>
-        </ShellCard>
-      </section>
-
-      <section>
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-extrabold">Add a new task</h2>
-            </div>
-            <ParentTaskWizardLauncher
-              childOptions={childOptions}
-              returnTo="/parent"
-              taskCatalog={taskCatalog.categories}
-              triggerLabel="Create task"
-            />
-          </div>
-        </ShellCard>
-      </section>
-
-      <section>
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-extrabold">Add a new reward</h2>
-            </div>
-            <ParentRewardWizardLauncher
-              childOptions={childOptions}
-              triggerLabel="Create reward"
-            />
-          </div>
-        </ShellCard>
-      </section>
-
-      <section>
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-extrabold">Give extra Boops</h2>
-            </div>
-            <ParentSurpriseBoopsWizardLauncher
-              childOptions={childOptions}
-              triggerLabel="Award surprise boops"
-            />
-          </div>
-        </ShellCard>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1fr_1.05fr]">
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <details className="group" name="parent-dashboard-panels">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
-              <div>
-                <h2 className="text-3xl font-extrabold">Boop Balances</h2>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
-                  <svg
-                    aria-hidden="true"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M10 4V16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-                    <path d="M4 10H16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-                  </svg>
-                </span>
-              </div>
-            </summary>
-
-            <div className="mt-6 grid gap-3">
-              {dashboard.children.length ? (
-                dashboard.children.map((child) => (
-                  <div
-                    key={child.id}
-                    className="flex items-center justify-between rounded-[1.4rem] bg-[#f8fbff] px-4 py-4"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      {child.avatar_url ? (
-                        <Image
-                          alt={`${child.display_name} avatar`}
-                          className="h-12 w-12 rounded-[1rem] object-cover"
-                          height={48}
-                          src={child.avatar_url}
-                          width={48}
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-[color:var(--sun)] text-lg font-black text-[color:var(--foreground)]">
-                          {child.display_name.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-extrabold">{child.display_name}</p>
-                        <p className="text-sm text-[color:var(--ink-soft)]">
-                          Created {formatDateTime(child.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="shrink-0 text-xl font-extrabold text-[color:var(--primary-strong)]">
-                      {formatBoops(child.boop_balance)}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
-                  Add your first child profile to start tracking boops.
-                </div>
-              )}
-            </div>
-          </details>
-        </ShellCard>
-
-        <ShellCard className="rounded-[1.8rem] p-6">
-          <details className="group" name="parent-dashboard-panels">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
-              <div>
-                <h2 className="text-3xl font-extrabold">Latest Boops</h2>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
-                  <svg
-                    aria-hidden="true"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M10 4V16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-                    <path d="M4 10H16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-                  </svg>
-                </span>
-              </div>
-            </summary>
-
-            <div className="mt-6">
-              {dashboard.transactions.length ? (
-                <div className="grid max-h-[26rem] gap-3 overflow-y-auto pr-1">
-                  {dashboard.transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-start justify-between gap-4 rounded-[1.4rem] bg-white px-4 py-4 shadow-[0_10px_26px_rgba(20,36,82,0.08)]"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-base font-extrabold">{transaction.reason}</p>
-                        <p className="mt-1 text-sm text-[color:var(--ink-soft)]">
-                          {transaction.childName ?? "Child"} · {formatDateTime(transaction.created_at)}
-                        </p>
-                      </div>
-                      <p className="shrink-0 text-lg font-extrabold text-[color:var(--primary-strong)]">
-                        {transaction.amount > 0 ? "+" : ""}
-                        {formatBoops(transaction.amount)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-[1.4rem] border border-dashed border-[color:var(--line-strong)] p-4 text-sm text-[color:var(--ink-soft)]">
-                  Activity will appear here once tasks, rewards, or manual boops start moving.
-                </div>
-              )}
-            </div>
-          </details>
-        </ShellCard>
-      </section>
+      <ParentDashboardExperience
+        balances={childBalances}
+        childOptions={childOptions}
+        childSnapshotCards={childSnapshotCards}
+        pendingApprovals={pendingApprovals}
+        pendingRewardRequestCount={
+          dashboard.redemptions.filter((redemption) => redemption.status === "pending").length
+        }
+        pendingTaskCompletionCount={dashboard.pendingTaskCompletions.length}
+        taskCatalog={taskCatalog.categories}
+      />
     </main>
   );
 }

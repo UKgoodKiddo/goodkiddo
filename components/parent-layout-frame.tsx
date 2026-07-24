@@ -36,14 +36,25 @@ export function ParentLayoutFrame({
 }) {
   const pathname = usePathname();
   const isImmersiveRoute = pathname.startsWith("/parent/worry-box");
+  const isDashboardRoute = pathname === "/parent";
 
   if (isImmersiveRoute) {
     return <div className="relative z-10 flex min-h-0 flex-1 flex-col">{children}</div>;
   }
 
   return (
-    <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6">
-      <header className="parent-hero shell-card relative z-20 mb-6 overflow-hidden rounded-[2rem] px-5 py-6 sm:px-6">
+    <div
+      className={
+        isDashboardRoute
+          ? "relative z-10 flex w-full flex-1 flex-col px-0 py-5"
+          : "relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6"
+      }
+    >
+      <header
+        className={`parent-hero shell-card relative z-20 mb-6 overflow-hidden rounded-[2rem] px-5 py-6 sm:px-6 ${
+          isDashboardRoute ? "mx-4 sm:mx-6 lg:mx-8" : ""
+        }`}
+      >
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(141,255,217,0.18),transparent_26%),radial-gradient(circle_at_right_center,rgba(20,86,216,0.08),transparent_30%)]"
@@ -85,9 +96,11 @@ export function ParentLayoutFrame({
         </div>
 
         <div className="relative mt-4 flex justify-center text-center">
-          <p className="text-sm font-bold text-[color:var(--ink-soft)] sm:text-base">
-            {familyName ? `Welcome back ${familyName}` : "Welcome back"}
-          </p>
+          <div className="parent-welcome-badge">
+            <p className="parent-welcome-copy text-sm font-bold text-white sm:text-base">
+              {familyName ? `Welcome back ${familyName}` : "Welcome back"}
+            </p>
+          </div>
         </div>
       </header>
       {children}

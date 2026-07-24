@@ -191,7 +191,7 @@ export function RewardPresetBuilder() {
       <div className="parent-soft-panel rounded-[1.6rem] p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="eyebrow">Reward presets</p>
+            <p className="parent-eyebrow">Reward presets</p>
             <h3 className="mt-2 text-2xl font-extrabold">Tap a ready-made reward</h3>
             <p className="mt-2 text-sm leading-6 text-[color:var(--ink-soft)]">
               Start with one of your icon rewards, then tweak the title, cost, or wording before saving.

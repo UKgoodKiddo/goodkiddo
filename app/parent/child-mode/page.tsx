@@ -41,7 +41,7 @@ export default async function ParentChildModePage(props: {
       {banner ? <Banner message={banner.message} tone={banner.tone} /> : null}
 
       <ShellCard className="rounded-[1.8rem] p-6">
-        <p className="eyebrow">Child mode</p>
+        <p className="parent-eyebrow">Child mode</p>
         <h2 className="mt-3 text-3xl font-extrabold">Choose a child profile</h2>
         <p className="mt-3 text-sm leading-6 text-[color:var(--ink-soft)]">
           Pick the child for this device first. That keeps child mode tied to a real profile instead of opening an empty session.

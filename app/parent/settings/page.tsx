@@ -46,7 +46,7 @@ export default async function ParentSettingsPage(props: {
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div className="min-w-0">
-                <p className="eyebrow">Settings</p>
+                <p className="parent-eyebrow">Settings</p>
                 <h2 className="mt-2 text-3xl font-extrabold">Family details</h2>
               </div>
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] shadow-[0_8px_18px_rgba(20,36,82,0.08)] transition-transform duration-200 group-open:rotate-45">
@@ -249,7 +249,7 @@ export default async function ParentSettingsPage(props: {
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] bg-[#f8fbff] px-4 py-4">
               <div className="min-w-0">
-                <p className="eyebrow">Child mode PIN</p>
+                <p className="parent-eyebrow">Child mode PIN</p>
                 <h2 className="mt-2 text-3xl font-extrabold">Parent unlock code</h2>
                 <p className="mt-2 text-sm text-[color:var(--ink-soft)]">
                   Save a 4-digit parent PIN for child mode exit.

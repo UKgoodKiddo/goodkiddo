@@ -5,6 +5,8 @@ export const GOODKIDDO_ASSETS = {
   bookIcon: "/goodkiddo/book-icon.png",
   boopCool: "/goodkiddo/boop-cool.png",
   boopHappy: "/goodkiddo/boop-happy.png",
+  boopPopPiratesTreasureChestCollectible:
+    "/boop-pop-pirates-handover/treasure-chest-collectible.webp",
   boopSleepy: "/goodkiddo/boop-sleepy.png",
   boopSurprised: "/goodkiddo/boop-surprised.png",
   boopTaskCompleteButton: "/goodkiddo/boop-task-complete-button.png",
